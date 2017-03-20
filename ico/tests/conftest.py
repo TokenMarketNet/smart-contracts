@@ -5,10 +5,12 @@ import pytest
 from web3.contract import Contract
 
 
-def pytest_itemcollected(item):
+def nice_list_pytest_itemcollected(item):
     """Visualize tests run so we can copy paste output.
 
     http://stackoverflow.com/q/28898919/315168
+
+    TODO: Make env variable activated
     """
     par = item.parent.obj
     node = item.obj

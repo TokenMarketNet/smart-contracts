@@ -3,13 +3,13 @@ import "zeppelin/contracts/ownership/Ownable.sol";
 import "zeppelin/contracts/token/StandardToken.sol";
 import "./SafeMathLib.sol";
 
-
 pragma solidity ^0.4.6;
 
 /**
- * Token that has capabilities to increase its supply by another contract.
+ * A token that can increase its supply by another contract.
  *
  * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
+ * Only mint agents, contracts whitelisted by owner, can mint new tokens.
  *
  */
 contract MintableToken is StandardToken, Ownable {

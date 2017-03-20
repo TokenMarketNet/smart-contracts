@@ -47,6 +47,13 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeAgentEnabledTo
     balances[msg.sender] = totalSupply;
   }
 
+  /**
+   * When token is released to be transferable, enforce no new tokens can be created.
+   */
+  function releaseTokenTransfer() public onlyReleaseAgent {
+    mintingFinished = true;
+    super.releaseTokenTransfer();
+  }
 
   /**
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
