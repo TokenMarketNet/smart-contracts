@@ -1,15 +1,15 @@
-.. highlight:: shell
-
 .. contents:: :local:
 
 Introduction
 ============
 
-This repository contains crowdsale smart contracts to be used with your `ICO <https://tokenmarket.net/what-is/ico>`_.
+This package contains crowdsale smart contracts to be used with your `ICO <https://tokenmarket.net/what-is/ico>`_.
 
-* Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups
+* Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups, token upgrade
 
 * Populus based test suite
+
+* Deployment tools and scripts
 
 As the writing of this, Ethereum smart contract ICO business has been booming almost a year. The industry and development teams are still figuring out the best practices. A lot of similar smart contracts get written over and over again. This project aims to tackle this problem by providing reusable ICO codebase, so that developers can focus on their own project specific value adding feature instead of rebuilding core crowdfunding logic. Having one well maintained codebase with best practice and security audits benefits the community as a whole.
 
@@ -35,7 +35,7 @@ Features and design goals
 
 * **Emergency stop**: To try to save the situation in the case we found an issue in the contract post-deploy
 
-* **Build upon a foundation**: Instead of building everything from the scratch, use [OpenZeppelin contracts](https://github.com/OpenZeppelin/zeppelin-solidity/) as much as possible as they are the gold standard of Solidity development
+* **Build upon a foundation**: Instead of building everything from the scratch, use `OpenZeppelin contracts <https://github.com/OpenZeppelin/zeppelin-solidity/>`_ as much as possible as they are the gold standard of Solidity development
 
 Installation
 ============

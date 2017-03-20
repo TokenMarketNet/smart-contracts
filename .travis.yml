@@ -1,0 +1,26 @@
+language: python
+python: 3.5
+dist: trusty
+sudo: true
+
+env:
+  - TOXENV=py35
+
+cache:
+  - pip: true
+
+before_install:
+  - sudo add-apt-repository -y ppa:ethereum/ethereum
+  - sudo apt-get update
+  - sudo apt-get install solidity
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - travis_retry pip install setuptools --upgrade
+  - pip install -U tox
+  - solc --version
+
+# command to run tests, e.g. python setup.py test
+script: tox -e ${TOXENV}
+
+
