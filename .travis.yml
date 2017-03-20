@@ -4,8 +4,7 @@ dist: trusty
 sudo: true
 
 env:
-  - TOXENV=py35
-  - SOLC_VERSION=0.4.8
+  - TOXENV=py35 SOLC_VERSION=0.4.8
 
 cache:
   - pip: true
@@ -17,7 +16,6 @@ before_install:
   - sudo add-apt-repository -y ppa:ethereum/ethereum
   - sudo apt-get update
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - if [ -n "$SOLC_VERSION" ]; then /.$TRAVIS_BUILD_DIR/bin/install_solc.sh; fi
   - travis_retry pip install setuptools --upgrade
