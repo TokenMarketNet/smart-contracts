@@ -1,0 +1,185 @@
+{
+  "chains": {
+    "mainnet": {
+      "chain": {
+        "class": "populus.chain.geth.MainnetChain"
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "$ref": "web3.GethIPC"
+      }
+    },
+    "ropsten": {
+      "chain": {
+        "class": "populus.chain.geth.TestnetChain"
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "$ref": "web3.GethIPC"
+      }
+    },
+    "temp": {
+      "chain": {
+        "class": "populus.chain.geth.TemporaryGethChain"
+      },
+      "contracts": {
+        "backends": {
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "$ref": "web3.GethIPC"
+      }
+    },
+    "tester": {
+      "chain": {
+        "class": "populus.chain.tester.TesterChain"
+      },
+      "contracts": {
+        "backends": {
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "$ref": "web3.Tester"
+      }
+    },
+    "testrpc": {
+      "chain": {
+        "class": "populus.chain.testrpc.TestRPCChain"
+      },
+      "contracts": {
+        "backends": {
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "$ref": "web3.TestRPC"
+      }
+    }
+  },
+  "compilation": {
+    "contracts_source_dir": "./contracts",
+    "settings": {
+      "optimize": true,
+      "import_remappings": ["zeppelin=zeppelin"]
+    }
+  },
+  "contracts": {
+    "backends": {
+      "JSONFile": {
+        "class": "populus.contracts.backends.filesystem.JSONFileBackend",
+        "priority": 10,
+        "settings": {
+          "file_path": "./registrar.json"
+        }
+      },
+      "Memory": {
+        "class": "populus.contracts.backends.memory.MemoryBackend",
+        "priority": 50
+      },
+      "ProjectContracts": {
+        "class": "populus.contracts.backends.project.ProjectContractsBackend",
+        "priority": 20
+      },
+      "TestContracts": {
+        "class": "populus.contracts.backends.testing.TestContractsBackend",
+        "priority": 40
+      }
+    }
+  },
+  "version": "3",
+  "web3": {
+    "GethIPC": {
+      "provider": {
+        "class": "web3.providers.ipc.IPCProvider"
+      }
+    },
+    "InfuraMainnet": {
+      "eth": {
+        "default_account": "0x0000000000000000000000000000000000000001"
+      },
+      "provider": {
+        "class": "web3.providers.rpc.HTTPProvider",
+        "settings": {
+          "endpoint_uri": "https://mainnet.infura.io"
+        }
+      }
+    },
+    "InfuraRopsten": {
+      "eth": {
+        "default_account": "0x0000000000000000000000000000000000000001"
+      },
+      "provider": {
+        "class": "web3.providers.rpc.HTTPProvider",
+        "settings": {
+          "endpoint_uri": "https://ropsten.infura.io"
+        }
+      }
+    },
+    "TestRPC": {
+      "provider": {
+        "class": "web3.providers.tester.TestRPCProvider"
+      }
+    },
+    "Tester": {
+      "provider": {
+        "class": "web3.providers.tester.EthereumTesterProvider"
+      }
+    }
+  }
+}
