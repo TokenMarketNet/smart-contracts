@@ -5,5 +5,8 @@ pragma solidity ^0.4.6;
  */
 contract PricingStrategy {
 
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised) public constant returns (uint);
+  /**
+   * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
+   */
+  function calculatePrice(uint value, uint tokensSold, uint weiRaised) public constant returns (uint tokenAmount);
 }
