@@ -3,11 +3,11 @@
 .. image:: https://img.shields.io/pypi/v/ico.svg
         :target: https://pypi.python.org/pypi/eireg
 
-.. image:: https://img.shields.io/travis/tokenmarketnet/ico.svg
-        :target: https://travis-ci.org/tokenmarketnet/ico
+.. image:: https://img.shields.io/travis/TokenMarketNet/ico.svg
+        :target: https://travis-ci.org/TokenMarketNet/ico
 
-.. image:: https://pyup.io/repos/github/tokenmarketnet/ico/shield.svg
-     :target: https://pyup.io/repos/github/tokenmarketnet/ico/
+.. image:: https://pyup.io/repos/github/TokenMarketNet/ico/shield.svg
+     :target: https://pyup.io/repos/github/TokenMarketNet/ico/
      :alt: Updates
 
 Introduction
