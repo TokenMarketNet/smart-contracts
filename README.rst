@@ -1,3 +1,5 @@
+This package contains smart contracts to be used to launch your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
+
 .. image:: https://img.shields.io/pypi/v/ico.svg
         :target: https://pypi.python.org/pypi/ico
 
@@ -8,23 +10,20 @@
      :target: https://pyup.io/repos/github/TokenMarketNet/ico/
      :alt: Updates
 
+.. contents:: :local:
+
 Introduction
 ============
 
-This package contains smart contracts to be used to launch your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
+As the writing of this, Ethereum smart contract ICO business has been booming almost a year. The industry and development teams are still figuring out the best practices. A lot of similar smart contracts get written over and over again. This project aims to tackle this problem by providing reusable ICO codebase, so that developers can focus on their own project specific value adding feature instead of rebuilding core crowdfunding logic. Having one well maintained codebase with best practice and security audits benefits the community as a whole.
+
+This package provides
 
 * Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups, token upgrade
 
-* Populus based test suite
+* Automated test suite
 
 * Deployment tools and scripts
-
-.. contents:: :local:
-
-Preface
-=======
-
-As the writing of this, Ethereum smart contract ICO business has been booming almost a year. The industry and development teams are still figuring out the best practices. A lot of similar smart contracts get written over and over again. This project aims to tackle this problem by providing reusable ICO codebase, so that developers can focus on their own project specific value adding feature instead of rebuilding core crowdfunding logic. Having one well maintained codebase with best practice and security audits benefits the community as a whole.
 
 TODO
 ====
