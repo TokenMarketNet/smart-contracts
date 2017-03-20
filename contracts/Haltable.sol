@@ -7,6 +7,9 @@ import "zeppelin/contracts/ownership/Ownable.sol";
  *
  * Abstract contract that allows children to implement an
  * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ *
+ *
+ * Originally envisioned in FirstBlood ICO contract.
  */
 contract Haltable is Ownable {
   bool public halted;
