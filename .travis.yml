@@ -8,6 +8,9 @@ env:
 
 cache:
   - pip: true
+  - directories:
+    - $TRAVIS_BUILD_DIR/solc-versions
+    - $TRAVIS_BUILD_DIR/.tox --recreate
 
 before_install:
   - if [ -n "$SOLC_VERSION" ]; then export SOLC_BINARY="$TRAVIS_BUILD_DIR/solc-versions/solc-$SOLC_VERSION/solc"; fi
