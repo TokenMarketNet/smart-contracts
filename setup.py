@@ -23,7 +23,7 @@ test_requirements = [
 ]
 
 setup(
-    name='ethereum-crowdsale',
+    name='ico',
     version='0.1',
     description="Ethereum smart contracts and tools for managing crowdsales",
     long_description=readme + '\n\n' + history,
@@ -39,7 +39,7 @@ setup(
     install_requires=requirements,
     license="Apache 2.0",
     zip_safe=False,
-    keywords='ethereum blockchain smartcontract',
+    keywords='ethereum blockchain smartcontract crowdsale ico solidity populus',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
