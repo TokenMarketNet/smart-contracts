@@ -12,7 +12,7 @@ cache:
 before_install:
   - sudo add-apt-repository -y ppa:ethereum/ethereum
   - sudo apt-get update
-  - sudo apt-get install solidity
+  - sudo apt-get install solc
 
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:

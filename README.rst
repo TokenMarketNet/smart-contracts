@@ -1,9 +1,19 @@
 .. contents:: :local:
 
+.. image:: https://img.shields.io/pypi/v/ico.svg
+        :target: https://pypi.python.org/pypi/eireg
+
+.. image:: https://img.shields.io/travis/tokenmarketnet/ico.svg
+        :target: https://travis-ci.org/tokenmarketnet/ico
+
+.. image:: https://pyup.io/repos/github/tokenmarketnet/ico/shield.svg
+     :target: https://pyup.io/repos/github/tokenmarketnet/ico/
+     :alt: Updates
+
 Introduction
 ============
 
-This package contains crowdsale smart contracts to be used with your `ICO <https://tokenmarket.net/what-is/ico>`_.
+This package contains smart contracts to be used to launch your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
 
 * Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups, token upgrade
 
@@ -31,7 +41,7 @@ Features and design goals
 
 * **Reusable**: The contract code is modularized and reusable across different projects, all variables are parametrized and there are no hardcoded values or magic numbers
 
-* **Reissuance**: There can be multiple crowdsales for the same token (pre-ICO, ICO)
+* **Reissuance**: There can be multiple crowdsales for the same token (pre-ICO, ICO, etc.)
 
 * **Emergency stop**: To try to save the situation in the case we found an issue in the contract post-deploy
 
