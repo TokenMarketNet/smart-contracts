@@ -1,5 +1,5 @@
 .. image:: https://img.shields.io/pypi/v/ico.svg
-        :target: https://pypi.python.org/pypi/eireg
+        :target: https://pypi.python.org/pypi/ico
 
 .. image:: https://img.shields.io/travis/TokenMarketNet/ico.svg
         :target: https://travis-ci.org/TokenMarketNet/ico
