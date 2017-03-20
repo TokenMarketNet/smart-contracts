@@ -173,12 +173,12 @@ In-depth discussion
 ===================
 
 Timestamp vs. block number
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The code uses block timestamps instead of block numbers for start and events. We work on the assumption that crowdsale periods are not so short or time sensitive there would be need for block number based timing. Furthermore if the network miners start to skew block timestamps we might have a larger problem with dishonest miners.
 
 Crowdsale strategies and compound design pattern
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Instead of cramming all the logic into a single contract through mixins and inheritance, we assemble our crowdsale from multiple components. Benefits include more elegant code, better reusability, separation of concern and testability.
 
