@@ -20,7 +20,7 @@ before_install:
   - sudo apt-get update
 
 install:
-  - if [ -n "$SOLC_VERSION" ]; then /.$TRAVIS_BUILD_DIR/install_solc.sh; fi
+  - if [ ! -e "$SOLC_BINARY" ]; then /.$TRAVIS_BUILD_DIR/install_solc.sh; fi
   - travis_retry pip install setuptools --upgrade
   - pip install -U tox
 

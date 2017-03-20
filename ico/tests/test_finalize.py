@@ -26,7 +26,7 @@ def test_finalize_fail_goal(chain: TestRPCChain, uncapped_flatprice_final: Contr
         uncapped_flatprice_final.transact().finalize()
 
 
-def test_finalize_fail_success(chain: TestRPCChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
+def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
     """Finalize releases the token."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -43,6 +43,7 @@ def test_finalize_fail_success(chain: TestRPCChain, uncapped_flatprice_final: Co
 
     # Here we go
     assert uncapped_token.call().released()
+    assert uncapped_token.call().mintingFinished()
 
 
 def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
