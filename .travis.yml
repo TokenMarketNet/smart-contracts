@@ -26,6 +26,7 @@ install:
 
 before_script:
   - if [ -n "$SOLC_BINARY" ]; then $SOLC_BINARY --version; fi
+  - export PATH=$PATH:`dirname $SOLC_BINARY`
 
 # command to run tests, e.g. python setup.py test
 script: tox -e ${TOXENV}
