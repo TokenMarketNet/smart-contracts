@@ -47,7 +47,7 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
-  /** Subcontracts can override to have a mint condition to finish minting in some point of time. */
+  /** Make sure we are not done yet. */
   modifier canMint() {
     if(mintingFinished) throw;
     _;
