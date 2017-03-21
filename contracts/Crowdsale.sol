@@ -71,9 +71,9 @@ contract Crowdsale is Haltable {
    * - Funding: Active crowdsale
    * - Success: Minimum funding goal reached
    * - Failure: Minimum funding goal not reached before ending time
-   *
+   * - Finalized: The finalized has been called and succesfully executed
    */
-  enum State{Unknown, PreFunding, Funding, Success, Failure}
+  enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized}
 
   /* notifying transfers and the success of the crowdsale*/
   event GoalReached(address beneficiary, uint amountRaised);
@@ -219,7 +219,8 @@ contract Crowdsale is Haltable {
   /// We make it a function and do not assign the result to a variable
   /// So there is no chance of the variable being stale
   function getState() public constant returns (State) {
-    if (block.timestamp < startsAt) return State.PreFunding;
+    if(finalized) return State.Finalized;
+    else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
     else return State.Failure;

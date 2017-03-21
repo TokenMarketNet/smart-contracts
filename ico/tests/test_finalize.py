@@ -40,6 +40,7 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
 
     # Release the tokens
     uncapped_flatprice_final.transact().finalize()
+    assert uncapped_flatprice_final.call().getState() == CrowdsaleState.Finalized
 
     # Here we go
     assert uncapped_token.call().released()

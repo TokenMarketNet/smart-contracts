@@ -6,8 +6,13 @@ pragma solidity ^0.4.6;
  *
  */
 contract UpgradeAgent {
-  address public owner;
-  bool public isUpgradeAgent;
+
+
+  /** Interface marker */
+  function isUpgradeAgent() public constant returns (bool) {
+    return true;
+  }
+
   function upgradeFrom(address _from, uint256 _value) public;
   function finalizeUpgrade() public;
   function setOriginalSupply() public;

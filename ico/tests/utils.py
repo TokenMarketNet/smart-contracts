@@ -12,6 +12,7 @@ class CrowdsaleState(IntEnum):
     Funding = 2
     Success = 3
     Failure = 4
+    Finalized = 5
 
 
 def time_travel(chain: TestRPCChain, timestamp: float):
