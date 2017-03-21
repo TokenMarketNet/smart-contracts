@@ -1,4 +1,4 @@
-This package contains smart contracts to be used to launch your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
+This package contains Ethereum smart contracts for launching your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
 
 .. image:: https://img.shields.io/pypi/v/ico.svg
         :target: https://pypi.python.org/pypi/ico
@@ -19,9 +19,9 @@ As the writing of this, Ethereum smart contract ICO business has been booming al
 
 This package provides
 
-* Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups, token upgrade
+* Crowdsale contracts: token, ICO, uncapped ICO, pricing, transfer lock ups, token upgrade in Solidity smart contract programming language
 
-* Automated test suite
+* Automated test suite in Python
 
 * Deployment tools and scripts
 
