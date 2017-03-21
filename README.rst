@@ -43,6 +43,10 @@ Features and design goals
 
 * **Reusable**: The contract code is modularized and reusable across different projects, all variables are parametrized and there are no hardcoded values or magic numbers
 
+* **Refund**: Built-in refund and minimum funding goal protect investors
+
+* **Migration**: Token holders can opt in to a new version of the token contract in the case the token owner wants to add more functionality to their token
+
 * **Reissuance**: There can be multiple crowdsales for the same token (pre-ICO, ICO, etc.)
 
 * **Emergency stop**: To try to save the situation in the case we found an issue in the contract post-deploy
