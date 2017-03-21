@@ -35,11 +35,11 @@ TODO
 Features and design goals
 =========================
 
-* **Best practices**: Smart contracts are written with the modern best practices of Ethereum community in mind
+* **Best practices**: Smart contracts are written with the modern best practices of Ethereum community
 
-* **Separation of concerns**: crowdsale and token logic lies in separate contracts
+* **Separation of concerns**: Crowdsale, token and other logic lies in separate contracts that can be assembled together like lego bricks
 
-* **Testable**: all branches can be covered by an automatic test suite
+* **Testable**: We aim for 100% branch code coverage by automated test suite
 
 * **Reusable**: The contract code is modularized and reusable across different projects, all variables are parametrized and there are no hardcoded values or magic numbers
 
