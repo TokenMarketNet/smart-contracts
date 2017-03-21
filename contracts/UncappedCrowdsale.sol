@@ -14,9 +14,10 @@ import "./MintableToken.sol";
  * - No cap
  *
  */
-contract UncappedFlatpriceICO is Crowdsale {
+contract UncappedCrowdsale is Crowdsale {
 
-  function UncappedFlatpriceICO(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
+  function UncappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
+
   }
 
   /**

@@ -68,7 +68,7 @@ def actual_ico(chain, uncapped_token: Contract, team_multisig, beneficiary, fina
         "from": team_multisig,
     }
 
-    contract, hash = chain.provider.deploy_contract('UncappedFlatpriceICO', deploy_args=args, deploy_transaction=tx)
+    contract, hash = chain.provider.deploy_contract('UncappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
     assert contract.call().owner() == team_multisig
     assert not token.call().released()

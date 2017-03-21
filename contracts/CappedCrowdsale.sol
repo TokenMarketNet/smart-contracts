@@ -14,12 +14,12 @@ import "./Crowdsale.sol";
  * - beneficiary is the party who is supplying the tokens for this ICO
  *
  */
-contract ICO is Crowdsale {
+contract CappedCrowdsale is Crowdsale {
 
   /** How many ETH in max we are allowed to raise */
   uint public weiCap;
 
-  function ICO(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
+  function CappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
     weiCap = _weiCap;
   }
 

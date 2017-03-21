@@ -9,7 +9,7 @@ import "./FinalizeAgent.sol";
 
 
 /**
- * Base contract for token sales.
+ * Abstract base contract for token sales.
  *
  * This is inspired by
  * - FirstBlood
