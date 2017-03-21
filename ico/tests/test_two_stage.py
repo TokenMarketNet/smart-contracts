@@ -118,7 +118,13 @@ def test_two_stage_initialized(preico, actual_ico, token, team_multisig, preico_
 
 
 def test_buy_both_stages(chain: TestRPCChain, preico: Contract, actual_ico: Contract, uncapped_token: Contract, customer, customer_2, preico_starts_at, preico_ends_at, actual_ico_starts_at, actual_ico_ends_at, flat_pricing, final_pricing):
-    """Integration test that we can run two uncapped ICOs for a token and then make it transferable until the end of the last ICO."""
+    """We run ICOs in several stages and investors can participate every round.
+
+    In this test we do pre-ICO and ICO. Pre-ICO has a minimum funding goal. The tokens are not released for transfer until the actual ICO is over. Both rounds are uncapped and new tokens get minted for investors.
+    """
+
+    # The token contract used in this test
+    token = uncapped_token
 
     # First buy tokens when pre-ICO is open
     first_buy = to_wei(100000, "ether")
@@ -132,7 +138,7 @@ def test_buy_both_stages(chain: TestRPCChain, preico: Contract, actual_ico: Cont
     time_travel(chain, preico_ends_at + 1)
     assert preico.call().getState() == CrowdsaleState.Success
     preico.transact({"from": customer}).finalize()
-    assert not uncapped_token.call().released() # Still on hold
+    assert not token.call().released() # Still on hold
 
     # Then buy more tokens when the actual ICO is open
     time_travel(chain, actual_ico_starts_at + 1)
@@ -146,11 +152,11 @@ def test_buy_both_stages(chain: TestRPCChain, preico: Contract, actual_ico: Cont
     assert actual_ico.call().getState() == CrowdsaleState.Success
     actual_ico.transact({"from": customer}).finalize()
     assert actual_ico.call().finalized()
-    assert uncapped_token.call().released()
+    assert token.call().released()
 
     # We got our tokens from both ICO buys
-    uncapped_token.call().balanceOf(customer) == first_batch + second_batch
+    token.call().balanceOf(customer) == first_batch + second_batch
 
     # Transfer tokens between accounts
-    uncapped_token.transact({"from": customer}).transfer(customer_2, 2000)
-    assert uncapped_token.call().balanceOf(customer_2) == 2000
+    token.transact({"from": customer}).transfer(customer_2, 2000)
+    assert token.call().balanceOf(customer_2) == 2000
