@@ -11,12 +11,12 @@ import "./FinalizeAgent.sol";
 /**
  * Abstract base contract for token sales.
  *
- * This is inspired by
- * - FirstBlood
- * - Golem
- * - Lunyr
- * - Edgeless
- *
+ * Handle
+ * - start and end dates
+ * - accepting investments
+ * - minimum funding goal and refund
+ * - various statistics during the crowdfund
+ * - different pricing strategies
  *
  */
 contract Crowdsale is Haltable {
@@ -98,6 +98,7 @@ contract Crowdsale is Haltable {
         throw;
     }
 
+    // TODO: remove beneficiary from the base class
     beneficiary = _beneficiary;
     if(beneficiary == 0) {
         throw;
@@ -241,7 +242,7 @@ contract Crowdsale is Haltable {
   /**
    * @return true if the crowdsale has raised enough money to be a succes
    */
-  function isMinimumGoalReached() public returns (bool reached) {
+  function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
   }
 
@@ -255,7 +256,7 @@ contract Crowdsale is Haltable {
     else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
-    else if (!isMinimumGoalReached() && weiRaised >= 0 && loadedRefund >= weiRaised) return State.Refunding;
+    else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised) return State.Refunding;
     else return State.Failure;
   }
 

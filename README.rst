@@ -25,13 +25,6 @@ This package provides
 
 * Deployment tools and scripts
 
-TODO
-====
-
-[ ] Refund
-
-[ ] Migration agent
-
 Features and design goals
 =========================
 
