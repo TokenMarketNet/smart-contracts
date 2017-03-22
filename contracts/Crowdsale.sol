@@ -56,6 +56,12 @@ contract Crowdsale is Haltable {
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
 
+  /* How much wei we have returned back to the contract after a failed crowdfund. */
+  uint public loadedRefund = 0;
+
+  /* How much wei we have given back to investors.*/
+  uint public weiRefunded = 0;
+
   /* Has this crowdsale been finalized */
   bool public finalized;
 
@@ -72,10 +78,12 @@ contract Crowdsale is Haltable {
    * - Success: Minimum funding goal reached
    * - Failure: Minimum funding goal not reached before ending time
    * - Finalized: The finalized has been called and succesfully executed
+   * - Refunding: Refunds are loaded on the contract for reclaim.
    */
-  enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized}
+  enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
-  event Invested(address backer, uint weiAmount, uint tokenAmount);
+  event Invested(address investor, uint weiAmount, uint tokenAmount);
+  event Refund(address investor, uint weiAmount);
 
   function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -116,8 +124,10 @@ contract Crowdsale is Haltable {
     minimumFundingGoal = _minimumFundingGoal;
   }
 
-  function() {
-    // Don't expect to just send in money and get tokens
+  /**
+   * Don't expect to just send in money and get tokens.
+   */
+  function() payable {
     throw;
   }
 
@@ -207,20 +217,45 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Allow load refunds back on the contract for the refundinf.
+   *
+   * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
+   */
+  function loadRefund() public payable inState(State.Failure) {
+    if(msg.value == 0) throw;
+    loadedRefund = loadedRefund.plus(msg.value);
+  }
+
+  /**
+   * Investors can claim refund.
+   */
+  function refund() public inState(State.Refunding) {
+    uint256 weiValue = investedAmountOf[msg.sender];
+    if (weiValue == 0) throw;
+    investedAmountOf[msg.sender] = 0;
+    weiRefunded = weiRefunded.plus(weiValue);
+    Refund(msg.sender, weiValue);
+    if (!msg.sender.send(weiValue)) throw;
+  }
+
+  /**
    * @return true if the crowdsale has raised enough money to be a succes
    */
   function isMinimumGoalReached() public returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
   }
 
-  /// @notice This manages the crowdfunding state machine
-  /// We make it a function and do not assign the result to a variable
-  /// So there is no chance of the variable being stale
+  /**
+   * Crowdfund state machine management.
+   *
+   * We make it a function and do not assign the result to a variable, so there is no chance of the variable being stale.
+   */
   function getState() public constant returns (State) {
     if(finalized) return State.Finalized;
     else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
+    else if (!isMinimumGoalReached() && weiRaised >= 0 && loadedRefund >= weiRaised) return State.Refunding;
     else return State.Failure;
   }
 

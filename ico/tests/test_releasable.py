@@ -1,5 +1,4 @@
 """Releasable token."""
-"""Releasable token."""
 
 import pytest
 from ethereum.tester import TransactionFailed

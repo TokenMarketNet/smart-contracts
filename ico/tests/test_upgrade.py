@@ -10,7 +10,6 @@ from ico.state import UpgradeState
 @pytest.fixture
 def upgrade_agent(chain, released_token) -> Contract:
     """The test upgrade agent/target token."""
-    assert released_token.address
     args = [
         released_token.address,
     ]
@@ -21,13 +20,11 @@ def upgrade_agent(chain, released_token) -> Contract:
 @pytest.fixture
 def upgrade_agent_2(chain, released_token) -> Contract:
     """Another deployment of the upgrade agent."""
-    assert released_token.address
     args = [
         released_token.address,
     ]
     contract, hash = chain.provider.deploy_contract('TestMigrationTarget', deploy_args=args)
     return contract
-
 
 
 def test_cannot_upgrade_until_released(token: Contract):

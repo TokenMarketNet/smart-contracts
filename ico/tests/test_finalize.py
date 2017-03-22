@@ -1,8 +1,6 @@
 """Finalize crowdsale."""
 import pytest
-from eth_utils import to_wei
 from ethereum.tester import TransactionFailed
-from web3 import Web3
 
 from populus.chain import TestRPCChain
 from web3.contract import Contract

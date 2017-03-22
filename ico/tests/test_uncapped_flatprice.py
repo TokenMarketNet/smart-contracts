@@ -76,7 +76,7 @@ def test_buy(chain: TestRPCChain, web3: Web3, uncapped_flatprice: Contract, unca
     events = uncapped_flatprice.pastEvents("Invested").get()
     assert len(events) == 1
     e = events[0]
-    assert e["args"]["backer"] == customer
+    assert e["args"]["investor"] == customer
     assert e["args"]["weiAmount"] == wei_value
     assert e["args"]["tokenAmount"] == buys_tokens
 
@@ -194,7 +194,7 @@ def test_buy_reach_goal(chain: TestRPCChain, flat_pricing, uncapped_flatprice: C
     events = uncapped_flatprice.pastEvents("Invested").get()
     assert len(events) == 1
     e = events[0]
-    assert e["args"]["backer"] == customer
+    assert e["args"]["investor"] == customer
     assert e["args"]["weiAmount"] == wei_value
 
     assert uncapped_flatprice.call().weiRaised() == wei_value
@@ -244,6 +244,15 @@ def test_buy_dust(chain: TestRPCChain, web3: Web3, uncapped_flatprice: Contract,
 
     with pytest.raises(TransactionFailed):
         uncapped_flatprice.transact({"from": customer, "value": wei_value}).buy()
+
+
+def test_deposit_default_payabl(chain: TestRPCChain, web3: Web3, uncapped_flatprice: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):
+    """Cannot just send money to the contract address and expect getting tokens.."""
+
+    wei_value = to_wei(100, "ether")
+    time_travel(chain, preico_starts_at + 1)
+    with pytest.raises(TransactionFailed):
+        web3.eth.sendTransaction({"from": customer, "value": wei_value, "to": uncapped_flatprice.address})
 
 
 def test_cannot_mint(chain: TestRPCChain, web3: Web3, uncapped_flatprice: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):

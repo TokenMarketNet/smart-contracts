@@ -9,6 +9,7 @@ class CrowdsaleState(IntEnum):
     Success = 3
     Failure = 4
     Finalized = 5
+    Refunding = 6
 
 
 class UpgradeState(IntEnum):
