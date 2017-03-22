@@ -33,17 +33,6 @@ contract TestMigrationTarget is StandardToken, UpgradeAgent {
     }
   }
 
-  /**
-   * Make sure that we keep token supplies in sync.
-   */
-  function safetyInvariantCheck(uint256 _value) public {
-    uint oldSupply = oldToken.totalSupply();
-    uint newSupply = totalSupply;
-    if (oldSupply.plus(newSupply) != originalSupply.minus(_value)) {
-      throw;
-    }
-  }
-
   function upgradeFrom(address _from, uint256 _value) public {
     if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
 
