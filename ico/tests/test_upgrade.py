@@ -18,6 +18,18 @@ def upgrade_agent(chain, released_token) -> Contract:
     return contract
 
 
+@pytest.fixture
+def upgrade_agent_2(chain, released_token) -> Contract:
+    """Another deployment of the upgrade agent."""
+    assert released_token.address
+    args = [
+        released_token.address,
+    ]
+    contract, hash = chain.provider.deploy_contract('TestMigrationTarget', deploy_args=args)
+    return contract
+
+
+
 def test_cannot_upgrade_until_released(token: Contract):
     """Non-released tokens cannot be upgradeable."""
 
@@ -27,6 +39,7 @@ def test_cannot_upgrade_until_released(token: Contract):
 
 def test_can_upgrade_released_token(released_token: Contract):
     """Released token is free to upgrade."""
+    assert released_token.call().canUpgrade()
     assert released_token.call().getUpgradeState() == UpgradeState.WaitingForAgent
 
 
@@ -57,12 +70,14 @@ def test_change_upgrade_master(released_token: Contract, upgrade_agent: Contract
     released_token.transact({"from": team_multisig}).setUpgradeMaster(customer)
     released_token.transact({"from": customer}).setUpgradeAgent(upgrade_agent.address)
 
+
 def test_upgrade_partial(released_token: Contract, upgrade_agent: Contract, team_multisig, customer):
-    """We can upgrade some of tokns."""
+    """We can upgrade some of tokens."""
 
     released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent.address)
     assert released_token.call().balanceOf(team_multisig) == 9990000
-    released_token.transact({"from": team_multisig}).upgrade(3000000)  # total supply
+    assert released_token.call().totalSupply() == 10000000
+    released_token.transact({"from": team_multisig}).upgrade(3000000)
 
     assert released_token.call().getUpgradeState() == UpgradeState.Upgrading
 
@@ -70,12 +85,45 @@ def test_upgrade_partial(released_token: Contract, upgrade_agent: Contract, team
     assert upgrade_agent.call().totalSupply() == 3000000
     assert released_token.call().totalUpgraded() == 3000000
 
-    assert released_token.call().balanceOf(team_multisig) == 7000000
+    assert released_token.call().balanceOf(team_multisig) == 6990000
     assert upgrade_agent.call().balanceOf(team_multisig) == 3000000
 
 
 def test_upgrade_all(released_token: Contract, upgrade_agent: Contract, team_multisig, customer):
     """We can upgrade all tokens of two owners."""
 
-    released_token.transact({"from": team_multisig}).setUpgradeMaster(customer)
-    released_token.transact({"from": customer}).setUpgradeAgent(upgrade_agent.address)
+    released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent.address)
+    assert released_token.call().balanceOf(team_multisig) == 9990000
+    assert released_token.call().balanceOf(customer) == 10000
+    assert released_token.call().totalSupply() == 10000000
+    released_token.transact({"from": team_multisig}).upgrade(9990000)
+    released_token.transact({"from": customer}).upgrade(10000)
+
+    assert released_token.call().getUpgradeState() == UpgradeState.Upgrading
+    assert released_token.call().totalSupply() == 0
+    assert upgrade_agent.call().totalSupply() == 10000000
+    assert released_token.call().totalUpgraded() == 10000000
+
+    assert upgrade_agent.call().balanceOf(team_multisig) == 9990000
+    assert upgrade_agent.call().balanceOf(customer) == 10000
+
+
+def test_cannot_upgrade_too_many(released_token: Contract, upgrade_agent: Contract, team_multisig, customer):
+    """We cannot upgrade more tokens than we have."""
+
+    released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent.address)
+    assert released_token.call().balanceOf(customer) == 10000
+
+    with pytest.raises(TransactionFailed):
+        released_token.transact({"from": customer}).upgrade(20000)
+
+
+def test_cannot_change_agent_in_fly(released_token: Contract, upgrade_agent: Contract, team_multisig, customer, upgrade_agent_2):
+    """Upgrade agent cannot be changed after the ugprade has begun."""
+
+    released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent.address)
+    released_token.transact({"from": customer}).upgrade(10000)
+
+    with pytest.raises(TransactionFailed):
+        released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent_2.address)
+

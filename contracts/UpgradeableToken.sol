@@ -47,7 +47,7 @@ contract UpgradeableToken is StandardToken {
   /**
    * Allow the token holder to upgrade some of their tokens to a new contract.
    */
-  function upgrade(uint256 value) external {
+  function upgrade(uint256 value) public {
 
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {

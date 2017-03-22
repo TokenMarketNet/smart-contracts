@@ -9,7 +9,7 @@ import "../MintableToken.sol";
  *
  * This is not an actual token, but just a stub used in testing.
  */
-contract TestMigrationTarget is MintableToken, UpgradeAgent {
+contract TestMigrationTarget is StandardToken, UpgradeAgent {
 
   using SafeMathLib for uint;
 
@@ -45,10 +45,12 @@ contract TestMigrationTarget is MintableToken, UpgradeAgent {
   }
 
   function upgradeFrom(address _from, uint256 _value) public {
-      if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
-      safetyInvariantCheck(_value);
-      mint(_from, _value);
-      safetyInvariantCheck(0);
+    if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
+
+    // Mint new tokens to the migrator
+    totalSupply = totalSupply.plus(_value);
+    balances[_from] = balances[_from].plus(_value);
+    Transfer(0, _from, _value);
   }
 
   function() public payable {
