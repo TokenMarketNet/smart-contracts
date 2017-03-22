@@ -8,7 +8,7 @@ from populus.chain import TestRPCChain
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
-from ico.tests.utils import CrowdsaleState
+from ico.state import CrowdsaleState
 
 
 def test_finalize_fail_goal(chain: TestRPCChain, uncapped_flatprice_final: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):

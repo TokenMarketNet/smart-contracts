@@ -5,7 +5,7 @@ from populus.chain import TestRPCChain
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
-from ico.tests.utils import CrowdsaleState
+from ico.state import CrowdsaleState
 
 
 @pytest.fixture

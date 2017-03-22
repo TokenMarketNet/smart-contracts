@@ -75,8 +75,6 @@ contract Crowdsale is Haltable {
    */
   enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized}
 
-  /* notifying transfers and the success of the crowdsale*/
-  event GoalReached(address beneficiary, uint amountRaised);
   event Invested(address backer, uint weiAmount, uint tokenAmount);
 
   function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) {

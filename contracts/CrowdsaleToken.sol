@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/contracts/token/StandardToken.sol";
-import "./UpgradeAgentEnabledToken.sol";
+import "./UpgradeableToken.sol";
 import "./ReleasableToken.sol";
 import "./MintableToken.sol";
 import "./SafeMathLib.sol";
@@ -18,7 +18,7 @@ import "./SafeMathLib.sol";
  * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
  *
  */
-contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeAgentEnabledToken {
+contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public name;
 
@@ -36,7 +36,9 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeAgentEnabledTo
 
     // Create from team multisig
     owner = msg.sender;
-    upgradeMaster = msg.sender;
+
+    // Initially set the upgrade master same as owner
+    upgradeMaster = owner;
 
     name = _name;
     symbol = _symbol;
@@ -58,9 +60,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeAgentEnabledTo
   /**
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
    */
-  modifier canUpgrade() {
-    if(!released) throw;
-    _;
+  function canUpgrade() public constant returns(bool) {
+    return released;
   }
 
 }
