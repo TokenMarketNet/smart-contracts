@@ -28,7 +28,7 @@ contract PresaleFundCollector is Ownable {
   /** How much they have invested */
   mapping(address => uint) public balances;
 
-  /** When our refund freeze is over */
+  /** When our refund freeze is over (UNIT timestamp) */
   uint public freezeEndsAt;
 
   /** What is the minimum buy in */
@@ -144,6 +144,9 @@ contract PresaleFundCollector is Ownable {
     Refunded(investor, amount);
   }
 
+  /**
+   * Set the target crowdsale where we will move presale funds when the crowdsale opens.
+   */
   function setCrowdsale(Crowdsale _crowdsale) public onlyOwner {
      crowdsale = _crowdsale;
   }
