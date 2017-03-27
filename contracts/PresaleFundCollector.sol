@@ -63,6 +63,9 @@ contract PresaleFundCollector is Ownable {
     freezeEndsAt = _freezeEndsAt;
   }
 
+  /**
+   * Participate to a presale.
+   */
   function invest() public payable {
 
     // Cannot invest anymore through crowdsale when moving has begun
@@ -93,7 +96,7 @@ contract PresaleFundCollector is Ownable {
   }
 
   /**
-   * Participat to ICO for a single investor.
+   * Load funds to the crowdsale for a single investor.
    */
   function parcipateCrowdsaleInvestor(address investor) public {
 
@@ -110,7 +113,7 @@ contract PresaleFundCollector is Ownable {
   }
 
   /**
-   * Participat to ICO for all investor.
+   * Load funds to the crowdsale for all investor.
    *
    */
   function parcipateCrowdsaleAll() public {
@@ -127,8 +130,10 @@ contract PresaleFundCollector is Ownable {
    */
   function refund() {
 
+    // Trying to ask refund too soon
     if(now < freezeEndsAt) throw;
 
+    // We have started to move funds
     moving = true;
 
     address investor = msg.sender;

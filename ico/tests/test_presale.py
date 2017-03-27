@@ -100,7 +100,8 @@ def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale
     presale_fund_collector.transact().parcipateCrowdsaleAll()
 
     # Presale balances zerod
-    presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
+    presale_fund_collector.call().balances(customer) == 0
+    presale_fund_collector.call().balances(customer_2) == 0
 
     # Tokens received
     presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
@@ -167,7 +168,8 @@ def test_invest_presale_refund(chain, web3, presale_fund_collector, presale_crow
     presale_fund_collector.transact({"from": customer}).refund()
     after_refund = web3.eth.getBalance(customer)
 
-    assert from_wei(after_refund - before_refund, "ether") > 0.99  # gas cost
+    assert from_wei(after_refund - before_refund, "ether") > 0.99  # gas cost epsilon
+    assert presale_fund_collector.call().balances(customer) == 0
 
 
 def test_invest_presale_refund_early(chain, web3, presale_fund_collector, presale_crowdsale, preico_starts_at, customer, customer_2):
