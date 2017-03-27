@@ -199,3 +199,7 @@ Mainly, our crowdsales have the following major parts
 
 * Finalizing strategy: What happens after a successful crowdsale: allow tokens to be transferable, give out extra tokens, etc.
 
+Background information
+======================
+
+* https://drive.google.com/file/d/0ByMtMw2hul0EN3NCaVFHSFdxRzA/view
