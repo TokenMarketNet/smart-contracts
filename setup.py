@@ -49,5 +49,9 @@ setup(
     ],
     test_suite='tests',
     setup_requires=["pytest-runner"],
-    tests_require=test_requirements
+    tests_require=test_requirements,
+    entry_points='''
+    [console_scripts]
+    presale=ico.presale:main
+    ''',
 )

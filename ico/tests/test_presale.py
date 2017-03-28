@@ -205,3 +205,11 @@ def test_only_owner_sets_crowdsale(chain, presale_fund_collector, uncapped_flatp
 
     with pytest.raises(TransactionFailed):
         presale_fund_collector.transact({"from": customer}).setCrowdsale(uncapped_flatprice.address)
+
+
+def test_estimate_invest_cost(chain, web3, presale_fund_collector, presale_crowdsale, preico_starts_at, customer, customer_2):
+    """Estimate invest gas cost."""
+
+    value = to_wei(1, "ether")
+    transaction = {"from": customer, "value": value}
+    cost = presale_fund_collector.estimateGasCost().invest()
