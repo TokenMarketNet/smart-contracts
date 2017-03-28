@@ -21,7 +21,15 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8545",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
       }
     },
     "ropsten": {

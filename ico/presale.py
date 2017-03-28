@@ -1,15 +1,27 @@
 """Deploy pre-sale contract."""
-import click
-
 import time
-
 import sys
+import datetime
+
+import click
 from eth_utils import from_wei
 from eth_utils import to_wei
 from populus.utils.accounts import is_account_locked
-
 from populus import Project
 from populus.utils.cli import request_account_unlock
+
+from ico.utils import get_constructor_arguments
+
+
+def utc_time():
+    """UTC UNIX time.
+
+    http://stackoverflow.com/a/22101249/315168
+    """
+    d = datetime.datetime.utcnow()
+    epoch = datetime.datetime(1970, 1, 1)
+    t = (d - epoch).total_seconds()
+    return t
 
 
 @click.command()
@@ -22,7 +34,7 @@ def main(chain, address, days, minimum):
     project = Project()
 
     minimum = to_wei(minimum, "ether")
-    freeze_ends_at = time.time() + days * 24*3600
+    freeze_ends_at = int(utc_time() + days * 24*3600)
 
     # This is configured in populus.json
     # We are working on a testnet
@@ -46,16 +58,28 @@ def main(chain, address, days, minimum):
         args = [freeze_ends_at, minimum]
 
         # This does deployment with all dependencies linked in
-        presale, txhash = chain.provider.deploy_contract('PresaleFundCollector', deploy_transaction=transaction, deploy_args=args)
+        presale, txhash = c.provider.deploy_contract('PresaleFundCollector', deploy_transaction=transaction, deploy_args=args)
         print("Deploying presale, tx hash is", txhash)
         print("Presale contract address is", presale.address)
+
+        # This is needed for Etherscan contract verification
+        # https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
+        data = get_constructor_arguments(presale, args)
+        print("Presale constructor arguments is", data)
 
         # Do some contract reads to see everything looks ok
         print("Presale freeze ends at", presale.call().freezeEndsAt())
         print("Presale minimum buy in (wei) is", presale.call().weiMinimumLimit())
 
         # Estimate invest() gas cost
-        estimation = presale.estimateGas(tranaction={"from": address, "value": to_wei(1000, "ether")}}).invest()
+        estimation = presale.estimateGas(transaction={"from": address, "value": to_wei(1000, "ether")}).invest()
+        print("Presale.invest() estimated gas cost is", estimation)
+
+        sig_data = presale._prepare_transaction("invest")
+        print("Presale.invest() data payload is", sig_data["data"])
+
+        sig_data = presale._prepare_transaction("refund")
+        print("Presale.refund() data payload is", sig_data["data"])
 
         print("All done! Enjoy your decentralized future.")
 

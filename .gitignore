@@ -65,3 +65,6 @@ chains/*
 eireg/chains/*
 venv
 build
+
+# Where Populus has deployed contracts
+registrar.json
