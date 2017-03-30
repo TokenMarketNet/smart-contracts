@@ -1,4 +1,4 @@
-This package contains Ethereum smart contracts and Python based command line tools for launching your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
+This package contains Ethereum smart contracts and Python based command line tools for launching your ICO crowdsale or token offering.
 
 .. image:: https://img.shields.io/pypi/v/ico.svg
         :target: https://pypi.python.org/pypi/ico
@@ -12,8 +12,19 @@ This package contains Ethereum smart contracts and Python based command line too
 
 .. contents:: :local:
 
+Links
+=====
+
+`Github issue tracker and source code <https://github.com/tokenmarketnet/ico>`_
+
+`Documentation <https://ico.readthedocs.io/en/latest/>`_
+
 About the project
 =================
+
+`ICO stands for a token or cryptocurrency initial offering crowdsale <https://tokenmarket.net/what-is/ico>`_. It is a common method in blockchain space, decentralized applications and in-game tokens for bootstrap funding of your project.
+
+This project aims to provide standard, secure smart contracts and tools to create crowdsales for Ethereum blockchain.
 
 As the writing of this, Ethereum smart contract ICO business has been booming almost a year. The industry and development teams are still figuring out the best practices. A lot of similar smart contracts get written over and over again. This project aims to tackle this problem by providing reusable ICO codebase, so that developers can focus on their own project specific value adding feature instead of rebuilding core crowdfunding logic. Having one well maintained codebase with best practice and security audits benefits the community as a whole.
 
