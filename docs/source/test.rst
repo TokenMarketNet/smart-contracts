@@ -28,30 +28,3 @@ Running tests::
 Run a specific test::
 
     py.test tests -k test_get_price_tiers
-
-Deploying on testnet
-^^^^^^^^^^^^^^^^^^^^
-
-Compile contracts::
-
-    populus compile
-
-Deploy::
-
-    python testnet_deploy.py
-
-
-Deploying on a private testnet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Create a local chain::
-
-    populus chain run local
-
-Compile contracts::
-
-    populus compile
-
-Deploy::
-
-    python private_testnet_deploy.py
