@@ -52,7 +52,7 @@ setup(
     tests_require=test_requirements,
     entry_points='''
     [console_scripts]
-    presale=ico.presale:main
-    token=ico.token:main
+    presale=ico.deploypresale:main
+    token=ico.deploytoken:main
     ''',
 )
