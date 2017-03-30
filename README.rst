@@ -15,8 +15,6 @@ This package contains Ethereum smart contracts and Python based command line too
     :scale: 100%
     :target: https://ico.readthedocs.io/en/latest/?badge=latest
 
-.. contents:: :local:
-
 Links
 =====
 
