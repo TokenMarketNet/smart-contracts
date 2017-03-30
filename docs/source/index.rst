@@ -20,6 +20,7 @@ This project aims to provide standard, secure smart contracts and tools to creat
    contracts
    install
    commands
+   interact
    test
    designchoices
    support

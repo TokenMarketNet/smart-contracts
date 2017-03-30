@@ -68,3 +68,7 @@ build
 
 # Where Populus has deployed contracts
 registrar.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb

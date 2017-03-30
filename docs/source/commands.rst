@@ -1,3 +1,4 @@
+=====================
 Command line commands
 =====================
 
@@ -58,12 +59,41 @@ Now you can make a invest transaction to the contract:
 .. image:: screenshots/presale_invest.png
     :width: 384
 
+.. _deploy-token:
+
 deploy-token
 ============
 
 Deploy a crowdsale token contract.
 
-Example that deploys a crowdsale token to testnet and then sets the owner as a release agent (party that can make the token transferable):
+::
+
+    Usage: deploy-token [OPTIONS]
+
+      Deploy a CrowdsaleToken contract.
+
+      Example:
+
+      deploy-token --chain=ropsten
+      --address=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6 --name="MikkoToken
+      2.0" --symbol=MOO --release-
+      agent=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6  --supply=100000
+
+    Options:
+      --chain TEXT          On which chain to deploy - see populus.json
+      --address TEXT        Address to deploy from and who becomes as a owner
+                            (must exist on geth)  [required]
+      --release-agent TEXT  Address that acts as a release agent (can be same as
+                            owner)
+      --minting-agent TEXT  Address that acts as a minting agent (can be same as
+                            owner)
+      --name TEXT           How many days presale is frozen for  [required]
+      --symbol TEXT         What is the minimum pre-ico buy in (ether)  [required]
+      --supply INTEGER      What is the minimum pre-ico buy in (ether)
+      --help                Show this message and exit.
+
+
+Example that deploys a crowdsale token to testnet and then sets the owner as a release agent:
 
 .. code-block:: console
 
