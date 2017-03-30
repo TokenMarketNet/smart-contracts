@@ -32,3 +32,4 @@ toposort==1.5
 watchdog==0.8.3
 web3==3.7.2
 Werkzeug==0.12.1
+Sphinx==1.5.3
