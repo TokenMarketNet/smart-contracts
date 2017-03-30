@@ -10,10 +10,10 @@ This package contains Ethereum smart contracts and Python based command line too
      :target: https://pyup.io/repos/github/TokenMarketNet/ico/
      :alt: Updates
 
-.. image:: https://readthedocs.org/projects/docs/badge/?version=latest
+.. image:: https://readthedocs.org/projects/ico/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
-    :target: https://docs.readthedocs.io/en/latest/?badge=latest
+    :target: https://ico.readthedocs.io/en/latest/?badge=latest
 
 .. contents:: :local:
 
