@@ -3,7 +3,6 @@ pragma solidity ^0.4.8;
 import "zeppelin/contracts/ownership/Ownable.sol";
 import "zeppelin/contracts/token/TransferableToken.sol";
 import "zeppelin/contracts/token/ERC20.sol";
-import "./ReleaseAgent.sol";
 
 
 /**
@@ -12,7 +11,7 @@ import "./ReleaseAgent.sol";
 contract ReleasableToken is ERC20, Ownable {
 
   /* The crowdsale contrcat that allows unlift the transfer limits on this token */
-  ReleaseAgent releaseAgent;
+  address public releaseAgent;
 
   /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
   bool public released = false;
@@ -44,16 +43,12 @@ contract ReleasableToken is ERC20, Ownable {
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
 
     // Already set
-    if(address(releaseAgent) != 0) {
+    if(releaseAgent != 0) {
       throw;
     }
 
-    releaseAgent = ReleaseAgent(addr);
-
-     // Do an interface check
-    if(!releaseAgent.isReleaseAgent()) {
-      throw;
-    }
+    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
+    releaseAgent = addr;
   }
 
   /**
@@ -83,7 +78,7 @@ contract ReleasableToken is ERC20, Ownable {
 
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyReleaseAgent() {
-    if(msg.sender != address(releaseAgent)) {
+    if(msg.sender != releaseAgent) {
         throw;
     }
     _;

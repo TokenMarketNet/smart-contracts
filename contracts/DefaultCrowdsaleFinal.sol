@@ -8,7 +8,7 @@ import "./ReleasableToken.sol";
  *
  * Unlock tokens.
  */
-contract DefaultCrowdsaleFinal is FinalizeAgent, ReleaseAgent {
+contract DefaultCrowdsaleFinal is FinalizeAgent {
 
   ReleasableToken public token;
   Crowdsale public crowdsale;

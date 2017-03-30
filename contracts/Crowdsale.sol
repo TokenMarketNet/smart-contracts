@@ -2,7 +2,6 @@ pragma solidity ^0.4.8;
 
 import "zeppelin/contracts/token/ERC20.sol";
 import "./SafeMathLib.sol";
-import "./ReleaseAgent.sol";
 import "./Haltable.sol";
 import "./PricingStrategy.sol";
 import "./FinalizeAgent.sol";

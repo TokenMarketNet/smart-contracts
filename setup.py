@@ -53,5 +53,6 @@ setup(
     entry_points='''
     [console_scripts]
     presale=ico.presale:main
+    token=ico.token:main
     ''',
 )

@@ -25,14 +25,15 @@ def utc_time():
 
 
 @click.command()
-@click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy')
+@click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
 @click.option('--address', nargs=1, help='Account to deploy from (must exist on geth)', default=None)
 @click.option('--days', nargs=1, default=30, help='How many days presale is frozen for', type=int)
 @click.option('--minimum', nargs=1, default=1, help='What is the minimum pre-ico buy in (ether)', type=float)
 def main(chain, address, days, minimum):
-
+    """Deploy a PresaleFundCollector contract."""
     project = Project()
 
+    # Parse command line args to presale constructor args
     minimum = to_wei(minimum, "ether")
     freeze_ends_at = int(utc_time() + days * 24*3600)
 
