@@ -6,7 +6,7 @@
 ICO smart contract and tool documentation
 ==========================================
 
-This is a documentation for `ICO package <https://github.com/tokenmarketnet/ico>`_ providing Ethereum smart contracts and Python based command line tools for launching your `ICO <https://tokenmarket.net/what-is/ico>`_ crowdsale or token offering.
+This is a documentation for `ICO package <https://github.com/tokenmarketnet/ico>`_ providing Ethereum smart contracts and Python based command line tools for launching your ICO crowdsale or token offering.
 
 `ICO stands for a token or cryptocurrency initial offering crowdsale <https://tokenmarket.net/what-is/ico>`_. It is a common method in blockchain space, decentralized applications and in-game tokens for bootstrap funding of your project.
 
