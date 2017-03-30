@@ -17,6 +17,7 @@ This project aims to provide standard, secure smart contracts and tools to creat
    :caption: Contents:
 
    intro
+   contracts
    install
    commands
    test
