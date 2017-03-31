@@ -217,7 +217,7 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * Allow load refunds back on the contract for the refundinf.
+   * Allow load refunds back on the contract for the refunding.
    *
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
    */
