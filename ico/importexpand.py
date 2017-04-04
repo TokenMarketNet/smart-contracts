@@ -14,6 +14,7 @@ class Expander:
     def __init__(self, project: Project):
         self.project = project
         self.processed_imports = set()
+        self.pragma_processed = False
 
     def expand_file(self, import_path: str):
         """Read Solidity source code and expart any import paths inside.
@@ -42,7 +43,6 @@ class Expander:
             self.processed_imports.add(import_path)
             return self.process_source(source)
 
-
     def process_source(self, src: str):
         """Process Solidity source code and expand any import statement."""
 
@@ -54,6 +54,12 @@ class Expander:
                 prefix, import_path, suffix = line.split('"')
                 source = self.expand_file(import_path)
                 out += source.split("\n")
+            elif line.startswith('pragma'):
+                # Only allow one pragma statement per file
+                if self.pragma_processed:
+                    continue
+                else:
+                    self.pragma_processed = True
             else:
                 out.append(line)
 

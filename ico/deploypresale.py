@@ -11,6 +11,8 @@ from populus import Project
 from populus.utils.cli import request_account_unlock
 
 from ico.utils import get_constructor_arguments
+from ico.utils import get_libraries
+from ico.etherscan import verify_contract
 
 
 def utc_time():
@@ -26,18 +28,26 @@ def utc_time():
 
 @click.command()
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
-@click.option('--address', nargs=1, help='Account to deploy from (must exist on geth)', required=True)
+@click.option('--address', nargs=1, help='Account to deploy from. Must exist on geth.', required=True)
 @click.option('--owner', nargs=1, help='Address that is set as owner of the presale contract', required=True)
 @click.option('--days', nargs=1, default=30, help='How many days presale is frozen for', type=int)
 @click.option('--minimum', nargs=1, default=1, help='What is the minimum pre-ico buy in (ether)', type=float)
-@click.option('--verify/--no-verify', default=True, help='Verify contract source code one EtherScan.io')
-def main(chain, address, days, minimum, verify):
-    """Deploy a PresaleFundCollector contract."""
+@click.option('--verify/--no-verify', default=False, help='Verify contract source code one EtherScan.io')
+def main(chain, address, owner, days, minimum, verify):
+    """Deploy a PresaleFundCollector contract.
+
+    Example:
+
+     deploy-presale --chain=ropsten --address=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6  --owner=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6 --days=30 --minimum=30
+
+    """
     project = Project()
 
     # Parse command line args to presale constructor args
     minimum = to_wei(minimum, "ether")
     freeze_ends_at = int(utc_time() + days * 24*3600)
+
+    contract_name = "PresaleFundCollector"
 
     # This is configured in populus.json
     # We are working on a testnet
@@ -58,17 +68,33 @@ def main(chain, address, days, minimum, verify):
             request_account_unlock(c, address, None)
 
         transaction = {"from": address}
-        args = [freeze_ends_at, minimum]
+        args = [owner, freeze_ends_at, minimum]
 
         # This does deployment with all dependencies linked in
-        presale, txhash = c.provider.deploy_contract('PresaleFundCollector', deploy_transaction=transaction, deploy_args=args)
+        print("Deploying contracts")
+        presale, txhash = c.provider.deploy_contract(contract_name, deploy_transaction=transaction, deploy_args=args)
         print("Deploying presale, tx hash is", txhash)
         print("Presale contract address is", presale.address)
 
+        libraries = get_libraries(c, contract_name, presale)
+        print("Linked libraries are", libraries)
+
         # This is needed for Etherscan contract verification
         # https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
-        data = get_constructor_arguments(presale, args)
-        print("Presale constructor arguments is", data)
+        constructor_args = get_constructor_arguments(presale, args)
+        print("Presale constructor arguments is", constructor_args)
+
+        if verify:
+            print("Verifying contract")
+            verify_contract(
+                project=project,
+                chain_name=chain,
+                address=presale.address,
+                contract_name="PresaleFundCollector",
+                contract_filename="PresaleFundCollector.sol",
+                constructor_args=constructor_args,
+                libraries=libraries)
+
 
         # Do some contract reads to see everything looks ok
         print("Presale freeze ends at", presale.call().freezeEndsAt())

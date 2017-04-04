@@ -1,3 +1,5 @@
+.. _command-line:
+
 =====================
 Command line commands
 =====================
