@@ -1,10 +1,7 @@
-.. ICO smart contracts documentation master file, created by
-   sphinx-quickstart on Thu Mar 30 22:42:13 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 ICO smart contract and tool documentation
-==========================================
+=========================================
+
 
 This is a documentation for `ICO package <https://github.com/tokenmarketnet/ico>`_ providing Ethereum smart contracts and Python based command line tools for launching your ICO crowdsale or token offering.
 
@@ -23,6 +20,7 @@ This project aims to provide standard, secure smart contracts and tools to creat
    interact
    test
    designchoices
+   other
    support
 
 Links

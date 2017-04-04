@@ -54,5 +54,6 @@ setup(
     [console_scripts]
     deploy-presale=ico.deploypresale:main
     deploy-token=ico.deploytoken:main
+    deploy-multisig=ico.deploymultisig:main
     ''',
 )
