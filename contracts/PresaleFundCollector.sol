@@ -46,8 +46,9 @@ contract PresaleFundCollector is Ownable {
   /**
    * Create presale contract where lock up period is given days
    */
-  function PresaleFundCollector(uint _freezeEndsAt, uint _weiMinimumLimit) {
-    owner = msg.sender;
+  function PresaleFundCollector(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit) {
+
+    owner = _owner;
 
     // Give argument
     if(_freezeEndsAt == 0) {

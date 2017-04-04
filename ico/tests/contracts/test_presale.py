@@ -21,6 +21,7 @@ def presale_freeze_ends_at() -> int:
 def presale_fund_collector(chain, presale_freeze_ends_at, team_multisig) -> Contract:
     """In actual ICO, the price is doubled (for testing purposes)."""
     args = [
+        team_multisig,
         presale_freeze_ends_at,
         to_wei(1, "ether")
     ]
@@ -222,17 +223,6 @@ def test_invest_signature(chain, web3, presale_fund_collector, presale_crowdsale
     """Check we get invest() signature for data payload."""
 
     value = to_wei(1, "ether")
-    transaction = {"from": customer, "value": value}
     sig = presale_fund_collector._prepare_transaction("invest")
     assert sig["data"] == "0xe8b5e51f"
 
-
-def test_encode_constructor(chain, web3, presale_fund_collector, presale_freeze_ends_at):
-    """Needed for getting Etherscan.io signature in presale.py."""
-
-    args = [
-        int(1),
-        to_wei(1, "ether")
-    ]
-    data = get_constructor_arguments(presale_fund_collector, args)
-    assert data == "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000de0b6b3a7640000"
