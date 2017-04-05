@@ -50,7 +50,6 @@ Features and design goals
 
 * **Auditable**: Our tool chain supports `verifiable EtherScan.io contract builds <http://ico.readthedocs.io/en/latest/verification.html>`_
 
-
 * **Reusable**: The contract code is modularized and reusable across different projects, all variables are parametrized and there are no hardcoded values or magic numbers
 
 * **Refund**: Built-in refund and minimum funding goal protect investors

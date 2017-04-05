@@ -26,3 +26,4 @@ from ico.tests.fixtures.general import *  # noqa
 from ico.tests.fixtures.flatprice import *  # noqa
 from ico.tests.fixtures.releasable import *  # noqa
 from ico.tests.fixtures.finalize import *  # noqa
+from ico.tests.fixtures.presale import *  # noqa

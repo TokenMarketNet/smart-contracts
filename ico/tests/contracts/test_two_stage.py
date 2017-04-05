@@ -128,7 +128,7 @@ def test_buy_both_stages(chain: TestRPCChain, preico: Contract, actual_ico: Cont
 
     # First buy tokens when pre-ICO is open
     first_buy = to_wei(100000, "ether")
-    first_batch = flat_pricing.call().calculatePrice(first_buy, 0, 0)
+    first_batch = flat_pricing.call().calculatePrice(first_buy, 0, 0, customer)
     time_travel(chain, preico_starts_at + 1)
     assert preico.call().getState() == CrowdsaleState.Funding
     assert actual_ico.call().getState() == CrowdsaleState.PreFunding
@@ -144,7 +144,7 @@ def test_buy_both_stages(chain: TestRPCChain, preico: Contract, actual_ico: Cont
     time_travel(chain, actual_ico_starts_at + 1)
     assert actual_ico.call().getState() == CrowdsaleState.Funding
     second_buy = to_wei(2, "ether")
-    second_batch = final_pricing.call().calculatePrice(second_buy, 0, 0)
+    second_batch = final_pricing.call().calculatePrice(second_buy, 0, 0, customer)
     actual_ico.transact({"from": customer, "value": second_buy}).buy()
 
     # Close the actual ICO and check tokens are transferable

@@ -142,7 +142,7 @@ contract Crowdsale is Haltable {
   function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold);
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender);
 
     if(tokenAmount == 0) {
       // Dust transaction
