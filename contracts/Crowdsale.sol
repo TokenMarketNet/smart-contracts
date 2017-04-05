@@ -34,9 +34,6 @@ contract Crowdsale is Haltable {
   /* tokens will be transfered from this address */
   address public multisigWallet;
 
-  /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
-  address public beneficiary;
-
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
 
@@ -72,6 +69,7 @@ contract Crowdsale is Haltable {
 
   /** State machine
    *
+   * - Preparing: All contract initialization calls and variables have not been set yet
    * - Prefunding: We have not started yet
    * - Funding: Active crowdsale
    * - Success: Minimum funding goal reached
@@ -79,12 +77,12 @@ contract Crowdsale is Haltable {
    * - Finalized: The finalized has been called and succesfully executed
    * - Refunding: Refunds are loaded on the contract for reclaim.
    */
-  enum State{Unknown, PreFunding, Funding, Success, Failure, Finalized, Refunding}
+  enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
   event Invested(address investor, uint weiAmount, uint tokenAmount);
   event Refund(address investor, uint weiAmount);
 
-  function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) {
+  function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
@@ -94,12 +92,6 @@ contract Crowdsale is Haltable {
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
-        throw;
-    }
-
-    // TODO: remove beneficiary from the base class
-    beneficiary = _beneficiary;
-    if(beneficiary == 0) {
         throw;
     }
 
@@ -207,7 +199,7 @@ contract Crowdsale is Haltable {
     finalized = true;
   }
 
-  function setFinalizeAgent(FinalizeAgent addr) onlyOwner inState(State.PreFunding) {
+  function setFinalizeAgent(FinalizeAgent addr) onlyOwner inState(State.Preparing) {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
@@ -252,6 +244,8 @@ contract Crowdsale is Haltable {
    */
   function getState() public constant returns (State) {
     if(finalized) return State.Finalized;
+    else if (address(finalizeAgent) == 0) return State.Preparing;
+    else if (!finalizeAgent.isSane()) return State.Preparing;
     else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
@@ -284,7 +278,7 @@ contract Crowdsale is Haltable {
    * @param weiAmount The amount of wei the investor tries to invest in the current transaction
    * @param tokenAmount The amount of tokens we try to give to the investor in the current transaction
    * @param weiRaisedTotal What would be our total raised balance after this transaction
-   * @param tokensSoldTotal What would be our total sold tokens countafter this transaction
+   * @param tokensSoldTotal What would be our total sold tokens count after this transaction
    *
    * @return true if taking this investment would break our cap rules
    */

@@ -19,7 +19,7 @@ TRANSACTION_COST_ETH_EPSILON = Decimal(0.01)
 
 
 @pytest.fixture
-def failed_ico(chain: TestRPCChain, web3, uncapped_flatprice: Contract, team_multisig, customer, customer_2, preico_starts_at, preico_ends_at) -> Contract:
+def failed_ico(chain: TestRPCChain, web3, uncapped_flatprice: Contract, team_multisig, customer, customer_2, preico_starts_at, preico_ends_at, uncapped_flatprice_finalizer) -> Contract:
     """An ICO that did not reach a goal, but has participants.
 
     Both ``customer`` and ``customer_2`` had bought token.

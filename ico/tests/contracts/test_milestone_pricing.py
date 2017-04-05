@@ -8,6 +8,7 @@ from web3.contract import Contract
 
 
 from ico.tests.utils import time_travel
+from ico.state import CrowdsaleState
 
 
 @pytest.fixture
@@ -62,7 +63,7 @@ def milestone_pricing(chain, presale_fund_collector, start_time):
 
 
 @pytest.fixture
-def milestone_ico(chain, beneficiary, team_multisig, start_time, milestone_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector) -> Contract:
+def milestone_ico(chain, team_multisig, start_time, milestone_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector) -> Contract:
     """Create a crowdsale contract that uses milestone based pricing."""
 
     ends_at = start_time + 4*24*3600
@@ -71,7 +72,6 @@ def milestone_ico(chain, beneficiary, team_multisig, start_time, milestone_prici
         token.address,
         milestone_pricing.address,
         team_multisig,
-        beneficiary,
         start_time,
         ends_at,
         0,
@@ -86,10 +86,27 @@ def milestone_ico(chain, beneficiary, team_multisig, start_time, milestone_prici
     assert contract.call().owner() == team_multisig
     assert not token.call().released()
 
-    # Allow pre-ico contract to do mint()
+    # Allow crowdsale contract to do mint()
     token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
     assert token.call().mintAgents(contract.address) == True
 
+    return contract
+
+
+
+@pytest.fixture()
+def finalizer(chain, token, milestone_ico, team_multisig) -> Contract:
+    """Set crowdsale end strategy."""
+
+    # Create finalizer contract
+    args = [
+        token.address,
+        milestone_ico.address,
+    ]
+    contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
+
+    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
+    milestone_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
     return contract
 
 
@@ -147,7 +164,7 @@ def test_milestone_calculate_preico_price(chain, milestone_pricing, start_time, 
     ) == 1
 
 
-def test_presale_move_to_milestone_crowdsale(chain, presale_fund_collector, milestone_ico, token, start_time, team_multisig, customer, customer_2):
+def test_presale_move_to_milestone_based_crowdsale(chain, presale_fund_collector, milestone_ico, finalizer, token, start_time, team_multisig, customer, customer_2):
     """When pre-ico contract funds are moved to the crowdsale, the pre-sale investors gets tokens with a preferred price and not the current milestone price."""
 
     value = to_wei(50, "ether")
@@ -156,6 +173,8 @@ def test_presale_move_to_milestone_crowdsale(chain, presale_fund_collector, mile
     # ICO begins, Link presale to an actual ICO
     presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(milestone_ico.address)
     time_travel(chain, start_time)
+
+    assert milestone_ico.call().getState() == CrowdsaleState.Funding
 
     # Load funds to ICO
     presale_fund_collector.transact().parcipateCrowdsaleAll()

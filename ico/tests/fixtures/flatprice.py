@@ -5,6 +5,7 @@ from eth_utils import to_wei
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
+from ico.state import CrowdsaleState
 
 
 @pytest.fixture
@@ -54,44 +55,12 @@ def flat_pricing(chain, preico_token_price) -> Contract:
 
 
 @pytest.fixture
-def ico(chain, beneficiary, team_multisig, preico_starts_at, preico_ends_at, flat_pricing, preico_cap, preico_funding_goal, preico_token_allocation, token) -> Contract:
-    """Create a Pre-ICO crowdsale contract."""
-
-    args = [
-        token.address,
-        flat_pricing.address,
-        team_multisig,
-        beneficiary,
-        preico_starts_at,
-        preico_ends_at,
-        preico_funding_goal,
-        preico_cap
-    ]
-
-    tx = {
-        "from": team_multisig,
-    }
-
-    contract, hash = chain.provider.deploy_contract('ICO', deploy_args=args, deploy_transaction=tx)
-
-    assert contract.call().owner() == team_multisig
-
-    # Allow pre-ico contract to do transferFrom()
-    token.transact({"from": team_multisig}).setTransferAgent(contract.address, True)
-
-    # Set aside the pool of tokens for pre-ico sale
-    token.transact({"from": team_multisig}).approve(contract.address, preico_token_allocation)
-
-    return contract
-
-
-@pytest.fixture
 def uncapped_token(empty_token):
     return empty_token
 
 
 @pytest.fixture
-def uncapped_flatprice(chain, beneficiary, team_multisig, preico_starts_at, preico_ends_at, flat_pricing, preico_cap, preico_funding_goal, preico_token_allocation, uncapped_token) -> Contract:
+def uncapped_flatprice(chain, team_multisig, preico_starts_at, preico_ends_at, flat_pricing, preico_cap, preico_funding_goal, preico_token_allocation, uncapped_token) -> Contract:
     """Create a Pre-ICO crowdsale contract."""
 
     token = uncapped_token
@@ -100,7 +69,6 @@ def uncapped_flatprice(chain, beneficiary, team_multisig, preico_starts_at, prei
         token.address,
         flat_pricing.address,
         team_multisig,
-        beneficiary,
         preico_starts_at,
         preico_ends_at,
         preico_funding_goal,
@@ -123,7 +91,7 @@ def uncapped_flatprice(chain, beneficiary, team_multisig, preico_starts_at, prei
 
 
 @pytest.fixture
-def uncapped_flatprice_goal_reached(chain, uncapped_flatprice, preico_funding_goal, preico_starts_at, customer) -> Contract:
+def uncapped_flatprice_goal_reached(chain, uncapped_flatprice, uncapped_flatprice_finalizer, preico_funding_goal, preico_starts_at, customer) -> Contract:
     """A ICO contract where the minimum funding goal has been reached."""
     time_travel(chain, preico_starts_at + 1)
     wei_value = preico_funding_goal
@@ -132,3 +100,17 @@ def uncapped_flatprice_goal_reached(chain, uncapped_flatprice, preico_funding_go
 
 
 
+@pytest.fixture()
+def uncapped_flatprice_finalizer(chain, presale_crowdsale, uncapped_token, team_multisig) -> Contract:
+    """Set crowdsale end strategy."""
+
+    # Create finalizer contract
+    args = [
+        uncapped_token.address,
+        presale_crowdsale.address,
+    ]
+    contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
+    uncapped_token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
+    presale_crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    assert presale_crowdsale.call().getState() == CrowdsaleState.PreFunding
+    return contract

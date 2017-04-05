@@ -9,19 +9,24 @@ import "./Crowdsale.sol";
  *
  * Intended usage
  *
+ * - Tokens have precreated supply "premined"
  * - Small share of tokens of the actual crowdsale
  * - A short time window
  * - Flat price
  * - beneficiary is the party who is supplying the tokens for this ICO
  *
  */
-contract CappedCrowdsale is Crowdsale {
+contract PreminedCappedCrowdsale is Crowdsale {
 
   /** How many ETH in max we are allowed to raise */
   uint public weiCap;
 
-  function CappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
+  /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
+  address public beneficiary;
+
+  function PreminedCappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
     weiCap = _weiCap;
+    beneficiary = _beneficiary;
   }
 
   /**

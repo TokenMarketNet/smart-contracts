@@ -9,6 +9,23 @@ from web3.contract import Contract
 
 from ico.tests.utils import time_travel
 from ico.utils import get_constructor_arguments
+from ico.state import CrowdsaleState
+
+
+@pytest.fixture()
+def finalizer(chain, presale_crowdsale, uncapped_token, team_multisig) -> Contract:
+    """Set crowdsale end strategy."""
+
+    # Create finalizer contract
+    args = [
+        uncapped_token.address,
+        presale_crowdsale.address,
+    ]
+    contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
+    uncapped_token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
+    presale_crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    assert presale_crowdsale.call().getState() == CrowdsaleState.PreFunding
+    return contract
 
 
 def test_invest_presale(presale_fund_collector, customer, presale_freeze_ends_at):
@@ -60,8 +77,7 @@ def test_invest_presale_two_parties(presale_fund_collector, customer, customer_2
     assert presale_fund_collector.call().balances(customer_2) == to_wei(1.5, "ether")
 
 
-
-def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale_crowdsale, preico_starts_at, customer, customer_2):
+def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale_crowdsale, preico_starts_at, customer, customer_2, finalizer):
     """Move loaded funds to crowdsale."""
 
     value = to_wei(1, "ether")
@@ -70,7 +86,11 @@ def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale
     value = to_wei(1.5, "ether")
     presale_fund_collector.transact({"from": customer_2, "value": value}).invest()
 
+    # Crowdsale starts
     time_travel(chain, preico_starts_at)
+    assert presale_crowdsale.call().finalizeAgent()
+    assert presale_crowdsale.call().getState() == CrowdsaleState.Funding
+
     presale_fund_collector.transact().parcipateCrowdsaleAll()
 
     # Presale balances zerod
@@ -82,7 +102,7 @@ def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale
     presale_crowdsale.call().investedAmountOf(customer_2) == to_wei(1.5, "ether")
 
 
-def test_invest_presale_move_to_crowdsale_twice(chain, presale_fund_collector, presale_crowdsale, preico_starts_at, customer, customer_2):
+def test_invest_presale_move_to_crowdsale_twice(chain, presale_fund_collector, presale_crowdsale, finalizer, preico_starts_at, customer, customer_2):
     """Move loaded funds to crowdsale called twice does no harm."""
 
     value = to_wei(1, "ether")
@@ -112,7 +132,7 @@ def test_invest_presale_move_to_crowdsale_too_early(chain, presale_fund_collecto
         presale_fund_collector.transact().parcipateCrowdsaleAll()
 
 
-def test_invest_presale_invest_too_late(chain, presale_fund_collector, presale_crowdsale, customer, customer_2, preico_starts_at):
+def test_invest_presale_invest_too_late(chain, presale_fund_collector, presale_crowdsale, customer, customer_2, preico_starts_at, finalizer):
     """Cannot participate to presale after we have started to move funds to the actual crowdsale."""
 
     value = to_wei(1, "ether")

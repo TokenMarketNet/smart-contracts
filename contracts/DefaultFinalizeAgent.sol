@@ -8,18 +8,23 @@ import "./ReleasableToken.sol";
  *
  * Unlock tokens.
  */
-contract DefaultCrowdsaleFinal is FinalizeAgent {
+contract DefaultFinalizeAgent is FinalizeAgent {
 
   ReleasableToken public token;
   Crowdsale public crowdsale;
 
-  function DefaultCrowdsaleFinal(ReleasableToken _token, Crowdsale _crowdsale) {
+  function DefaultFinalizeAgent(ReleasableToken _token, Crowdsale _crowdsale) {
     token = _token;
     crowdsale = _crowdsale;
   }
 
+  /** Check that we can release the token */
+  function isSane() public constant returns (bool) {
+    return (token.releaseAgent() == address(this));
+  }
+
   /** Called once by crowdsale finalize() if the sale was success. */
-  function finalizeCrowdsale() {
+  function finalizeCrowdsale() public {
     if(msg.sender != address(crowdsale)) {
       throw;
     }

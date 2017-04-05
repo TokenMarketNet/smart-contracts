@@ -10,7 +10,7 @@ def default_finalize_agent(chain, uncapped_token, uncapped_flatprice) -> Contrac
         uncapped_token.address,
         uncapped_flatprice.address,
     ]
-    contract, hash = chain.provider.deploy_contract('DefaultCrowdsaleFinal', deploy_args=args)
+    contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
     return contract
 
 

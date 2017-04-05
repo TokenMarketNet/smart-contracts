@@ -3,6 +3,7 @@ pragma solidity ^0.4.8;
 import "./Crowdsale.sol";
 import "./MintableToken.sol";
 
+
 /**
  * Uncapped ICO crowdsale contract.
  *
@@ -16,7 +17,7 @@ import "./MintableToken.sol";
  */
 contract UncappedCrowdsale is Crowdsale {
 
-  function UncappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, address _beneficiary, uint _start, uint _end, uint _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _beneficiary, _start, _end, _minimumFundingGoal) {
+  function UncappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
 
   }
 
