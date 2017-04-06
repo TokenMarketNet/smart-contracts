@@ -15,7 +15,9 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'populus'
+    'populus',
+    'Jinja2',
+    'ruamel.yaml',
 ]
 
 test_requirements = [
@@ -52,8 +54,8 @@ setup(
     tests_require=test_requirements,
     entry_points='''
     [console_scripts]
-    deploy-presale=ico.deploypresale:main
-    deploy-token=ico.deploytoken:main
-    deploy-multisig=ico.deploymultisig:main
+    deploy-presale=ico.cmd.deploypresale:main
+    deploy-token=ico.cmd.deploytoken:main
+    deploy-multisig=ico.cmd.deploymultisig:main
     ''',
 )

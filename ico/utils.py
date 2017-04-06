@@ -1,3 +1,5 @@
+from typing import Optional
+
 from web3 import Web3
 from web3.contract import Contract
 from web3.utils.abi import get_constructor_abi
@@ -23,13 +25,17 @@ def check_succesful_tx(web3: Web3, txid: str, timeout=180) -> dict:
     return receipt
 
 
-def get_constructor_arguments(contract: Contract, args: list):
+def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwargs: Optional[dict]=None):
     """Get constructor arguments for Etherscan verify.
 
     https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
     """
     constructor_abi = get_constructor_abi(contract.abi)
-    return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
+
+    if args is not None:
+        return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
+    else:
+        return contract._encode_abi(constructor_abi, kwarg)[2:]  # No 0x
 
 
 def get_libraries(chain: BaseChain, contract_name, contract: Contract) -> dict:

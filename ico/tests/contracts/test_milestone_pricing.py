@@ -118,6 +118,15 @@ def test_milestone_getter(chain, milestone_pricing, start_time):
     assert price == 100000000000000000
 
 
+def test_milestone_data(chain, milestone_pricing, start_time):
+    """Milestone data can be read."""
+
+    for i in range(0, 4):
+        time, price = milestone_pricing.call().getMilestone(i)
+        print("-", time)
+        print("-", price)
+
+
 def test_milestone_prices(chain, milestone_pricing, start_time, customer):
     """We get correct milestone prices for different dates."""
 

@@ -72,3 +72,6 @@ registrar.json
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+
+# Crowdsale definitions
+crowdsales/*.yml
