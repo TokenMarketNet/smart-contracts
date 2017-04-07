@@ -1,5 +1,6 @@
 """Deploy contracts from crowdsale defifinitions."""
 import copy
+import textwrap
 from collections import Counter
 from typing import Tuple
 
@@ -13,7 +14,9 @@ from populus.utils.accounts import is_account_locked
 from ico.definition import load_crowdsale_definitions
 from ico.definition import get_jinja_context
 from ico.definition import interpolate_data
+from ico.definition import get_post_actions_context
 from ico.utils import get_constructor_arguments
+
 
 
 def get_etherscan_link(network, address):
@@ -118,21 +121,40 @@ def write_deployment_report(yaml_filename: str, runtime_data: dict):
         out.write(ruamel.yaml.round_trip_dump(runtime_data))
 
 
+
+def exec_lines(lines: str, context: dict):
+    """Exec python code line-by-line and stop on error.
+    :param lines: Python code snippet to evaluate
+    :param context: Evaluation context
+    """
+
+    for line in lines.split("\n"):
+        try:
+            exec(line, context)
+        except Exception as e:
+            raise RuntimeError("Failed when running: {}".format(line)) from e
+
+
 def perform_post_actions(runtime_data: dict, contracts: dict):
+    """Make contracts to set up call chains."""
 
     post_actions = runtime_data.get("post_actions")
-    context = get_jinja_context(runtime_data)
+    context = get_post_actions_context(post_actions, runtime_data, contracts)
+    post_actions = textwrap.dedent(post_actions)
 
-    # Make contracts available in the context
-    for name, contract in contracts.items():
-        context[name] = contract
+    print("Performing post-deployment contract actions")
+    exec_lines(post_actions, context)
 
-    try:
-        expanded_post_actions_def = interpolate_data(post_actions, context)
-    except jinja2.exceptions.TemplateError as e:
-        raise RuntimeError("Could not expand data for section {}".format(name)) from e
 
-    runtime_data["post_actions"] = post_actions
+def perform_verify_actions(runtime_data: dict, contracts: dict):
+    """Check out deployment was solid."""
+
+    verify_actions = runtime_data.get("verify_actions")
+    context = get_post_actions_context(verify_actions, runtime_data, contracts)
+
+    verify_actions = textwrap.dedent(verify_actions)
+    print("Performing deployment verification")
+    exec_lines(verify_actions, context)
 
 
 def deploy_crowdsale_from_file(chain, deployment_name, yaml_filename):

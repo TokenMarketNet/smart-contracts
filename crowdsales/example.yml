@@ -39,17 +39,17 @@ unit_test:
             contract_name: MilestonePricing
             contract_file: MilestonePricing.sol
             arguments:
-                _preicoPrice: "{{ to_wei('0.8', 'ether') }}"
+                _preicoPrice: "{{ to_wei('0.08', 'ether') }}"
                 _preicoContractAddress: "{{contracts.preico.address}}"
                 _milestones:
                     - 1492272000
-                    - "{{ to_wei('0.10', 'ether') }}"
+                    - "{{ to_wei('0.010', 'ether') }}"
                     - 1492876800
-                    - "{{ to_wei('0.11', 'ether') }}"
+                    - "{{ to_wei('0.011', 'ether') }}"
                     - 1493481600
-                    - "{{ to_wei('0.12', 'ether') }}"
+                    - "{{ to_wei('0.012', 'ether') }}"
                     - 1494691200
-                    - "{{ to_wei('0.13', 'ether') }}"
+                    - "{{ to_wei('0.013', 'ether') }}"
         crowdsale:
             contract_name: MintedTokenCappedCrowdsale
             contract_file: MintedTokenCappedCrowdsale.sol
@@ -70,11 +70,25 @@ unit_test:
                 _bonusBasePoints: 2500
                 _teamMultisig: "{{contracts.team_multisig.address}}"
     # Post-deployment actions to orchestrate everything together
-    post_actions:
-        token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-        milestone_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
-    # Make sure that everything is well deployed
-    verify_actions:
-        asset token.call().owner() == team_multisig.address
-        asset crowdsale.call().owner() == team_multisig.address
+    post_actions: |
+        # Allow crowdsale to create new tokens on go as people deposit
+        token.transact({"from": deploy_address}).setMintAgent(crowdsale.address, True)
 
+        # Set post-success crowdsale actions to mint tokens for bounties and team
+        token.transact({"from": deploy_address}).setMintAgent(finalize_agent.address, True)
+        crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address)
+        token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address)
+
+        # At the end of the deployment, make team_multisig owner of everything
+        crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
+        token.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
+
+    # Make sure that everything we have deployed all contracts in good state
+    # and their internal state is sane
+    verify_actions: |
+        assert token.call().owner() == team_multisig.address
+        assert crowdsale.call().owner() == team_multisig.address
+        assert preico.call().owner() == team_multisig.address
+        assert finalize_agent.call().teamMultisig() == team_multisig.address
+        assert finalize_agent.call().isSane()
+        assert crowdsale.call().getState() == CrowdsaleState.PreFunding

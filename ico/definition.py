@@ -2,12 +2,16 @@
 import datetime
 import time
 from collections import OrderedDict
+from typing import Dict
 
 import ruamel.yaml
 import jinja2
 
 from eth_utils.currency import to_wei
 from ruamel.yaml.comments import CommentedMap
+from web3.contract import Contract
+
+from ico.state import CrowdsaleState
 
 
 def _datetime(*args) -> datetime.datetime:
@@ -48,6 +52,26 @@ def get_jinja_context(data: dict) -> dict:
     # Copy run-time data to template context
     for key, value in data.items():
         context[key] = value
+
+    return context
+
+
+def get_post_actions_context(section_data: str, runtime_data: dict, contracts: Dict[str, Contract]) -> dict:
+    """Get Python evalution context for post-deploy and verify actions.
+
+    :param runtime_data:
+    :param contracts: Dictionary of deployed contract objects
+    :param section: "post_actions" or "verify"
+    :return:
+    """
+
+    context = get_jinja_context(runtime_data)
+
+    # Make contracts available in the context
+    for name, contract in contracts.items():
+        context[name] = contract
+
+    context["CrowdsaleState"] = CrowdsaleState
 
     return context
 
