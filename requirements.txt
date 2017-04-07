@@ -12,7 +12,7 @@ json-rpc==1.10.3
 jsonschema==2.6.0
 pathtools==0.1.2
 pbkdf2==1.3
-populus==1.6.7
+populus==1.6.8
 py==1.4.33
 py-geth==1.7.1
 py-solc==1.0.1

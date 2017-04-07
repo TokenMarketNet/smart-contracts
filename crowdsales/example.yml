@@ -1,0 +1,71 @@
+mainnet:
+    team_multisig:
+        address:
+    preico:
+        address:
+
+# A testnet deployment for the crowdsale contracts
+unit_test:
+    # The address used to deploy contracts
+    # Must be configured on Geth
+    chain: ropsten
+    deploy_address: "" # This will be dynamically set by the testing code
+    verify_on_etherscan: no
+    contracts:
+        team_multisig:
+            contract_name: Wallet
+            contract_file: Wallet.sol
+            arguments:
+                _owners:
+                    - "0x4fa6fb927f525265233cd5da32baa11dff7fcdc1"
+                    - "0xaa7b03923ad7dc65c8a4bbcd8c51e5956c7d3252"
+                _required: 2
+                _daylimit: 0
+        preico:
+            contract_name: PresaleFundCollector
+            contract_file: PresaleFundCollector.sol
+            arguments:
+                _owner: "{{contracts.team_multisig.address}}"
+                _freezeEndsAt: "{{ time() + 30*24*3600 }}"
+                _weiMinimumLimit: "{{ to_wei(750, 'ether') }}"
+        token:
+            contract_name: CrowdsaleToken
+            contract_file: CrowdsaleToken.sol
+            arguments:
+                _name: Example-testnet
+                _symbol: EXA
+                _initialSupply: 0
+        pricing_strategy:
+            contract_name: MilestonePricing
+            contract_file: MilestonePricing.sol
+            arguments:
+                _preicoPrice: "{{ to_wei('0.8', 'ether') }}"
+                _preicoContractAddress: "{{contracts.preico.address}}"
+                _milestones:
+                    - 1492272000
+                    - "{{ to_wei('0.10', 'ether') }}"
+                    - 1492876800
+                    - "{{ to_wei('0.11', 'ether') }}"
+                    - 1493481600
+                    - "{{ to_wei('0.12', 'ether') }}"
+                    - 1494691200
+                    - "{{ to_wei('0.13', 'ether') }}"
+        crowdsale:
+            contract_name: MintedTokenCappedCrowdsale
+            contract_file: MintedTokenCappedCrowdsale.sol
+            arguments:
+                _token: "{{contracts.token.address}}"
+                _pricingStrategy: "{{contracts.pricing_strategy.address}}"
+                _multisigWallet: "{{contracts.team_multisig.address}}"
+                _start: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) }}"
+                _end: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) + 30*24*3600 }}"
+                _minimumFundingGoal: 7500
+                _maximumTokensSold: 4000000
+        finalize_agent:
+            contract_name: BonusFinalizeAgent
+            contract_file: BonusFinalizeAgent.sol
+            arguments:
+                _token: "{{contracts.token.address}}"
+                _crowdsale: "{{contracts.crowdsale.address}}"
+                _bonusBasePoints: 2500
+                _teamMultisig: "{{contracts.team_multisig.address}}"

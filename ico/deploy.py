@@ -4,16 +4,28 @@ from collections import Counter
 from typing import Tuple
 
 import jinja2
+import ruamel.yaml
+from populus.utils.cli import request_account_unlock
+from populus.utils.accounts import is_account_locked
+
 from ico.definition import load_crowdsale_definitions
 from ico.definition import get_jinja_context
 from ico.definition import interpolate_data
-from populus.utils.cli import request_account_unlock
-
-from populus.utils.accounts import is_account_locked
 from ico.utils import get_constructor_arguments
 
 
-def deploy_contract(chain, deploy_address, contract_def: dict, verify=False, need_unlock=True):
+def get_etherscan_link(network, address):
+    """Construct etherscan link"""
+
+    if network == "mainnet":
+        return "https://etherscan.io/address/" + address
+    elif network == "ropsten":
+        return "https://etherscan.io/address/" + address
+    else:
+        raise RuntimeError("Unknown network: {}".format(network))
+
+
+def deploy_contract(chain, deploy_address, contract_def: dict, chain_name: str, verify=False, need_unlock=True):
     """Deploy a single contract."""
 
     contract_name = contract_def["contract_name"]
@@ -26,11 +38,9 @@ def deploy_contract(chain, deploy_address, contract_def: dict, verify=False, nee
             request_account_unlock(chain, deploy_address, None)
 
     transaction = {"from": deploy_address}
-    kwargs = contract_def["arguments"]
+    kwargs = dict(**contract_def["arguments"])  # Unwrap YAML CommentedMap
 
-    assert type(kwargs) == dict, "Contract constructor arguments need a dictionary, got: {}".format(kwargs)
-
-    print("Starting {} deployment".format(contract_name))
+    print("Starting", contract_name, "deployment, with arguments ", kwargs)
     try:
         contract, txhash = chain.provider.deploy_contract(contract_name, deploy_transaction=transaction, deploy_kwargs=kwargs)
     except Exception as e:
@@ -40,8 +50,11 @@ def deploy_contract(chain, deploy_address, contract_def: dict, verify=False, nee
     print(contract_name, "address is", contract.address)
 
     constructor_args = get_constructor_arguments(contract, kwargs=kwargs)
-    print(contract_name, "constructor arguments is", constructor_args)
-    contract_def["costructor_args"] = constructor_args
+    print(contract_name, "constructor arguments payload is", constructor_args)
+    contract_def["constructor_args"] = constructor_args
+
+    contract_def["link"] = get_etherscan_link(chain_name, contract.address)
+
 
 
 def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
@@ -58,6 +71,7 @@ def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
     runtime_data = copy.deepcopy(source_definitions)
 
     deploy_address = runtime_data["deploy_address"]
+    chain_name = runtime_data["chain"]
 
     need_unlock = runtime_data.get("unlock_deploy_address", True)
 
@@ -74,15 +88,25 @@ def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
         context = get_jinja_context(runtime_data)
 
         try:
-            interpolate_data(contract_def, context)
+            expanded_contract_def = interpolate_data(contract_def, context)
         except jinja2.exceptions.TemplateError as e:
             raise RuntimeError("Could not expand data for section {}".format(name)) from e
 
-        deploy_contract(chain, deploy_address, contract_def, need_unlock=need_unlock)
+        # Store expanded data for output
+        runtime_data["contracts"][name] = expanded_contract_def
 
+        deploy_contract(chain, deploy_address, expanded_contract_def, chain_name, need_unlock=need_unlock)
         statistics["deployed"] += 1
 
     return runtime_data, statistics
+
+
+def write_deployment_report(yaml_filename: str, runtime_data: dict):
+    """Write run-time data to a result file, so that it can easily inspected and shared."""
+
+    report_filename = yaml_filename.replace(".yml", ".deployment-report.yml")
+    with open(report_filename, "wt") as out:
+        out.write(ruamel.yaml.round_trip_dump(runtime_data))
 
 
 def deploy_crowdsale_from_file(chain, deployment_name, yaml_filename):

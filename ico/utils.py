@@ -1,8 +1,15 @@
 from typing import Optional
 
+from eth_abi import encode_abi
+from eth_abi.exceptions import EncodingError
+from eth_utils import add_0x_prefix
+from eth_utils import encode_hex
+from eth_utils import force_bytes
+from eth_utils import force_obj_to_bytes
+from eth_utils import remove_0x_prefix
 from web3 import Web3
 from web3.contract import Contract
-from web3.utils.abi import get_constructor_abi
+from web3.utils.abi import get_constructor_abi, get_abi_input_types, check_if_arguments_can_be_encoded, merge_args_and_kwargs
 from web3.utils.transactions import wait_for_transaction_receipt
 
 from populus.chain.base import BaseChain
@@ -35,7 +42,12 @@ def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwa
     if args is not None:
         return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
     else:
-        return contract._encode_abi(constructor_abi, kwarg)[2:]  # No 0x
+        constructor_abi = get_constructor_abi(contract.abi)
+        arguments = merge_args_and_kwargs(constructor_abi, [], kwargs)
+        deploy_data = add_0x_prefix(
+            contract._encode_abi(constructor_abi, arguments)
+        )
+        return deploy_data
 
 
 def get_libraries(chain: BaseChain, contract_name, contract: Contract) -> dict:
