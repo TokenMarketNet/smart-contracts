@@ -13,6 +13,6 @@ def test_deploy_crowdsale(chain, accounts, example_yaml_filename):
     chain_data["unlock_deploy_address"] = False
     # Dynamically set deploy address from testrpc address list
     chain_data["deploy_address"] = accounts[0]
-    runtime_data, statistics = deploy_crowdsale(chain, chain_data)
+    runtime_data, statistics, contracts = deploy_crowdsale(chain, chain_data)
 
     write_deployment_report(example_yaml_filename, runtime_data)

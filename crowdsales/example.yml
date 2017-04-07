@@ -69,3 +69,12 @@ unit_test:
                 _crowdsale: "{{contracts.crowdsale.address}}"
                 _bonusBasePoints: 2500
                 _teamMultisig: "{{contracts.team_multisig.address}}"
+    # Post-deployment actions to orchestrate everything together
+    post_actions:
+        token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
+        milestone_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    # Make sure that everything is well deployed
+    verify_actions:
+        asset token.call().owner() == team_multisig.address
+        asset crowdsale.call().owner() == team_multisig.address
+

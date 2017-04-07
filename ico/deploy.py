@@ -5,6 +5,8 @@ from typing import Tuple
 
 import jinja2
 import ruamel.yaml
+from web3.contract import Contract
+
 from populus.utils.cli import request_account_unlock
 from populus.utils.accounts import is_account_locked
 
@@ -25,7 +27,7 @@ def get_etherscan_link(network, address):
         raise RuntimeError("Unknown network: {}".format(network))
 
 
-def deploy_contract(chain, deploy_address, contract_def: dict, chain_name: str, verify=False, need_unlock=True):
+def deploy_contract(chain, deploy_address, contract_def: dict, chain_name: str, verify=False, need_unlock=True) -> Contract:
     """Deploy a single contract."""
 
     contract_name = contract_def["contract_name"]
@@ -55,6 +57,7 @@ def deploy_contract(chain, deploy_address, contract_def: dict, chain_name: str, 
 
     contract_def["link"] = get_etherscan_link(chain_name, contract.address)
 
+    return contract
 
 
 def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
@@ -70,6 +73,9 @@ def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
     # This will contain our output and parsed values
     runtime_data = copy.deepcopy(source_definitions)
 
+    # Contract handles for post-actions
+    contracts = {}
+
     deploy_address = runtime_data["deploy_address"]
     chain_name = runtime_data["chain"]
 
@@ -77,10 +83,13 @@ def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
 
     for name, contract_def in runtime_data["contracts"].items():
 
+        contract_name = contract_def["contract_name"]
+
         # First expand out all variables
         address = contract_def.get("address")
         if address:
             print("Already deployed contract,", name, address)
+            contracts[name] = chain.get_contract_factory(contract_name)
             statistics["already_deployed"] += 1
             continue
 
@@ -95,10 +104,10 @@ def deploy_crowdsale(chain, source_definitions: dict) -> Tuple[dict, dict]:
         # Store expanded data for output
         runtime_data["contracts"][name] = expanded_contract_def
 
-        deploy_contract(chain, deploy_address, expanded_contract_def, chain_name, need_unlock=need_unlock)
+        contracts[name] = deploy_contract(chain, deploy_address, expanded_contract_def, chain_name, need_unlock=need_unlock)
         statistics["deployed"] += 1
 
-    return runtime_data, statistics
+    return runtime_data, statistics, contracts
 
 
 def write_deployment_report(yaml_filename: str, runtime_data: dict):
@@ -107,6 +116,23 @@ def write_deployment_report(yaml_filename: str, runtime_data: dict):
     report_filename = yaml_filename.replace(".yml", ".deployment-report.yml")
     with open(report_filename, "wt") as out:
         out.write(ruamel.yaml.round_trip_dump(runtime_data))
+
+
+def perform_post_actions(runtime_data: dict, contracts: dict):
+
+    post_actions = runtime_data.get("post_actions")
+    context = get_jinja_context(runtime_data)
+
+    # Make contracts available in the context
+    for name, contract in contracts.items():
+        context[name] = contract
+
+    try:
+        expanded_post_actions_def = interpolate_data(post_actions, context)
+    except jinja2.exceptions.TemplateError as e:
+        raise RuntimeError("Could not expand data for section {}".format(name)) from e
+
+    runtime_data["post_actions"] = post_actions
 
 
 def deploy_crowdsale_from_file(chain, deployment_name, yaml_filename):
