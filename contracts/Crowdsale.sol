@@ -67,6 +67,9 @@ contract Crowdsale is Haltable {
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
+  /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
+  uint public ownerTestValue;
+
   /** State machine
    *
    * - Preparing: All contract initialization calls and variables have not been set yet
@@ -253,6 +256,11 @@ contract Crowdsale is Haltable {
     else return State.Failure;
   }
 
+  /** This is for manual testing of multisig wallet interaction */
+  function setOwnerTestValue(uint val) onlyOwner {
+    ownerTestValue = val;
+  }
+
   //
   // Modifiers
   //
@@ -262,6 +270,7 @@ contract Crowdsale is Haltable {
     if(getState() != state) throw;
     _;
   }
+
 
   //
   // Abstract functions
