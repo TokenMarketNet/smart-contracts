@@ -57,5 +57,6 @@ setup(
     deploy-presale=ico.cmd.deploypresale:main
     deploy-token=ico.cmd.deploytoken:main
     deploy-multisig=ico.cmd.deploymultisig:main
+    deploy-contracts=ico.cmd.deploycontracts:main
     ''',
 )

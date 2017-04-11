@@ -27,7 +27,7 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
     elif chain_name == "ropsten":
         url = "https://ropsten.etherscan.io/verifyContract"
     else:
-        raise RuntimeError("Unknown chain")
+        raise RuntimeError("Unknown chain: ".format(chain_name))
 
     with Browser() as browser:
         browser.visit(url)

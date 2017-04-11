@@ -67,9 +67,8 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
     contract_def["constructor_args"] = constructor_args
 
     libraries = get_libraries(chain, contract_name, contract)
+    print(contract_name, "libraries are", libraries)
     contract_def["libraries"] = libraries
-
-    contract_def["link"] = get_etherscan_link(chain_name, contract.address)
 
     return contract
 
@@ -127,12 +126,13 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
         if verify_on_etherscan:
             verify_contract(
                 project=project,
-                chain_name=chain,
+                chain_name=chain_name,
                 address=runtime_data["contracts"][name]["address"],
                 contract_name=contract_name,
-                contract_filename=runtime_data["contracts"]["contract_file"],
+                contract_filename=runtime_data["contracts"][name]["contract_file"],
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
-                libraries=runtime_data["contracts"][name]["constructor_args"])
+                libraries=runtime_data["contracts"][name]["libraries"])
+            runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
 
     return runtime_data, statistics, contracts
 
@@ -162,25 +162,31 @@ def perform_post_actions(runtime_data: dict, contracts: dict):
     """Make contracts to set up call chains."""
 
     post_actions = runtime_data.get("post_actions")
-    context = get_post_actions_context(post_actions, runtime_data, contracts)
-    post_actions = textwrap.dedent(post_actions)
+    if post_actions:
+        context = get_post_actions_context(post_actions, runtime_data, contracts)
+        post_actions = textwrap.dedent(post_actions)
 
-    print("Performing post-deployment contract actions")
-    exec_lines(post_actions, context)
+        print("Performing post-deployment contract actions")
+        exec_lines(post_actions, context)
+    else:
+        print("No post-deployment actions defined")
 
 
 def perform_verify_actions(runtime_data: dict, contracts: dict):
     """Check out deployment was solid."""
 
     verify_actions = runtime_data.get("verify_actions")
-    context = get_post_actions_context(verify_actions, runtime_data, contracts)
+    if verify_actions:
+        context = get_post_actions_context(verify_actions, runtime_data, contracts)
 
-    verify_actions = textwrap.dedent(verify_actions)
-    print("Performing deployment verification")
-    exec_lines(verify_actions, context)
+        verify_actions = textwrap.dedent(verify_actions)
+        print("Performing deployment verification")
+        exec_lines(verify_actions, context)
+    else:
+        print("No verify defined")
 
 
-def deploy_crowdsale_from_file(project, chain, deployment_name, yaml_filename, deploy_address):
+def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_name: str, deploy_address: str):
     """"""
     chain_data = load_crowdsale_definitions(yaml_filename, deployment_name)
     chain_name = chain_data["chain"]
