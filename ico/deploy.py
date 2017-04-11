@@ -22,17 +22,7 @@ from ico.utils import get_constructor_arguments
 from ico.utils import asbool
 from ico.utils import get_libraries
 from ico.etherscan import verify_contract
-
-
-def get_etherscan_link(network, address):
-    """Construct etherscan link"""
-
-    if network == "mainnet":
-        return "https://etherscan.io/address/" + address
-    elif network == "ropsten":
-        return "https://ropsten.etherscan.io/address/" + address
-    else:
-        raise RuntimeError("Unknown network: {}".format(network))
+from ico.etherscan import get_etherscan_link
 
 
 def deploy_contract(project: Project, chain, deploy_address, contract_def: dict, chain_name: str, need_unlock=True) -> Contract:
@@ -93,6 +83,7 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
     runtime_data["deploy_address"] = deploy_address
     chain_name = runtime_data["chain"]
     verify_on_etherscan = asbool(runtime_data["verify_on_etherscan"])
+    browser_driver = runtime_data.get("browser_driver", "chrome")
 
     need_unlock = runtime_data.get("unlock_deploy_address", True)
 
@@ -131,7 +122,8 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
                 contract_name=contract_name,
                 contract_filename=runtime_data["contracts"][name]["contract_file"],
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
-                libraries=runtime_data["contracts"][name]["libraries"])
+                libraries=runtime_data["contracts"][name]["libraries"],
+                browser_driver=browser_driver)
             runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
 
     return runtime_data, statistics, contracts

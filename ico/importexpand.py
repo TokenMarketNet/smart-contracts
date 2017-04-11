@@ -16,7 +16,7 @@ class Expander:
         self.processed_imports = set()
         self.pragma_processed = False
 
-    def expand_file(self, import_path: str):
+    def expand_file(self, import_path: str, parent_path=None):
         """Read Solidity source code and expart any import paths inside.
 
         Supports Populus remapping settings:
@@ -26,24 +26,31 @@ class Expander:
         :param import_path:
         """
 
-        # Already handled
-        if import_path in self.processed_imports:
-            return ""
-
         # TODO: properly handle import remapping here, read them from project config
         if import_path.startswith("zeppelin/"):
             abs_import_path = os.path.join(os.getcwd(), import_path)
         else:
-            abs_import_path = os.path.join(os.getcwd(), "contracts", import_path)
+            if not parent_path:
+                abs_import_path = os.path.join(os.getcwd(), "contracts", import_path)
+            else:
+                abs_import_path = os.path.join(parent_path, import_path)
 
         abs_import_path = os.path.abspath(abs_import_path)
 
+        # Already handled
+        if abs_import_path in self.processed_imports:
+            return ""
+
+        print("Expanding source code file", import_path)
+
+        current_path = os.path.dirname(abs_import_path)
+
         with open(abs_import_path, "rt") as inp:
             source = inp.read()
-            self.processed_imports.add(import_path)
-            return self.process_source(source)
+            self.processed_imports.add(abs_import_path)
+            return self.process_source(source, current_path)
 
-    def process_source(self, src: str):
+    def process_source(self, src: str, parent_path: str):
         """Process Solidity source code and expand any import statement."""
 
         out = []
@@ -52,7 +59,7 @@ class Expander:
             # Detect import statements, ghetto way
             if line.startswith('import "'):
                 prefix, import_path, suffix = line.split('"')
-                source = self.expand_file(import_path)
+                source = self.expand_file(import_path, parent_path=parent_path)
                 out += source.split("\n")
             elif line.startswith('pragma'):
                 # Only allow one pragma statement per file
