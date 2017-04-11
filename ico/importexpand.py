@@ -61,6 +61,10 @@ class Expander:
                 prefix, import_path, suffix = line.split('"')
                 source = self.expand_file(import_path, parent_path=parent_path)
                 out += source.split("\n")
+            elif line.startswith("import '"):
+                prefix, import_path, suffix = line.split("'")
+                source = self.expand_file(import_path, parent_path=parent_path)
+                out += source.split("\n")
             elif line.startswith('pragma'):
                 # Only allow one pragma statement per file
                 if self.pragma_processed:

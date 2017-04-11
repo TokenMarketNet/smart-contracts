@@ -19,5 +19,7 @@ def test_expand_token(project: Project):
 
     expanded, imported_files = expand_contract_imports(project, "CrowdsaleToken.sol")
     assert "contract CrowdsaleToken" in expanded
+    assert 'import "' not in expanded
+    assert "import '" not in expanded
 
 

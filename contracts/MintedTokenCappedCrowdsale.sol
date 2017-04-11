@@ -8,8 +8,6 @@ import "./MintableToken.sol";
  *
  * - Tokens are dynamically created during the crowdsale
  *
- * - At the end of the crowdsale, a
- *
  *
  */
 contract MintedTokenCappedCrowdsale is Crowdsale {

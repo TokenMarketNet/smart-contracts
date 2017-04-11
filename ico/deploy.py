@@ -137,43 +137,54 @@ def write_deployment_report(yaml_filename: str, runtime_data: dict):
         out.write(ruamel.yaml.round_trip_dump(runtime_data))
 
 
-def exec_lines(lines: str, context: dict):
+def exec_lines(lines: str, context: dict, print_prefix=None):
     """Exec python code line-by-line and stop on error.
     :param lines: Python code snippet to evaluate
     :param context: Evaluation context
+    :param print_prefix: Echo all lines we evaluate
     """
 
     for line in lines.split("\n"):
+
+        if not line.strip():
+            continue
+
+        if print_prefix:
+            print(print_prefix, line)
         try:
             exec(line, context)
         except Exception as e:
             raise RuntimeError("Failed when running: {}".format(line)) from e
 
 
-def perform_post_actions(runtime_data: dict, contracts: dict):
+def perform_post_actions(chain, runtime_data: dict, contracts: dict):
     """Make contracts to set up call chains."""
+
+    web3 = chain.web3
 
     post_actions = runtime_data.get("post_actions")
     if post_actions:
-        context = get_post_actions_context(post_actions, runtime_data, contracts)
+        context = get_post_actions_context(post_actions, runtime_data, contracts, web3)
         post_actions = textwrap.dedent(post_actions)
 
         print("Performing post-deployment contract actions")
-        exec_lines(post_actions, context)
+        exec_lines(post_actions, context, print_prefix="Action:")
     else:
         print("No post-deployment actions defined")
 
 
-def perform_verify_actions(runtime_data: dict, contracts: dict):
+def perform_verify_actions(chain, runtime_data: dict, contracts: dict):
     """Check out deployment was solid."""
+
+    web3 = chain.web3
 
     verify_actions = runtime_data.get("verify_actions")
     if verify_actions:
-        context = get_post_actions_context(verify_actions, runtime_data, contracts)
+        context = get_post_actions_context(verify_actions, runtime_data, contracts, web3)
 
         verify_actions = textwrap.dedent(verify_actions)
         print("Performing deployment verification")
-        exec_lines(verify_actions, context)
+        exec_lines(verify_actions, context, print_prefix="Verification:")
     else:
         print("No verify defined")
 
@@ -193,8 +204,8 @@ def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_
         print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
 
         runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, deploy_address)
-        perform_post_actions(runtime_data, contracts)
-        perform_verify_actions(runtime_data, contracts)
+        perform_post_actions(chain, runtime_data, contracts)
+        perform_verify_actions(chain, runtime_data, contracts)
         write_deployment_report(yaml_filename, runtime_data)
 
     return runtime_data, statistics, contracts

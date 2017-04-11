@@ -9,9 +9,11 @@ import jinja2
 
 from eth_utils.currency import to_wei
 from ruamel.yaml.comments import CommentedMap
+from web3 import Web3
 from web3.contract import Contract
 
 from ico.state import CrowdsaleState
+from ico.utils import check_succesful_tx
 
 
 def _datetime(*args) -> datetime.datetime:
@@ -56,7 +58,7 @@ def get_jinja_context(data: dict) -> dict:
     return context
 
 
-def get_post_actions_context(section_data: str, runtime_data: dict, contracts: Dict[str, Contract]) -> dict:
+def get_post_actions_context(section_data: str, runtime_data: dict, contracts: Dict[str, Contract], web3: Web3) -> dict:
     """Get Python evalution context for post-deploy and verify actions.
 
     :param runtime_data:
@@ -67,11 +69,15 @@ def get_post_actions_context(section_data: str, runtime_data: dict, contracts: D
 
     context = get_jinja_context(runtime_data)
 
+    def _confirm_tx(txid):
+        check_succesful_tx(web3, txid)
+
     # Make contracts available in the context
     for name, contract in contracts.items():
         context[name] = contract
 
     context["CrowdsaleState"] = CrowdsaleState
+    context["confirm_tx"] = _confirm_tx
 
     return context
 

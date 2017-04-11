@@ -14,8 +14,8 @@ def test_deploy_crowdsale(project, chain, accounts, example_yaml_filename):
     # Not needed for testrpc
     chain_data["unlock_deploy_address"] = False
 
-    runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, accounts[0])
+    runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, accounts[7])
 
-    perform_post_actions(runtime_data, contracts)
-    perform_verify_actions(runtime_data, contracts)
+    perform_post_actions(chain, runtime_data, contracts)
+    perform_verify_actions(chain, runtime_data, contracts)
     write_deployment_report(example_yaml_filename, runtime_data)
