@@ -43,7 +43,7 @@ def test_buy_early(chain: TestRPCChain, ico: Contract, customer: str, preico_sta
         ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
 
 
-def test_buy(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):
+def test_buy_one_investor(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):
     """Can buy when crowdsale is running."""
 
     original_balance = web3.eth.getBalance(team_multisig)
@@ -53,7 +53,8 @@ def test_buy(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Con
 
     time_travel(chain, preico_starts_at + 1)
     assert ico.call().getState() == CrowdsaleState.Funding
-
+    assert ico.call().investorCount() == 0
+    assert ico.call().investedAmountOf(customer) == 0
     ico.transact({"from": customer, "value": wei_value}).buy()
 
     #
@@ -61,18 +62,19 @@ def test_buy(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Con
     #
 
     # Tokens on every account
-    uncapped_token.call().balanceOf(customer) == buys_tokens
-    uncapped_token.call().totalSupply() == buys_tokens
-    ico.call().tokensSold() == buys_tokens
+    assert uncapped_token.call().balanceOf(customer) == buys_tokens
+    assert uncapped_token.call().totalSupply() == buys_tokens
+    assert ico.call().tokensSold() == buys_tokens
+    assert ico.call().investorCount() == 1
 
     # Ether on every account
-    ico.call().weiRaised() == wei_value
-    ico.call().investedAmountOf(customer) == wei_value
+    assert ico.call().weiRaised() == wei_value
+    assert ico.call().investedAmountOf(customer) == wei_value
     balance_diff = web3.eth.getBalance(team_multisig) - original_balance
     assert balance_diff == wei_value
 
     # Investors
-    ico.call().investorCount() == 1
+    assert ico.call().investorCount() == 1
 
     #
     # Events
@@ -114,18 +116,18 @@ def test_buy_again(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_toke
     #
 
     # Tokens on every account
-    uncapped_token.call().balanceOf(customer) == buys_tokens * 2
-    uncapped_token.call().totalSupply() == buys_tokens * 2
-    ico.call().tokensSold() == buys_tokens * 2
+    assert uncapped_token.call().balanceOf(customer) == buys_tokens * 2
+    assert uncapped_token.call().totalSupply() == buys_tokens * 2
+    assert ico.call().tokensSold() == buys_tokens * 2
 
     # Ether on every account
-    ico.call().weiRaised() == wei_value * 2
-    ico.call().investedAmountOf(customer) == wei_value * 2
+    assert ico.call().weiRaised() == wei_value * 2
+    assert ico.call().investedAmountOf(customer) == wei_value * 2
     balance_diff = web3.eth.getBalance(team_multisig) - original_balance
     assert balance_diff == wei_value * 2
 
     # Investors
-    ico.call().investorCount() == 1
+    assert ico.call().investorCount() == 1
 
     #
     # Events
@@ -159,18 +161,18 @@ def test_buy_two_investors(chain: TestRPCChain, web3: Web3, ico: Contract, uncap
     #
 
     # Tokens on every account
-    uncapped_token.call().balanceOf(customer) == buys_tokens
-    uncapped_token.call().totalSupply() == buys_tokens * 2
-    ico.call().tokensSold() == buys_tokens * 2
+    assert uncapped_token.call().balanceOf(customer) == buys_tokens
+    assert uncapped_token.call().totalSupply() == buys_tokens * 2
+    assert ico.call().tokensSold() == buys_tokens * 2
 
     # Ether on every account
-    ico.call().weiRaised() == wei_value * 2
-    ico.call().investedAmountOf(customer) == wei_value
+    assert ico.call().weiRaised() == wei_value * 2
+    assert ico.call().investedAmountOf(customer) == wei_value
     balance_diff = web3.eth.getBalance(team_multisig) - original_balance
     assert balance_diff == wei_value * 2
 
     # Investors
-    ico.call().investorCount() == 2
+    assert ico.call().investorCount() == 2
 
     #
     # Events

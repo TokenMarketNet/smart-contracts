@@ -3,16 +3,16 @@ import copy
 import textwrap
 from collections import Counter
 from typing import Tuple
+import os
 
 import jinja2
 import ruamel.yaml
+
 from eth_utils import from_wei
-
 from populus import Project
-from web3.contract import Contract
-
 from populus.utils.cli import request_account_unlock
 from populus.utils.accounts import is_account_locked
+from web3.contract import Contract
 
 from ico.definition import load_crowdsale_definitions
 from ico.definition import get_jinja_context
@@ -115,16 +115,22 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
 
         # Perform manual verification of the deployed contract
         if verify_on_etherscan:
-            verify_contract(
+            fname = runtime_data["contracts"][name]["contract_file"]
+            src = verify_contract(
                 project=project,
                 chain_name=chain_name,
                 address=runtime_data["contracts"][name]["address"],
                 contract_name=contract_name,
-                contract_filename=runtime_data["contracts"][name]["contract_file"],
+                contract_filename=fname,
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
                 libraries=runtime_data["contracts"][name]["libraries"],
                 browser_driver=browser_driver)
             runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
+
+            # Write out our expanded contract
+            expanded_path = os.path.join(os.getcwd(), "build", "expanded", fname)
+            with open(expanded_path, "wt") as out:
+                out.write(src)
 
     return runtime_data, statistics, contracts
 

@@ -120,7 +120,7 @@ testnet:
                 _start: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) }}"
                 _end: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) + 30*24*3600 }}"
                 _minimumFundingGoal: 7500
-                _maximumTokensSold: 4000000
+                _maximumSellableTokens: 4000000
         #
         # Finalize contract
         #

@@ -92,6 +92,7 @@ def crowdsale(chain, team_multisig, start_time, end_time, milestone_pricing, pre
 
     assert contract.call().owner() == team_multisig
     assert not token.call().released()
+    assert contract.call().maximumSellableTokens() == cap
 
     # Allow crowdsale contract to do mint()
     token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
@@ -153,10 +154,10 @@ def test_buy_some(chain, crowdsale, token, finalizer, start_time, end_time, team
     assert token.call().totalSupply() == customer_tokens * (1+founder_allocation)
 
     # See that customers get their tokens
-    token.call().balanceOf(customer) == crowdsale.call().tokensSold()
+    assert token.call().balanceOf(customer) == crowdsale.call().tokensSold()
 
     # See that team multisig got our bonus tokens
-    token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
+    assert token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
 
     # Token is transferable
     assert token.call().released()
@@ -190,10 +191,10 @@ def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_
     assert token.call().totalSupply() == customer_tokens * (1 + founder_allocation)
 
     # See that customers get their tokens
-    token.call().balanceOf(customer) == crowdsale.call().tokensSold()
+    assert token.call().balanceOf(customer) == crowdsale.call().tokensSold()
 
     # See that team multisig got our bonus tokens
-    token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
+    assert token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
 
     # Token is transferable
     assert token.call().released()

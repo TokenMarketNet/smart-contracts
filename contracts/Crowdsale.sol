@@ -73,7 +73,7 @@ contract Crowdsale is Haltable {
   /** State machine
    *
    * - Preparing: All contract initialization calls and variables have not been set yet
-   * - Prefunding: We have not started yet
+   * - Prefunding: We have not passed start time yet
    * - Funding: Active crowdsale
    * - Success: Minimum funding goal reached
    * - Failure: Minimum funding goal not reached before ending time
@@ -144,7 +144,7 @@ contract Crowdsale is Haltable {
       throw;
     }
 
-    if(investedAmountOf[receiver] != 0) {
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }

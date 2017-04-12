@@ -13,21 +13,21 @@ import "./MintableToken.sol";
 contract MintedTokenCappedCrowdsale is Crowdsale {
 
   /* Maximum amount of tokens this crowdsale can sell. */
-  uint public maximumTokensSold;
+  uint public maximumSellableTokens;
 
-  function MintedTokenCappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumTokensSold) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
-    maximumTokensSold = _maximumTokensSold;
+  function MintedTokenCappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+    maximumSellableTokens = _maximumSellableTokens;
   }
 
   /**
    * Called from invest() to confirm if the curret investment does not break our cap rule.
    */
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken) {
-    return tokensSoldTotal > maximumTokensSold;
+    return tokensSoldTotal > maximumSellableTokens;
   }
 
   function isCrowdsaleFull() public constant returns (bool) {
-    return tokensSold >= maximumTokensSold;
+    return tokensSold >= maximumSellableTokens;
   }
 
   /**

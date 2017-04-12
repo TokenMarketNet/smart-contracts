@@ -94,12 +94,12 @@ def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale
     presale_fund_collector.transact().parcipateCrowdsaleAll()
 
     # Presale balances zerod
-    presale_fund_collector.call().balances(customer) == 0
-    presale_fund_collector.call().balances(customer_2) == 0
+    assert presale_fund_collector.call().balances(customer) == 0
+    assert presale_fund_collector.call().balances(customer_2) == 0
 
     # Tokens received
-    presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
-    presale_crowdsale.call().investedAmountOf(customer_2) == to_wei(1.5, "ether")
+    assert presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
+    assert presale_crowdsale.call().investedAmountOf(customer_2) == to_wei(1.5, "ether")
 
 
 def test_invest_presale_move_to_crowdsale_twice(chain, presale_fund_collector, presale_crowdsale, finalizer, preico_starts_at, customer, customer_2):
@@ -116,8 +116,8 @@ def test_invest_presale_move_to_crowdsale_twice(chain, presale_fund_collector, p
     presale_fund_collector.transact().parcipateCrowdsaleAll()
 
     # Tokens received
-    presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
-    presale_crowdsale.call().investedAmountOf(customer_2) == to_wei(1.5, "ether")
+    assert presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
+    assert presale_crowdsale.call().investedAmountOf(customer_2) == to_wei(1.5, "ether")
 
 
 def test_invest_presale_move_to_crowdsale_too_early(chain, presale_fund_collector, presale_crowdsale, customer, customer_2, preico_starts_at):
