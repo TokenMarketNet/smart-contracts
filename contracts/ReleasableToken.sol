@@ -10,20 +10,20 @@ import "zeppelin/contracts/token/ERC20.sol";
  */
 contract ReleasableToken is ERC20, Ownable {
 
-  /* The crowdsale contrcat that allows unlift the transfer limits on this token */
+  /* The finalizer contract that allows unlift the transfer limits on this token */
   address public releaseAgent;
 
   /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
   bool public released = false;
 
-  /** List of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the owner itself. */
+  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
   mapping (address => bool) public transferAgents;
 
   /**
    * Limit token transfer until the crowdsale is over.
    *
    */
-  modifier canTransfer(address _sender, uint _value) {
+  modifier canTransfer(address _sender) {
 
     if(!released) {
         if(!transferAgents[_sender]) {
@@ -31,14 +31,11 @@ contract ReleasableToken is ERC20, Ownable {
         }
     }
 
-    // Perform with the normal balance check
-    if (_value > transferableTokens(_sender, uint64(now))) throw;
-
     _;
   }
 
   /**
-   * Set the contract that can call release.
+   * Set the contract that can call release and make the token transferable.
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
 
@@ -52,7 +49,7 @@ contract ReleasableToken is ERC20, Ownable {
   }
 
   /**
-   * Owner can allow a particular address (crowdsale contract) to transfer tokens despite the lock up period.
+   * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
    */
   function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
     transferAgents[addr] = state;
@@ -64,7 +61,6 @@ contract ReleasableToken is ERC20, Ownable {
    * Can be called only from the release agent that is the final ICO contract. It is only called if the crowdsale has been success (first milestone reached).
    */
   function releaseTokenTransfer() public onlyReleaseAgent {
-    // np: David Hasselhoff - Looking for freedom
     released = true;
   }
 
@@ -84,16 +80,14 @@ contract ReleasableToken is ERC20, Ownable {
     _;
   }
 
-  function transfer(address _to, uint _value) canTransfer(msg.sender, _value) returns (bool success) {
+  function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
+    // Call StandardToken.transfer()
    return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from, _value) returns (bool success) {
-   return super.transferFrom(_from, _to, _value);
-  }
-
-  function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-    return balanceOf(holder);
+  function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
+    // Call StandardToken.transferForm()
+    return super.transferFrom(_from, _to, _value);
   }
 
 }
