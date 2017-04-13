@@ -38,7 +38,8 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
     # Goes through geth account unlock process if needed
     if need_unlock:
         if is_account_locked(web3, deploy_address):
-            request_account_unlock(chain, deploy_address, None)
+            # Deploy can last max 1 h
+            request_account_unlock(chain, deploy_address, timeout=3600)
 
     transaction = {"from": deploy_address}
     kwargs = dict(**contract_def["arguments"])  # Unwrap YAML CommentedMap
@@ -95,7 +96,8 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
         address = contract_def.get("address")
         if address:
             print("Already deployed contract,", name, address)
-            contracts[name] = chain.get_contract_factory(contract_name)
+            Contract = getattr(chain.contract_factories, contract_name)
+            contracts[name] = Contract(address=address)
             statistics["already_deployed"] += 1
             continue
 
@@ -196,7 +198,7 @@ def perform_verify_actions(chain, runtime_data: dict, contracts: dict):
 
 
 def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_name: str, deploy_address: str):
-    """"""
+    """Deploy crowdsale plan."""
     chain_data = load_crowdsale_definitions(yaml_filename, deployment_name)
     chain_name = chain_data["chain"]
     address = deploy_address
@@ -207,12 +209,15 @@ def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_
 
         print("Web3 provider is", web3.currentProvider)
         print("Owner address is", address)
-        print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
+        start_balance = from_wei(web3.eth.getBalance(address), "ether")
+        print("Owner balance is", start_balance, "ETH")
 
         runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, deploy_address)
         perform_post_actions(chain, runtime_data, contracts)
         perform_verify_actions(chain, runtime_data, contracts)
         write_deployment_report(yaml_filename, runtime_data)
+        end_balance = from_wei(web3.eth.getBalance(address), "ether")
+        print("Deployment cost is", start_balance - end_balance, "ETH")
 
     return runtime_data, statistics, contracts
 

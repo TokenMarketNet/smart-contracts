@@ -143,24 +143,34 @@ unit_test:
     # They set ownership and allowed actions, so that contracts can interact
     post_actions: |
         # Enable new token minting by a crowdsale contract
-        token.transact({"from": deploy_address}).setMintAgent(crowdsale.address, True)
+        confirm_tx(token.transact({"from": deploy_address}).setMintAgent(crowdsale.address, True))
 
         # Set actions what happen at the end of the crodsale.
         # Enable token mintint at the end of the crowdsale to create bonus pool, founder pool and such
-        token.transact({"from": deploy_address}).setMintAgent(finalize_agent.address, True)
-        crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address)
-        token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address)
+        confirm_tx(token.transact({"from": deploy_address}).setMintAgent(finalize_agent.address, True))
+        confirm_tx(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
+        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address))
 
         # Move ownership of all owned contracts to the team multisig address
-        crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
-        token.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
+        confirm_tx(crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address))
+        confirm_tx(token.transact({"from": deploy_address}).transferOwnership(team_multisig.address))
+
+        # Set token upgrade master
+        confirm_tx(token.transact({"from": deploy_address}).setUpgradeMaster(team_multisig.address))
 
     # Make sure that everything we have deployed all contracts in good state
     # and their internal state is sane
     verify_actions: |
-        assert token.call().owner() == team_multisig.address
+        assert token.call().owner() == team_multisig.address, "Expected owner {}, got {}".format(token.call().owner(),team_multisig.address)
         assert crowdsale.call().owner() == team_multisig.address
         assert preico.call().owner() == team_multisig.address
+        assert token.call().owner() == team_multisig.address
+        assert token.call().upgradeMaster() == team_multisig.address
         assert finalize_agent.call().teamMultisig() == team_multisig.address
         assert finalize_agent.call().isSane()
         assert crowdsale.call().getState() == CrowdsaleState.PreFunding
+
+        # To be used with the deposit instructions for contributors
+        sig_data = crowdsale._prepare_transaction("buy")
+        print("Crowdsale.buy() data payload is", sig_data["data"])
+

@@ -31,8 +31,16 @@ contract BonusFinalizeAgent is FinalizeAgent {
   function BonusFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint _bonusBasePoints, address _teamMultisig) {
     token = _token;
     crowdsale = _crowdsale;
-    bonusBasePoints = _bonusBasePoints;
+    if(address(crowdsale) == 0) {
+      throw;
+    }
+
     teamMultisig = _teamMultisig;
+    if(address(teamMultisig) == 0) {
+      throw;
+    }
+
+    bonusBasePoints = _bonusBasePoints;
   }
 
   /* Can we run finalize properly */
