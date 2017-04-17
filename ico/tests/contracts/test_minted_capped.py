@@ -141,7 +141,7 @@ def test_buy_some(chain, crowdsale, token, finalizer, start_time, end_time, team
     # Close the deal
     time_travel(chain, end_time + 1)
     assert crowdsale.call().getState() == CrowdsaleState.Success
-    crowdsale.transact({"from": customer}).finalize()
+    crowdsale.transact({"from": team_multisig}).finalize()
     assert crowdsale.call().getState() == CrowdsaleState.Finalized
 
     customer_tokens = 7500 / 0.10
@@ -178,7 +178,7 @@ def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_
     # Close the deal
     time_travel(chain, end_time + 1)
     assert crowdsale.call().getState() == CrowdsaleState.Success
-    crowdsale.transact({"from": customer}).finalize()
+    crowdsale.transact({"from": team_multisig}).finalize()
     assert crowdsale.call().getState() == CrowdsaleState.Finalized
 
     customer_tokens = 4000000

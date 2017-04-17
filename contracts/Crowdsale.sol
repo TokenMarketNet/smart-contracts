@@ -85,13 +85,13 @@ contract Crowdsale is Haltable {
   event Invested(address investor, uint weiAmount, uint tokenAmount);
   event Refund(address investor, uint weiAmount);
 
-  function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
     token = ERC20(_token);
 
-    pricingStrategy = PricingStrategy(_pricingStrategy);
+    setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
@@ -183,11 +183,9 @@ contract Crowdsale is Haltable {
   /**
    * Finalize a succcesful crowdsale.
    *
-   * Anybody can call to trigger the end of the crowdsale.
-   *
-   * Call the contract that provides post-crowdsale actions, like releasing the tokens.
+   * The owner can triggre a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
-  function finalize() public inState(State.Success) stopInEmergency {
+  function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
     if(finalized) {
@@ -202,7 +200,12 @@ contract Crowdsale is Haltable {
     finalized = true;
   }
 
-  function setFinalizeAgent(FinalizeAgent addr) onlyOwner inState(State.Preparing) {
+  /**
+   * Allow to (re)set finalize agent.
+   *
+   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   */
+  function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
@@ -210,6 +213,22 @@ contract Crowdsale is Haltable {
       throw;
     }
   }
+
+  /**
+   * Allow to (re)set pricing strategy.
+   *
+   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   */
+  function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
+    pricingStrategy = _pricingStrategy;
+
+    // Don't allow setting bad agent
+    if(!pricingStrategy.isPricingStrategy()) {
+      throw;
+    }
+  }
+
+
 
   /**
    * Allow load refunds back on the contract for the refunding.

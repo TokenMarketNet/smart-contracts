@@ -24,7 +24,7 @@ def test_finalize_fail_goal(chain: TestRPCChain, uncapped_flatprice_final: Contr
         uncapped_flatprice_final.transact().finalize()
 
 
-def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
+def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
     """Finalize releases the token."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -37,7 +37,7 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
     assert uncapped_flatprice_final.call().finalizeAgent() == default_finalize_agent.address
 
     # Release the tokens
-    uncapped_flatprice_final.transact().finalize()
+    uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
     assert uncapped_flatprice_final.call().getState() == CrowdsaleState.Finalized
 
     # Here we go
@@ -45,7 +45,7 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
     assert uncapped_token.call().mintingFinished()
 
 
-def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
+def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
     """Finalize cannot be done again."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -56,9 +56,9 @@ def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Cont
     time_travel(chain, preico_ends_at + 1)
     assert uncapped_flatprice_final.call().getState() == CrowdsaleState.Success
 
-    uncapped_flatprice_final.transact().finalize()
+    uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
     with pytest.raises(TransactionFailed):
-        uncapped_flatprice_final.transact().finalize()
+        uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
 
 
 def test_finalize_only_by_crowdsale(chain: TestRPCChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):

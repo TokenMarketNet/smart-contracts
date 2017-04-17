@@ -24,7 +24,7 @@ contract PreminedCappedCrowdsale is Crowdsale {
   /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
   address public beneficiary;
 
-  function PreminedCappedCrowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+  function PreminedCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
     weiCap = _weiCap;
     beneficiary = _beneficiary;
   }

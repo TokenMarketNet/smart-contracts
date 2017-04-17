@@ -70,6 +70,14 @@ contract MilestonePricing is PricingStrategy {
      return (milestones[n].time, milestones[n].price);
   }
 
+  function getFirstMilestone() private constant returns (Milestone) {
+    return milestones[0];
+  }
+
+  function getLastMilestone() private constant returns (Milestone) {
+    return milestones[milestoneCount-1];
+  }
+
   /**
    * Get the current milestone or bail out if we are not in the milestone periods.
    *

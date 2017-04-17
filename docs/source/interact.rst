@@ -160,5 +160,55 @@ And then finally we see tokens in our MyEtherWallet:
 .. image:: screenshots/myetherwallet_token.png
     :width: 600
 
+Setting the actual ICO contract for a pre-ICO contract
+======================================================
 
+Example setting the ICO contract for a presale:
 
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0xd58550a50161edf805a25431fc0bb850ff160bad"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "PresaleFundCollector")
+        contract = Contract(address="0x858759541633d5142855b27f16f5f67ea78654bf")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = contract.transact({"from": account}).setCrowdsale("0xb57d88c2f70150cb688da7b1d749f1b1b4d72f4c")
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+Example triggering the funds transfer to ICO:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0xd58550a50161edf805a25431fc0bb850ff160bad"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "PresaleFundCollector")
+        contract = Contract(address="0x858759541633d5142855b27f16f5f67ea78654bf")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = contract.transact({"from": account}).parcipateCrowdsaleAll()
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
