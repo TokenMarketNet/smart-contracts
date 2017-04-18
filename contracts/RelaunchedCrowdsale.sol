@@ -10,10 +10,13 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   /**
    * Rebuild invest data back to the crowdsale.
    */
-  function setInvestData(address addr, uint weiAmount, uint tokenAmount) onlyOwner public {
-    investedAmountOf[addr] = weiAmount;
-    tokenAmountOf[addr] = tokenAmount;
-    Invested(addr, weiAmount, tokenAmount);
+  function setInvestorData(address _addr, uint _weiAmount, uint _tokenAmount) onlyOwner public {
+    investedAmountOf[_addr] = _weiAmount;
+    tokenAmountOf[_addr] = _tokenAmount;
+    weiRaised += _weiAmount;
+    tokensSold += _tokenAmount;
+    investorCount++;
+    Invested(_addr, _weiAmount, _tokenAmount);
   }
 
 

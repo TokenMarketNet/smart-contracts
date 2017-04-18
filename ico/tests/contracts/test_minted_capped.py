@@ -69,7 +69,6 @@ def milestone_pricing(chain, start_time):
     return contract
 
 
-
 @pytest.fixture
 def crowdsale(chain, team_multisig, start_time, end_time, milestone_pricing, preico_cap, minimum_funding_goal, cap, token) -> Contract:
     """Create a crowdsale contract that has a minting cap and bonus % and token sold limit."""
