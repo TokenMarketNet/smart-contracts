@@ -35,8 +35,11 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
 
     contract_name = contract_def["contract_name"]
 
+    version = web3.version.node
+
     # Goes through geth account unlock process if needed
-    if need_unlock:
+    if need_unlock and version.startswith("Geth"):
+        # TODO:  Parity does not support this, must unlock on a command line, or web ui?
         if is_account_locked(web3, deploy_address):
             # Deploy can last max 1 h
             request_account_unlock(chain, deploy_address, timeout=3600)

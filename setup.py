@@ -59,5 +59,6 @@ setup(
     deploy-multisig=ico.cmd.deploymultisig:main
     deploy-contracts=ico.cmd.deploycontracts:main
     extract-investor-data=ico.cmd.investors:main
+    extract-raw-investment-data=ico.cmd.rawinvestments:main
     ''',
 )
