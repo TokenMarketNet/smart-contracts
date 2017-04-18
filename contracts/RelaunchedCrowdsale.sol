@@ -1,6 +1,14 @@
 import "./MintedTokenCappedCrowdsale.sol";
 
 
+/**
+ * A crowdsale that retains the previous token, but changes some parameters.
+ *
+ * Investor data can be manually fed in.
+ *
+ * Mostly useful as a hot fix.
+ *
+ */
 contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
 
   function RelaunchedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) MintedTokenCappedCrowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maximumSellableTokens) {

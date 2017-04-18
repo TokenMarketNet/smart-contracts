@@ -99,6 +99,8 @@ unit_test:
                     - "{{ to_wei('0.012', 'ether') }}"
                     - 1494691200
                     - "{{ to_wei('0.013', 'ether') }}"
+                    - 1494864000
+                    - 0
         #
         # Crowdsale
         #

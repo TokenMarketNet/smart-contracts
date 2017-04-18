@@ -1,6 +1,7 @@
 pragma solidity ^0.4.6;
 
 import "./PricingStrategy.sol";
+import "./Crowdsale.sol";
 
 
 /**
@@ -47,15 +48,29 @@ contract MilestonePricing is PricingStrategy {
     preicoPrice = _preicoPrice;
 
     // Need to have tuples, length check
-    if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE) {
+    if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
       throw;
     }
 
     milestoneCount = _milestones.length / 2;
 
+    uint lastTimestamp = 0;
+
     for(uint i=0; i<_milestones.length/2; i++) {
       milestones[i].time = _milestones[i*2];
       milestones[i].price = _milestones[i*2+1];
+
+      // No invalid steps
+      if((lastTimestamp != 0) && (milestones[i].time <= lastTimestamp)) {
+        throw;
+      }
+
+      lastTimestamp = milestones[i].time;
+    }
+
+    // Last milestone price must be zero, terminating the crowdale
+    if(milestones[milestoneCount-1].price != 0) {
+      throw;
     }
   }
 
@@ -78,7 +93,7 @@ contract MilestonePricing is PricingStrategy {
     return milestones[milestoneCount-1];
   }
 
-  function getPricingStarsAt() public constant returns (uint) {
+  function getPricingStartsAt() public constant returns (uint) {
     return getFirstMilestone().time;
   }
 

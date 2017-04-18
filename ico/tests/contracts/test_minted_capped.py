@@ -46,7 +46,7 @@ def founder_allocation() -> float:
 
 
 @pytest.fixture
-def milestone_pricing(chain, start_time):
+def milestone_pricing(chain, start_time, end_time):
     """Milestone pricing, do not set presale collection contract."""
 
     week = 24*3600 * 7
@@ -56,9 +56,10 @@ def milestone_pricing(chain, start_time):
         to_wei("0.05", "ether"),
         [
             start_time + 0, to_wei("0.10", "ether"),
-            start_time + week*1, to_wei("0.12", "ether"),
-            start_time + week*2, to_wei("0.13", "ether"),
-            start_time + week*4, to_wei("0.13", "ether"),
+            start_time + week*1, to_wei("0.11", "ether"),
+            start_time + week*2, to_wei("0.12", "ether"),
+            start_time + week*3, to_wei("0.13", "ether"),
+            end_time, 0,
         ],
     ]
 

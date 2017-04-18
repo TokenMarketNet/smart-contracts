@@ -34,15 +34,20 @@ def start_time() -> int:
 
 
 @pytest.fixture
+def end_time(start_time) -> int:
+    return int(start_time + 4*7*24*3600)
+
+
+@pytest.fixture
 def token(uncapped_token) -> int:
     """Token contract used in milestone tests"""
     return uncapped_token
 
 
 @pytest.fixture
-def milestone_pricing(chain, presale_fund_collector, start_time):
+def milestone_pricing(chain, presale_fund_collector, start_time, end_time):
 
-    week = 24*3600 * 7
+    week = 24*3600*7
 
     args = [
         presale_fund_collector.address,
@@ -51,7 +56,8 @@ def milestone_pricing(chain, presale_fund_collector, start_time):
             start_time + 0, to_wei("0.10", "ether"),
             start_time + week*1, to_wei("0.12", "ether"),
             start_time + week*2, to_wei("0.13", "ether"),
-            start_time + week*4, to_wei("0.13", "ether"),
+            start_time + week*3, to_wei("0.14", "ether"),
+            end_time, to_wei("0", "ether"),
         ],
     ]
 
@@ -63,17 +69,15 @@ def milestone_pricing(chain, presale_fund_collector, start_time):
 
 
 @pytest.fixture
-def milestone_ico(chain, team_multisig, start_time, milestone_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector) -> Contract:
+def milestone_ico(chain, team_multisig, start_time, milestone_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector, end_time) -> Contract:
     """Create a crowdsale contract that uses milestone based pricing."""
-
-    ends_at = start_time + 4*24*3600
 
     args = [
         token.address,
         milestone_pricing.address,
         team_multisig,
         start_time,
-        ends_at,
+        end_time,
         0,
     ]
 
@@ -91,7 +95,6 @@ def milestone_ico(chain, team_multisig, start_time, milestone_pricing, preico_ca
     assert token.call().mintAgents(contract.address) == True
 
     return contract
-
 
 
 @pytest.fixture()

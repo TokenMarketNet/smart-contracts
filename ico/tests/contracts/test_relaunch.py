@@ -97,7 +97,7 @@ def set_extra_finalizer(chain, token, crowdsale, team_multisig, founder_allocati
 
 
 @pytest.fixture
-def milestone_pricing(chain, start_time):
+def milestone_pricing(chain, start_time, end_time):
     """Milestone pricing, do not set presale collection contract."""
 
     week = 24*3600 * 7
@@ -108,6 +108,7 @@ def milestone_pricing(chain, start_time):
         [
             start_time + 0, to_wei("0.0009", "ether"),
             start_time + week*1, to_wei("0.0009", "ether"),
+            end_time, 0,
         ],
     ]
 
