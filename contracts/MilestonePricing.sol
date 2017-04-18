@@ -78,6 +78,19 @@ contract MilestonePricing is PricingStrategy {
     return milestones[milestoneCount-1];
   }
 
+  function getPricingStarsAt() public constant returns (uint) {
+    return getFirstMilestone().time;
+  }
+
+  function getPricingEndsAt() public constant returns (uint) {
+    return getLastMilestone().time;
+  }
+
+  function isSane(address _crowdsale) public constant returns(bool) {
+    Crowdsale crowdsale = Crowdsale(_crowdsale);
+    return crowdsale.startsAt() == getPricingStartsAt() && crowdsale.endsAt() == getPricingEndsAt();
+  }
+
   /**
    * Get the current milestone or bail out if we are not in the milestone periods.
    *
