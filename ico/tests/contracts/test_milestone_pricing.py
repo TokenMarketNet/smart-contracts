@@ -157,7 +157,8 @@ def test_milestone_prices(chain, milestone_pricing, start_time, customer):
         to_wei("0.26", "ether"),
         0,
         0,
-        customer
+        customer,
+        0,
     ) == 2
 
 
@@ -172,7 +173,8 @@ def test_milestone_calculate_preico_price(chain, milestone_pricing, start_time, 
         to_wei("0.05", "ether"),
         0,
         0,
-        presale_fund_collector.address
+        presale_fund_collector.address,
+        0
     ) == 1
 
 

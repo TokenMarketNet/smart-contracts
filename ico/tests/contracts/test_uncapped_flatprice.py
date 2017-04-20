@@ -194,7 +194,7 @@ def test_buy_reach_goal(chain: TestRPCChain, flat_pricing, ico: Contract, custom
     wei_value = preico_funding_goal
 
     # Check that we don't have issues with our pricing
-    assert flat_pricing.call().calculatePrice(wei_value, 0, 0, customer) > 0
+    assert flat_pricing.call().calculatePrice(wei_value, 0, 0, customer, 0) > 0
 
     ico.transact({"from": customer, "value": wei_value}).buy()
 

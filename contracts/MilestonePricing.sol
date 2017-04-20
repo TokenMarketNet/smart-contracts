@@ -2,12 +2,15 @@ pragma solidity ^0.4.6;
 
 import "./PricingStrategy.sol";
 import "./Crowdsale.sol";
+import "./SafeMathLib.sol";
 
 
 /**
  * Time milestone based pricing with special support for pre-ico deals.
  */
 contract MilestonePricing is PricingStrategy {
+
+  using SafeMathLib for uint;
 
   uint public constant MAX_MILESTONE = 10;
 
@@ -134,15 +137,17 @@ contract MilestonePricing is PricingStrategy {
   /**
    * Calculate the current price for buy in amount.
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender) public constant returns (uint) {
+  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint) {
+
+    uint multiplier = 10 ** decimals;
 
     // This investor is coming through pre-ico
     if(msgSender == preicoContractAddress) {
-      return value / preicoPrice;
+      return value.times(multiplier) / preicoPrice;
     }
 
     uint price = getCurrentPrice();
-    return value / price;
+    return value.times(multiplier) / price;
   }
 
   function() payable {

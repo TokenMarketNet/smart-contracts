@@ -1,10 +1,10 @@
 pragma solidity ^0.4.8;
 
-import "zeppelin/contracts/token/ERC20.sol";
 import "./SafeMathLib.sol";
 import "./Haltable.sol";
 import "./PricingStrategy.sol";
 import "./FinalizeAgent.sol";
+import "./FractionalERC20.sol";
 
 
 /**
@@ -23,7 +23,7 @@ contract Crowdsale is Haltable {
   using SafeMathLib for uint;
 
   /* The token we are selling */
-  ERC20 public token;
+  FractionalERC20 public token;
 
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
@@ -89,7 +89,7 @@ contract Crowdsale is Haltable {
 
     owner = msg.sender;
 
-    token = ERC20(_token);
+    token = FractionalERC20(_token);
 
     setPricingStrategy(_pricingStrategy);
 
@@ -137,7 +137,7 @@ contract Crowdsale is Haltable {
   function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender);
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
