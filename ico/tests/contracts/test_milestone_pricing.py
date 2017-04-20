@@ -2,6 +2,7 @@
 import datetime
 
 import pytest
+from decimal import Decimal
 from eth_utils import to_wei
 from ethereum.tester import TransactionFailed
 from web3.contract import Contract
@@ -9,6 +10,7 @@ from web3.contract import Contract
 
 from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
+from ico.utils import decimalize_token_amount
 
 
 @pytest.fixture
@@ -39,9 +41,23 @@ def end_time(start_time) -> int:
 
 
 @pytest.fixture
-def token(uncapped_token) -> int:
+def token(uncapped_token) -> Contract:
     """Token contract used in milestone tests"""
     return uncapped_token
+
+
+@pytest.fixture
+def fractional_token(chain, token_name, token_symbol, team_multisig) -> Contract:
+    """Token contract having 8 decimal places."""
+
+    args = [token_name, token_symbol, 0, 8]  # Owner set
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash = chain.provider.deploy_contract('CrowdsaleToken', deploy_args=args, deploy_transaction=tx)
+    return contract
 
 
 @pytest.fixture
@@ -130,7 +146,7 @@ def test_milestone_data(chain, milestone_pricing, start_time):
         print("-", price)
 
 
-def test_milestone_prices(chain, milestone_pricing, start_time, customer):
+def test_milestone_prices(chain, milestone_pricing, start_time, end_time, customer):
     """We get correct milestone prices for different dates."""
 
     time_travel(chain, start_time - 1)
@@ -152,14 +168,46 @@ def test_milestone_prices(chain, milestone_pricing, start_time, customer):
     time_travel(chain, int((datetime.datetime(2017, 4, 29, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds()))
     assert milestone_pricing.call().getCurrentPrice() == to_wei("0.13", "ether")
 
-    # See that we divide price correctly
+    # 3 week forward + last second
+    time_travel(chain, end_time - 1)
+    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.14", "ether")
+
+
+def test_non_fractional_price(chain, milestone_pricing, customer, end_time):
+    """We divide price correctly for integer only amount."""
+    time_travel(chain, end_time - 1)
+
     assert milestone_pricing.call().calculatePrice(
-        to_wei("0.26", "ether"),
+        to_wei("0.28", "ether"),
         0,
         0,
         customer,
         0,
     ) == 2
+
+    assert milestone_pricing.call().calculatePrice(
+        to_wei("0.281", "ether"),
+        0,
+        0,
+        customer,
+        0,
+    ) == 2
+
+    assert milestone_pricing.call().calculatePrice(
+        to_wei("0.4199", "ether"),
+        0,
+        0,
+        customer,
+        0,
+    ) == 2
+
+    assert milestone_pricing.call().calculatePrice(
+        to_wei("0.42", "ether"),
+        0,
+        0,
+        customer,
+        0,
+    ) == 3
 
 
 def test_milestone_calculate_preico_price(chain, milestone_pricing, start_time, presale_fund_collector):
@@ -197,3 +245,46 @@ def test_presale_move_to_milestone_based_crowdsale(chain, presale_fund_collector
     milestone_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
     token.call().balanceOf(customer) == 50 / 0.050
 
+
+def test_fractional_preico_pricing(presale_fund_collector, milestone_pricing, fractional_token):
+    """Pre-ICO amount is calculated correctly for a token having fractions.
+
+    """
+
+    amount = milestone_pricing.call().calculatePrice(
+        to_wei("0.05", "ether"),
+        0,
+        0,
+        presale_fund_collector.address,
+        fractional_token.call().decimals()
+    )
+
+    assert amount == 100000000
+    d = decimalize_token_amount(fractional_token, amount)
+
+    assert d == 1
+
+    # Make sure we get decimals right
+    assert d.as_tuple() == Decimal("1.00000000").as_tuple()
+
+
+def test_fractional_milestone_pricing(chain, presale_fund_collector, milestone_pricing, fractional_token, customer):
+    """Milestone amount is calculated correctly for a token having fractions."""
+
+    time_travel(chain, milestone_pricing.call().getPricingStartsAt() + 1)
+
+    amount = milestone_pricing.call().calculatePrice(
+        to_wei("0.512345678", "ether"),
+        0,
+        0,
+        customer,
+        fractional_token.call().decimals()
+    )
+
+    assert amount == 512345678
+    d = decimalize_token_amount(fractional_token, amount)
+
+    assert d == Decimal("5.12345678")
+
+    # Make sure we get decimals right
+    assert d.as_tuple() == Decimal("5.12345678").as_tuple()

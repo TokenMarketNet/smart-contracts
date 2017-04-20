@@ -1,5 +1,6 @@
 from typing import Optional
 
+from decimal import Decimal
 from eth_abi import encode_abi
 from eth_abi.exceptions import EncodingError
 from eth_utils import add_0x_prefix
@@ -15,6 +16,22 @@ from web3.utils.transactions import wait_for_transaction_receipt
 from populus.chain.base import BaseChain
 from populus.contracts.provider import Provider
 from populus.utils.linking import find_link_references
+
+
+truthy = frozenset(('t', 'true', 'y', 'yes', 'on', '1'))
+falsey = frozenset(('f', 'false', 'n', 'no', 'off', '0'))
+
+
+def asbool(s):
+    """ Return the boolean value ``True`` if the case-lowered value of string
+    input ``s`` is a :term:`truthy string`. If ``s`` is already one of the
+    boolean values ``True`` or ``False``, return it."""
+    if s is None:
+        return False
+    if isinstance(s, bool):
+        return s
+    s = str(s).strip()
+    return s.lower() in truthy
 
 
 def check_succesful_tx(web3: Web3, txid: str, timeout=180) -> dict:
@@ -71,16 +88,15 @@ def get_libraries(chain: BaseChain, contract_name, contract: Contract) -> dict:
     return libraries
 
 
-truthy = frozenset(('t', 'true', 'y', 'yes', 'on', '1'))
-falsey = frozenset(('f', 'false', 'n', 'no', 'off', '0'))
+def decimalize_token_amount(contract: Contract, amount: int) -> Decimal:
+    """Convert raw fixed point token amount to decimal format.
 
-def asbool(s):
-    """ Return the boolean value ``True`` if the case-lowered value of string
-    input ``s`` is a :term:`truthy string`. If ``s`` is already one of the
-    boolean values ``True`` or ``False``, return it."""
-    if s is None:
-        return False
-    if isinstance(s, bool):
-        return s
-    s = str(s).strip()
-    return s.lower() in truthy
+    :param contract: ERC-20 token contract with decimals field
+    :param amount: Raw token amount
+    :return: The resulting :py:class:`decimal.Decimal` carries a correct decimal places.
+    """
+    val = Decimal(amount) / Decimal(10 ** contract.call().decimals())
+    quantizer = Decimal(1) /  Decimal(10 ** contract.call().decimals())
+    return val.quantize(quantizer)
+
+
