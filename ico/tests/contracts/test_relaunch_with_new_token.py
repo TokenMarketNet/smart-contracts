@@ -199,13 +199,26 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
     assert len(events) == 2
     e = events[-1]
 
+    # Import old transactions from the multisig contract
     for data in sample_data:
         addr = data["Address"]
         wei = to_wei(data["Invested ETH"], "ether")
         tokens = int(data["Received tokens"])
         orig_txid = int(data["Tx hash"], 16)
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
+        orig_tx_index = int(data["Tx index"])
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
 
+    # No double issuance for the same tx
+    data = sample_data[0]
+    addr = data["Address"]
+    wei = to_wei(data["Invested ETH"], "ether")
+    tokens = int(data["Received tokens"])
+    orig_txid = int(data["Tx hash"], 16)
+    orig_tx_index = int(data["Tx index"])
+    with pytest.raises(TransactionFailed):
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+
+    # Compare that both crowdsales and tokens look the same
     assert original_crowdsale.call().tokensSold() == relaunched_crowdsale.call().tokensSold()
     assert original_crowdsale.call().investedAmountOf(customer) == relaunched_crowdsale.call().investedAmountOf(customer)
     assert original_crowdsale.call().investedAmountOf(customer_2) == relaunched_crowdsale.call().investedAmountOf(customer_2)

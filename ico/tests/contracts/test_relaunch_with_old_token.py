@@ -45,9 +45,9 @@ def cap() -> int:
 @pytest.fixture
 def sample_data(customer, customer_2):
     data = """
-Address,First payment at,Invested ETH,Received tokens
-{},2017-04-13T16:01:46+00:00,0.505,561
-{},2017-04-13T16:04:33+00:00,29,32222
+Address,First payment at,Invested ETH,Received tokens,Txid
+{},2017-04-13T16:01:46+00:00,0.505,561,0
+{},2017-04-13T16:04:33+00:00,29,32222,0
     """.strip().format(customer, customer_2)
     return list(csv.DictReader(StringIO(data)))
 
@@ -211,7 +211,8 @@ def test_rebuild_failed_crowdsale(chain, original_crowdsale, token, relaunched_c
         addr = data["Address"]
         wei = to_wei(data["Invested ETH"], "ether")
         tokens = int(data["Received tokens"])
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorData(addr, wei, tokens)
+        txid = int(data["Txid"], 16)
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorData(addr, wei, tokens, txid)
 
     assert original_crowdsale.call().tokensSold() == relaunched_crowdsale.call().tokensSold()
     assert original_crowdsale.call().investedAmountOf(customer) == relaunched_crowdsale.call().investedAmountOf(customer)
