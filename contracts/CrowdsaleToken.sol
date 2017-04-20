@@ -24,15 +24,14 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  /** We don't want to support decimal places as it's not very well handled by different wallets */
-  uint public decimals = 0;
+  uint public decimals;
 
   /**
    * Construct the token.
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply) {
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals) {
 
     // Create from team multisig
     owner = msg.sender;
@@ -44,6 +43,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     symbol = _symbol;
 
     totalSupply = _initialSupply;
+
+    decimals = _decimals;
 
     // Create initially all balance on the team multisig
     balances[msg.sender] = totalSupply;

@@ -19,10 +19,11 @@ from ico.utils import get_constructor_arguments
 @click.option('--address', nargs=1, help='Address to deploy from and who becomes as a owner (must exist on geth)', required=True)
 @click.option('--release-agent', nargs=1, help='Address that acts as a release agent (can be same as owner)', default=None)
 @click.option('--minting-agent', nargs=1, help='Address that acts as a minting agent (can be same as owner)', default=None)
-@click.option('--name', nargs=1, required=True, help='How many days presale is frozen for', type=str)
-@click.option('--symbol', nargs=1, required=True, help='What is the minimum pre-ico buy in (ether)', type=str)
-@click.option('--supply', nargs=1, default=21000000, help='What is the minimum pre-ico buy in (ether)', type=int)
-def main(chain, address, name, symbol, supply, minting_agent, release_agent):
+@click.option('--name', nargs=1, required=True, help='Token name', type=str)
+@click.option('--symbol', nargs=1, required=True, help='Token symbol', type=str)
+@click.option('--supply', nargs=1, default=21000000, help='What is the initial token supply', type=int)
+@click.option('--decimals', nargs=1, default=0, help='How many decimal points the token has', type=int)
+def main(chain, address, name, symbol, supply, decimals, minting_agent, release_agent):
     """Deploy a CrowdsaleToken contract.
 
     Example:
@@ -45,7 +46,7 @@ def main(chain, address, name, symbol, supply, minting_agent, release_agent):
             request_account_unlock(c, address, None)
 
         transaction = {"from": address}
-        args = [name, symbol, supply]
+        args = [name, symbol, supply, decimals]
 
         # This does deployment with all dependencies linked in
 

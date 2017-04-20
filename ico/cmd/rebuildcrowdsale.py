@@ -26,6 +26,8 @@ def main(chain, address, name, symbol, supply, minting_agent, release_agent):
 
     """
 
+    raise NotImplementedError()
+
     project = Project()
 
     with project.get_chain(chain) as c:

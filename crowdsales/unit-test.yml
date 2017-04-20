@@ -75,6 +75,7 @@ unit_test:
                 _name: Example-testnet
                 _symbol: EXA
                 _initialSupply: 0
+                _decimals: 0
         #
         # Pricing strategy
         #
