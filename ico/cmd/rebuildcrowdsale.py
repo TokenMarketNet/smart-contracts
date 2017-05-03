@@ -61,6 +61,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         multiplier = 10**multiplier
 
+        start_time = time.time()
         start_balance = from_wei(web3.eth.getBalance(address), "ether")
         for i in range(start_from, start_from+limit):
             data = rows[i]
@@ -68,12 +69,14 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             wei = to_wei(data["Invested ETH"], "ether")
             tokens = int(data["Received tokens"])
             orig_txid = int(data["Tx hash"], 16)
-            orig_tx_index = int(data["Tx index"])
+            # orig_tx_index = int(data["Tx index"])
 
             tokens *= multiplier
-            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "#", orig_tx_index)
+            end_balance = from_wei(web3.eth.getBalance(address), "ether")
+            spent = start_balance - end_balance
+            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "#", orig_tx_index, "ETH spent", spent, "time passed", time.time() - start_time)
 
-            if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid, orig_tx_index):
+            if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid):
                 print("Already restored, skipping")
                 continue
 
@@ -82,7 +85,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             if relaunched_crowdsale.call().isBreakingCap(tokens, wei, raised, sold):
                 sys.exit("Oops broke the cap.")
 
-            txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+            txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
             check_succesful_tx(web3, txid)
 
         end_balance = from_wei(web3.eth.getBalance(address), "ether")

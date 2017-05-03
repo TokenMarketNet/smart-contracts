@@ -67,6 +67,18 @@ Address,Payment at,Tx hash,Tx index,Invested ETH,Received tokens
 
 
 @pytest.fixture
+def success_sample_data(customer, customer_2):
+    """Enough to break the minimum funding goal"""
+    data = """
+Address,Payment at,Tx hash,Tx index,Invested ETH,Received tokens
+{},2017-04-13T16:01:46+00:00,0xf88780859cfde239e5898d036b685f5358d4b0a0f82e8cce26403c782f8a2e52,1,0.505,561
+{},2017-04-13T16:02:38+00:00,0x1385320b9d693afad1dce05cb0f9c8c3c1bc017668d32ee2b69d4039fdaf5983,3,0.1,111
+{},2017-04-13T16:02:38+00:00,0x1385320b9d693afad1dce05cb0f9c8c3c1bc017668d32ee2b69d4039fdaf5984,4,7500,1111
+    """.strip().format(customer, customer_2, customer_2)
+    return list(csv.DictReader(StringIO(data)))
+
+
+@pytest.fixture
 def founder_allocation() -> float:
     """How much tokens are allocated to founders, etc."""
     return 0.2
@@ -206,7 +218,7 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
         tokens = int(data["Received tokens"])
         orig_txid = int(data["Tx hash"], 16)
         orig_tx_index = int(data["Tx index"])
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
 
     # No double issuance for the same tx
     data = sample_data[0]
@@ -216,7 +228,7 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
     orig_txid = int(data["Tx hash"], 16)
     orig_tx_index = int(data["Tx index"])
     with pytest.raises(TransactionFailed):
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
 
     # Compare that both crowdsales and tokens look the same
     assert original_crowdsale.call().tokensSold() == relaunched_crowdsale.call().tokensSold()
@@ -246,3 +258,47 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
 
     with pytest.raises(TransactionFailed):
         original_crowdsale.transact({"from": customer}).refund()
+
+
+
+def test_rebuild_success_crowdsale_with_new_token(chain, new_token, relaunched_crowdsale, success_sample_data, team_multisig, customer, customer_2):
+    """Rebuild a crowdsale that reaches its minimum goal."""
+
+    time_travel(chain, relaunched_crowdsale.call().startsAt() + 1)
+    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Funding
+
+    # Import old transactions from the multisig contract
+    for data in success_sample_data:
+        addr = data["Address"]
+        wei = to_wei(data["Invested ETH"], "ether")
+        tokens = int(data["Received tokens"])
+        orig_txid = int(data["Tx hash"], 16)
+        # orig_tx_index = int(data["Tx index"])
+        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
+
+        assert relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid)
+
+    # Compare that both crowdsales and tokens look the same
+    assert relaunched_crowdsale.call().investorCount() == 2
+
+    # We restored 3 events
+    events = relaunched_crowdsale.pastEvents("RestoredInvestment").get()
+    assert len(events) == 3
+
+    assert new_token.call().balanceOf(customer_2) == 1222
+    assert new_token.call().balanceOf(customer) == relaunched_crowdsale.call().tokenAmountOf(customer)
+    assert new_token.call().balanceOf(customer_2) == relaunched_crowdsale.call().tokenAmountOf(customer_2)
+    assert new_token.call().totalSupply() == relaunched_crowdsale.call().tokensSold()
+
+    time_travel(chain, relaunched_crowdsale.call().endsAt() + 1)
+
+    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Success
+
+    before_final = new_token.call().totalSupply()
+    relaunched_crowdsale.transact({"from": team_multisig}).finalize()
+    assert new_token.call().totalSupply() == int(before_final * 1.20)
+
+    assert new_token.call().released()
+
+
+

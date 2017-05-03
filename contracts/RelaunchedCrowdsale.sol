@@ -16,7 +16,7 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   // This transaction was restored from a previous crowdsale
   event RestoredInvestment(address addr, uint originalTxHash);
 
-  mapping(uint => mapping(uint => bool)) public reissuedTransactions;
+  mapping(uint => bool) public reissuedTransactions;
 
   function RelaunchedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) MintedTokenCappedCrowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maximumSellableTokens) {
   }
@@ -24,8 +24,8 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   /**
    * Check if a particular transaction has already been written.
    */
-  function getRestoredTransactionStatus(uint _originalTxHash, uint _originalTxIndex) public constant returns(bool) {
-    return reissuedTransactions[_originalTxHash][_originalTxIndex];
+  function getRestoredTransactionStatus(uint _originalTxHash) public constant returns(bool) {
+    return reissuedTransactions[_originalTxHash];
   }
 
   /**
@@ -50,10 +50,10 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   /**
    * Rebuild the previous invest data and do a token reissuance.
    */
-  function setInvestorDataAndIssueNewToken(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash, uint _originalTxIndex) onlyOwner public {
+  function setInvestorDataAndIssueNewToken(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash) onlyOwner public {
 
     // This transaction has already been rebuild
-    if(reissuedTransactions[_originalTxHash][_originalTxIndex]) {
+    if(reissuedTransactions[_originalTxHash]) {
       throw;
     }
 
@@ -65,7 +65,7 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
     }
 
     // Mark transaction processed
-    reissuedTransactions[_originalTxHash][_originalTxIndex] = true;
+    reissuedTransactions[_originalTxHash] = true;
 
     // Mint new token to give it to the original investor
     MintableToken mintableToken = MintableToken(token);
