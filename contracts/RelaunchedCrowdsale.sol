@@ -22,16 +22,26 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   }
 
   /**
+   * Check if a particular transaction has already been written.
+   */
+  function getRestoredTransactionStatus(uint _originalTxHash, uint _originalTxIndex) public constant returns(bool) {
+    return reissuedTransactions[_originalTxHash][_originalTxIndex];
+  }
+
+  /**
    * Rebuild the previous invest data back to the crowdsale.
    */
   function setInvestorData(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash) onlyOwner public {
 
-    investedAmountOf[_addr] = _weiAmount;
-    tokenAmountOf[_addr] = _tokenAmount;
+    if(investedAmountOf[_addr] == 0) {
+      investorCount++;
+    }
+
+    investedAmountOf[_addr] += _weiAmount;
+    tokenAmountOf[_addr] += _tokenAmount;
 
     weiRaised += _weiAmount;
     tokensSold += _tokenAmount;
-    investorCount++;
 
     Invested(_addr, _weiAmount, _tokenAmount);
     RestoredInvestment(_addr, _originalTxHash);

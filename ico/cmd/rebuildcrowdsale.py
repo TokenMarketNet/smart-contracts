@@ -22,7 +22,7 @@ from ico.utils import get_constructor_arguments
 @click.option('--csv-file', nargs=1, help='CSV export of existing data created with extract-raw-investment-data ', required=True)
 @click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
-@click.option('--multiplier', nargs=1, help='Token amount multiplier (to fix decimal place)', required=False, default=1)
+@click.option('--multiplier', nargs=1, help='Token amount multiplier, to fix decimal place, as 10^exponent', required=False, default=1)
 def main(chain, address, contract_address, csv_file, limit, start_from, multiplier):
     """Rebuild a relaunched CrowdsaleToken contract.
 
@@ -53,7 +53,13 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
         print("Importing rows", start_from, "-", start_from + limit)
 
         RelaunchedCrowdsale = c.provider.get_contract_factory('RelaunchedCrowdsale')
-        relaunched_crowdsale = RelaunchedCrowdsale(address=address)
+        relaunched_crowdsale = RelaunchedCrowdsale(address=contract_address)
+        print("Crowdsale contract is", contract_address)
+        print("Currently issued", relaunched_crowdsale.call().tokensSold())
+
+        assert relaunched_crowdsale.call().owner().lower() == address.lower(), "We are not the crowdsale owner. Real owner is {}, we are {}".format(relaunched_crowdsale.call().owner(), address)
+
+        multiplier = 10**multiplier
 
         start_balance = from_wei(web3.eth.getBalance(address), "ether")
         for i in range(start_from, start_from+limit):
@@ -65,9 +71,19 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             orig_tx_index = int(data["Tx index"])
 
             tokens *= multiplier
-            print("Row", i,  "giving", tokens, "to", addr)
+            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "#", orig_tx_index)
 
-            relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+            if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid, orig_tx_index):
+                print("Already restored, skipping")
+                continue
+
+            raised = relaunched_crowdsale.call().weiRaised()
+            sold = relaunched_crowdsale.call().tokensSold()
+            if relaunched_crowdsale.call().isBreakingCap(tokens, wei, raised, sold):
+                sys.exit("Oops broke the cap.")
+
+            txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
+            check_succesful_tx(web3, txid)
 
         end_balance = from_wei(web3.eth.getBalance(address), "ether")
         print("Deployment cost is", start_balance - end_balance, "ETH")
