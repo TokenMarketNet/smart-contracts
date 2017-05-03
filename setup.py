@@ -60,5 +60,6 @@ setup(
     deploy-contracts=ico.cmd.deploycontracts:main
     extract-investor-data=ico.cmd.investors:main
     extract-raw-investment-data=ico.cmd.rawinvestments:main
+    rebuild-crowdsale=ico.cmd.rebuildcrowdsale:main
     ''',
 )

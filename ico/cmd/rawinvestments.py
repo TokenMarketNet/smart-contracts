@@ -44,7 +44,7 @@ def main(chain, address, csv_file):
                 timestamp = web3.eth.getBlock(e["blockNumber"])["timestamp"]
                 dt = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
                 writer.writerow([
-                    address,
+                    e["args"]["investor"],
                     dt.isoformat(),
                     e["transactionHash"],
                     e["transactionIndex"],

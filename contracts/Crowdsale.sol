@@ -203,7 +203,7 @@ contract Crowdsale is Haltable {
   /**
    * Allow to (re)set finalize agent.
    *
-   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
@@ -227,8 +227,6 @@ contract Crowdsale is Haltable {
       throw;
     }
   }
-
-
 
   /**
    * Allow load refunds back on the contract for the refunding.

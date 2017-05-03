@@ -1,4 +1,5 @@
 """Deploy tokens contract."""
+import csv
 import time
 import sys
 import datetime
@@ -16,17 +17,17 @@ from ico.utils import get_constructor_arguments
 
 @click.command()
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
-@click.option('--address', nargs=1, help='Address to deploy from and who becomes as a owner (must exist on geth)', required=True)
-def main(chain, address, name, symbol, supply, minting_agent, release_agent):
+@click.option('--address', nargs=1, help='Owner account (must exist on Ethereum node)', required=True)
+@click.option('--contract-address', nargs=1, help='RebuildCrowdsale contract address', required=True)
+@click.option('--csv-file', nargs=1, help='CSV export of existing data created with extract-raw-investment-data ', required=True)
+@click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
+@click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
+@click.option('--multiplier', nargs=1, help='Token amount multiplier (to fix decimal place)', required=False, default=1)
+def main(chain, address, contract_address, csv_file, limit, start_from, multiplier):
     """Rebuild a relaunched CrowdsaleToken contract.
 
     Example:
-
-    deploy-token --chain=ropsten --address=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6 --name="MikkoToken 2.0" --symbol=MOO --release-agent=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6  --supply=100000
-
     """
-
-    raise NotImplementedError()
 
     project = Project()
 
@@ -42,35 +43,34 @@ def main(chain, address, name, symbol, supply, minting_agent, release_agent):
             request_account_unlock(c, address, None)
 
         transaction = {"from": address}
-        args = [name, symbol, supply]
 
-        # This does deployment with all dependencies linked in
+        print("Reading data", csv_file)
+        with open(csv_file, "rt") as inp:
+            reader = csv.DictReader(inp)
+            rows = [row for row in reader]
 
-        print("Starting contract deployment")
-        contract, txhash = c.provider.deploy_contract('CrowdsaleToken', deploy_transaction=transaction, deploy_args=args)
-        print("Contract address is", contract.address)
+        print("Source data has", len(rows), "rows")
+        print("Importing rows", start_from, "-", start_from + limit)
 
-        # This is needed for Etherscan contract verification
-        # https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
-        data = get_constructor_arguments(contract, args)
-        print("CrowdsaleToken constructor arguments is", data)
+        RelaunchedCrowdsale = c.provider.get_contract_factory('RelaunchedCrowdsale')
+        relaunched_crowdsale = RelaunchedCrowdsale(address=address)
 
-        if release_agent:
-            print("Setting release agent to", release_agent)
-            txid = contract.transact(transaction).setReleaseAgent(release_agent)
-            check_succesful_tx(web3, txid)
+        start_balance = from_wei(web3.eth.getBalance(address), "ether")
+        for i in range(start_from, start_from+limit):
+            data = rows[i]
+            addr = data["Address"]
+            wei = to_wei(data["Invested ETH"], "ether")
+            tokens = int(data["Received tokens"])
+            orig_txid = int(data["Tx hash"], 16)
+            orig_tx_index = int(data["Tx index"])
 
-        if minting_agent:
-            print("Setting minting agent")
-            txid = contract.transact(transaction).setMintAgent(minting_agent, True)
-            check_succesful_tx(web3, txid)
+            tokens *= multiplier
+            print("Row", i,  "giving", tokens, "to", addr)
 
-        # Do some contract reads to see everything looks ok
-        print("Token owner:", contract.call().owner())
-        print("Token minting finished:", contract.call().mintingFinished())
-        print("Token released:", contract.call().released())
-        print("Token release agent:", contract.call().releaseAgent())
+            relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid, orig_tx_index)
 
+        end_balance = from_wei(web3.eth.getBalance(address), "ether")
+        print("Deployment cost is", start_balance - end_balance, "ETH")
         print("All done! Enjoy your decentralized future.")
 
 

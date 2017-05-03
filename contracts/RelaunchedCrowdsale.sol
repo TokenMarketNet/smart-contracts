@@ -14,7 +14,7 @@ import "./MintedTokenCappedCrowdsale.sol";
 contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
 
   // This transaction was restored from a previous crowdsale
-  event RestoredInvestment(address addr, uint256 weiAmount, uint256 tokenAmount, uint originalTxHash);
+  event RestoredInvestment(address addr, uint originalTxHash);
 
   mapping(uint => mapping(uint => bool)) public reissuedTransactions;
 
@@ -34,7 +34,7 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
     investorCount++;
 
     Invested(_addr, _weiAmount, _tokenAmount);
-    RestoredInvestment(_addr, _weiAmount, _tokenAmount, _originalTxHash);
+    RestoredInvestment(_addr, _originalTxHash);
   }
 
   /**
@@ -49,7 +49,7 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
 
     setInvestorData(_addr, _weiAmount, _tokenAmount, _originalTxHash);
 
-    // Check that we did not bust the cap
+    // Check that we did not bust the cap in the restoration process
     if(isBreakingCap(_tokenAmount, _weiAmount, weiRaised, tokensSold)) {
       throw;
     }
