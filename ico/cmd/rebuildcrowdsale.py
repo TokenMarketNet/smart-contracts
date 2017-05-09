@@ -24,9 +24,13 @@ from ico.utils import get_constructor_arguments
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
 @click.option('--multiplier', nargs=1, help='Token amount multiplier, to fix decimal place, as 10^exponent', required=False, default=1)
 def main(chain, address, contract_address, csv_file, limit, start_from, multiplier):
-    """Rebuild a relaunched CrowdsaleToken contract.
+    """Rebuild data on relaunched CrowdsaleToken contract.
+
+    This allows you rerun investment data to fix potential errors in the contract.
 
     Example:
+
+    rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
     """
 
     project = Project()
@@ -40,7 +44,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         # Goes through geth account unlock process if needed
         if is_account_locked(web3, address):
-            request_account_unlock(c, address, None)
+            request_account_unlock(c, address, timeout=3600*6)
 
         transaction = {"from": address}
 
@@ -63,7 +67,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         start_time = time.time()
         start_balance = from_wei(web3.eth.getBalance(address), "ether")
-        for i in range(start_from, start_from+limit):
+        for i in range(start_from, min(start_from+limit, len(rows))):
             data = rows[i]
             addr = data["Address"]
             wei = to_wei(data["Invested ETH"], "ether")
@@ -74,16 +78,11 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             tokens *= multiplier
             end_balance = from_wei(web3.eth.getBalance(address), "ether")
             spent = start_balance - end_balance
-            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "#", orig_tx_index, "ETH spent", spent, "time passed", time.time() - start_time)
+            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "ETH spent", spent, "time passed", time.time() - start_time)
 
             if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid):
                 print("Already restored, skipping")
                 continue
-
-            raised = relaunched_crowdsale.call().weiRaised()
-            sold = relaunched_crowdsale.call().tokensSold()
-            if relaunched_crowdsale.call().isBreakingCap(tokens, wei, raised, sold):
-                sys.exit("Oops broke the cap.")
 
             txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
             check_succesful_tx(web3, txid)
