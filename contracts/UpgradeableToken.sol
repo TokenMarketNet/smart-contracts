@@ -3,7 +3,6 @@ pragma solidity ^0.4.8;
 import "zeppelin/contracts/token/ERC20.sol";
 import "zeppelin/contracts/token/StandardToken.sol";
 import "./UpgradeAgent.sol";
-import "./SafeMathLib.sol";
 
 /**
  * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
@@ -11,8 +10,6 @@ import "./SafeMathLib.sol";
  * First envisioned by Golem and Lunyr projects.
  */
 contract UpgradeableToken is StandardToken {
-
-  using SafeMathLib for uint;
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -34,13 +31,20 @@ contract UpgradeableToken is StandardToken {
    */
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
 
+  /**
+   * Somebody has upgraded some of his tokens.
+   */
   event Upgrade(address indexed _from, address indexed _to, uint256 _value);
+
+  /**
+   * New upgrade agent available.
+   */
   event UpgradeAgentSet(address agent);
 
   /**
    * Do not allow construction without upgrade master set.
    */
-  function UpgradeAgentEnabledToken(address _upgradeMaster) {
+  function UpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
 
@@ -58,11 +62,11 @@ contract UpgradeableToken is StandardToken {
       // Validate input value.
       if (value == 0) throw;
 
-      balances[msg.sender] = balances[msg.sender].minus(value);
+      balances[msg.sender] = safeSub(balances[msg.sender], value);
 
       // Take tokens out from circulation
-      totalSupply = totalSupply.minus(value);
-      totalUpgraded = totalUpgraded.plus(value);
+      totalSupply = safeSub(totalSupply, value);
+      totalUpgraded = safeAdd(totalUpgraded, value);
 
       // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);
@@ -89,7 +93,6 @@ contract UpgradeableToken is StandardToken {
 
       // Bad interface
       if(!upgradeAgent.isUpgradeAgent()) throw;
-
       // Make sure that token supplies match in source and target
       if (upgradeAgent.originalSupply() != totalSupply) throw;
 
@@ -111,7 +114,7 @@ contract UpgradeableToken is StandardToken {
    *
    * This allows us to set a new owner for the upgrade mechanism.
    */
-  function setUpgradeMaster(address master) external {
+  function setUpgradeMaster(address master) public {
       if (master == 0x0) throw;
       if (msg.sender != upgradeMaster) throw;
       upgradeMaster = master;

@@ -31,13 +31,13 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals) {
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals)
+    UpgradeableToken(msg.sender) {
 
-    // Create from team multisig
+    // Create any address, can be transferred
+    // to team multisig via changeOwner(),
+    // also remember to call setUpgradeMaster()
     owner = msg.sender;
-
-    // Initially set the upgrade master same as owner
-    upgradeMaster = owner;
 
     name = _name;
     symbol = _symbol;
@@ -47,7 +47,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     decimals = _decimals;
 
     // Create initially all balance on the team multisig
-    balances[msg.sender] = totalSupply;
+    balances[owner] = totalSupply;
   }
 
   /**

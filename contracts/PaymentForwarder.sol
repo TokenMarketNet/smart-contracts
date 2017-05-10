@@ -65,4 +65,14 @@ contract PaymentForwarder is Haltable {
     if(!teamMultisig.send(weiAmount)) throw;
   }
 
+  /**
+   * Pay on a behalf of the sender.
+   *
+   * @param customerId Identifier in the central database, UUID v4
+   *
+   */
+  function payForMyself(uint128 customerId) public payable {
+    pay(customerId, msg.sender);
+  }
+
 }
