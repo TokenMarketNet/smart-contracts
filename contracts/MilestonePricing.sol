@@ -5,9 +5,7 @@ import "./Crowdsale.sol";
 import "./SafeMathLib.sol";
 
 
-/**
- * Time milestone based pricing with special support for pre-ico deals.
- */
+/// @dev Time milestone based pricing with special support for pre-ico deals.
 contract MilestonePricing is PricingStrategy {
 
   using SafeMathLib for uint;
@@ -48,9 +46,8 @@ contract MilestonePricing is PricingStrategy {
     _;
   }
 
-  /**
-   * @param _milestones uint[] miletones Pairs of (time, price)
-   */
+  /// @dev Contruction, creating a list of milestones
+  /// @param _milestones uint[] milestones Pairs of (time, price)
   function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
     if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
@@ -82,13 +79,11 @@ contract MilestonePricing is PricingStrategy {
     creator = msg.sender;
   }
 
-  /**
-   * @dev This is invoked once for every pre-ICO address, set pricePerToken
-          to 0 to disable
-   * @param preicoAddress PresaleFundCollector address
-   * @param pricePerToken How many weis one token cost for pre-ico investors
-   * @return Result in boolean (true for sanity check)
-   */
+  /// @dev This is invoked once for every pre-ICO address, set pricePerToken
+  ///      to 0 to disable
+  /// @param preicoAddress PresaleFundCollector address
+  /// @param pricePerToken How many weis one token cost for pre-ico investors
+  /// @return Result in boolean (true for sanity check)
   function addPreicoAddress(address preicoAddress, uint pricePerToken)
     public
     ifCreator
@@ -99,15 +94,10 @@ contract MilestonePricing is PricingStrategy {
     return true; // Returning true, so other components know that this was sane
   }
 
-  /**
-   * Iterate through milestones.
-   *
-   * You reach end of milestones when price = 0
-   *
-   * @return tuple (time, price)
-   */
+  /// @dev Iterate through milestones. You reach end of milestones when price = 0
+  /// @return tuple (time, price)
   function getMilestone(uint n) public constant returns (uint, uint) {
-     return (milestones[n].time, milestones[n].price);
+    return (milestones[n].time, milestones[n].price);
   }
 
   function getFirstMilestone() private constant returns (Milestone) {
@@ -131,11 +121,8 @@ contract MilestonePricing is PricingStrategy {
     return crowdsale.startsAt() == getPricingStartsAt() && crowdsale.endsAt() == getPricingEndsAt();
   }
 
-  /**
-   * Get the current milestone or bail out if we are not in the milestone periods.
-   *
-   * @return {[type]} [description]
-   */
+  /// @dev Get the current milestone or bail out if we are not in the milestone periods.
+  /// @return {[type]} [description]
   function getCurrentMilestone() private constant returns (Milestone) {
     uint i;
     uint price;
@@ -147,18 +134,13 @@ contract MilestonePricing is PricingStrategy {
     }
   }
 
-  /**
-   * Get the current price.
-   *
-   * @return The current price or 0 if we are outside milestone period
-   */
+  /// @dev Get the current price.
+  /// @return The current price or 0 if we are outside milestone period
   function getCurrentPrice() public constant returns (uint result) {
     return getCurrentMilestone().price;
   }
 
-  /**
-   * Calculate the current price for buy in amount.
-   */
+  /// @dev Calculate the current price for buy in amount.
   function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
