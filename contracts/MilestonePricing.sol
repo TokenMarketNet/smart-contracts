@@ -14,11 +14,11 @@ contract MilestonePricing is PricingStrategy {
 
   uint public constant MAX_MILESTONE = 10;
 
-  // This is our PresaleFundCollector contract
-  address public preicoContractAddress;
+  // This is used for access control (defined as public for future uses)
+  address public creator;
 
-  // Price for presale investors weis per toke
-  uint public preicoPrice;
+  // This contains all pre-ICO addresses, and their prices (weis per token)
+  mapping (address => uint) public preicoAddresses;
 
   /**
   * Define pricing schedule using milestones.
@@ -40,16 +40,18 @@ contract MilestonePricing is PricingStrategy {
   // How many active milestones we have
   uint public milestoneCount;
 
+  /// @dev This modifier is used to check if the user is the creator
+  modifier ifCreator {
+    if(msg.sender != creator)
+      throw;
+
+    _;
+  }
+
   /**
-   * @param _preicoContractAddress PresaleFundCollector address
-   * @param _preicoPrice How many weis one token cost for pre-ico investors
    * @param _milestones uint[] miletones Pairs of (time, price)
    */
-  function MilestonePricing(address _preicoContractAddress, uint _preicoPrice, uint[] _milestones) {
-
-    preicoContractAddress = _preicoContractAddress;
-    preicoPrice = _preicoPrice;
-
+  function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
     if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
       throw;
@@ -75,6 +77,26 @@ contract MilestonePricing is PricingStrategy {
     if(milestones[milestoneCount-1].price != 0) {
       throw;
     }
+
+    // Implementing a simple access control using "creator"
+    creator = msg.sender;
+  }
+
+  /**
+   * @dev This is invoked once for every pre-ICO address, set pricePerToken
+          to 0 to disable
+   * @param preicoAddress PresaleFundCollector address
+   * @param pricePerToken How many weis one token cost for pre-ico investors
+   * @return Result in boolean (true for sanity check)
+   */
+  function addPreicoAddress(address preicoAddress, uint pricePerToken)
+    public
+    ifCreator
+    returns (bool)
+  {
+    preicoAddresses[preicoAddress] = pricePerToken;
+
+    return true; // Returning true, so other components know that this was sane
   }
 
   /**
@@ -142,8 +164,8 @@ contract MilestonePricing is PricingStrategy {
     uint multiplier = 10 ** decimals;
 
     // This investor is coming through pre-ico
-    if(msgSender == preicoContractAddress) {
-      return value.times(multiplier) / preicoPrice;
+    if(preicoAddresses[msgSender] > 0) {
+      return value.times(multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice();
