@@ -61,5 +61,6 @@ setup(
     extract-investor-data=ico.cmd.investors:main
     extract-raw-investment-data=ico.cmd.rawinvestments:main
     rebuild-crowdsale=ico.cmd.rebuildcrowdsale:main
+    distribute-tokens=ico.cmd.distributetokens:main
     ''',
 )
