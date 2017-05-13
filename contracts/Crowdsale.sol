@@ -16,6 +16,7 @@ import "./FractionalERC20.sol";
  * - minimum funding goal and refund
  * - various statistics during the crowdfund
  * - different pricing strategies
+ * - different investment policies (require server side customer id, allow only whitelisted addresses)
  *
  */
 contract Crowdsale is Haltable {
@@ -61,6 +62,18 @@ contract Crowdsale is Haltable {
   /* Has this crowdsale been finalized */
   bool public finalized;
 
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireCustomerId;
+
+  /**
+    * Do we verify that contributor has been cleared on the server side (accredited investors only).
+    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
+    */
+  bool public requiredSignedAddress;
+
+  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
+  address public signerAddress;
+
   /** How much ETH each address has invested to this crowdsale */
   mapping (address => uint256) public investedAmountOf;
 
@@ -82,8 +95,14 @@ contract Crowdsale is Haltable {
    */
   enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
-  event Invested(address investor, uint weiAmount, uint tokenAmount);
+  // A new investment was made
+  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+
+  // Refund was processed for a contributor
   event Refund(address investor, uint weiAmount);
+
+  // The rules were changed what kind of investments we accept
+  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -134,7 +153,7 @@ contract Crowdsale is Haltable {
    *
    *
    */
-  function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
+  function investInternal(address receiver, uint128 customerId) inState(State.Funding) stopInEmergency private {
 
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
@@ -168,7 +187,33 @@ contract Crowdsale is Haltable {
     if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount);
+    Invested(receiver, weiAmount, tokenAmount, customerId);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+     bytes32 hash = sha256(addr);
+     if (ecrecover(hash, v, r, s) != signerAddress) throw;
+     investInternal(addr, customerId);
+  }
+
+  /**
+   * Track who is the customer making the payment so we can send thank you email.
+   */
+  function investWithCustomerId(address addr, uint128 customerId) public payable {
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    investInternal(addr, customerId);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function invest(address addr) public payable {
+    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    investInternal(addr, 0);
   }
 
   /**
@@ -212,6 +257,27 @@ contract Crowdsale is Haltable {
     if(!finalizeAgent.isFinalizeAgent()) {
       throw;
     }
+  }
+
+  /**
+   * Set policy do we need to have server-side customer ids for the investments.
+   *
+   */
+  function setRequireCustomerId(bool value) onlyOwner {
+    requireCustomerId = value;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
+   * Set policy if all investors must be cleared on the server side first.
+   *
+   * This is e.g. for the accredited investor clearing.
+   *
+   */
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+    requiredSignedAddress = value;
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
 
   /**
