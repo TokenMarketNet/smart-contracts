@@ -198,6 +198,7 @@ contract Crowdsale is Haltable {
   function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
      bytes32 hash = sha256(addr);
      if (ecrecover(hash, v, r, s) != signerAddress) throw;
+     if(customerId == 0) throw;  // UUIDv4 sanity check
      investInternal(addr, customerId);
   }
 
@@ -206,6 +207,7 @@ contract Crowdsale is Haltable {
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -219,11 +221,18 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Invest to tokens, recognize the payer and clear his address.
+   *
+   */
+  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    investWithSignedAddress(msg.sender, customerId, v, r, s);
+  }
+
+  /**
    * Invest to tokens, recognize the payer.
    *
    */
   function buyWithCustomerId(uint128 customerId) public payable {
-    if(customerId == 0) throw;  // UUIDv4 sanity check
     investWithCustomerId(msg.sender, customerId);
   }
 
