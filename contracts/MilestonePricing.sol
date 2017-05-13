@@ -3,17 +3,15 @@ pragma solidity ^0.4.6;
 import "./PricingStrategy.sol";
 import "./Crowdsale.sol";
 import "./SafeMathLib.sol";
+import "zeppelin/contracts/ownership/Ownable.sol";
 
 
 /// @dev Time milestone based pricing with special support for pre-ico deals.
-contract MilestonePricing is PricingStrategy {
+contract MilestonePricing is PricingStrategy, Ownable {
 
   using SafeMathLib for uint;
 
   uint public constant MAX_MILESTONE = 10;
-
-  // This is used for access control (defined as public for future uses)
-  address public creator;
 
   // This contains all pre-ICO addresses, and their prices (weis per token)
   mapping (address => uint) public preicoAddresses;
@@ -37,14 +35,6 @@ contract MilestonePricing is PricingStrategy {
 
   // How many active milestones we have
   uint public milestoneCount;
-
-  /// @dev This modifier is used to check if the user is the creator
-  modifier ifCreator {
-    if(msg.sender != creator)
-      throw;
-
-    _;
-  }
 
   /// @dev Contruction, creating a list of milestones
   /// @param _milestones uint[] milestones Pairs of (time, price)
@@ -74,9 +64,6 @@ contract MilestonePricing is PricingStrategy {
     if(milestones[milestoneCount-1].price != 0) {
       throw;
     }
-
-    // Implementing a simple access control using "creator"
-    creator = msg.sender;
   }
 
   /// @dev This is invoked once for every pre-ICO address, set pricePerToken
@@ -86,7 +73,7 @@ contract MilestonePricing is PricingStrategy {
   /// @return Result in boolean (true for sanity check)
   function addPreicoAddress(address preicoAddress, uint pricePerToken)
     public
-    ifCreator
+    onlyOwner
     returns (bool)
   {
     preicoAddresses[preicoAddress] = pricePerToken;
