@@ -70,15 +70,11 @@ contract MilestonePricing is PricingStrategy, Ownable {
   ///      to 0 to disable
   /// @param preicoAddress PresaleFundCollector address
   /// @param pricePerToken How many weis one token cost for pre-ico investors
-  /// @return Result in boolean (true for sanity check)
-  function addPreicoAddress(address preicoAddress, uint pricePerToken)
+  function setPreicoAddress(address preicoAddress, uint pricePerToken)
     public
     onlyOwner
-    returns (bool)
   {
     preicoAddresses[preicoAddress] = pricePerToken;
-
-    return true; // Returning true, so other components know that this was sane
   }
 
   /// @dev Iterate through milestones. You reach end of milestones when price = 0
