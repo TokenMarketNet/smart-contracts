@@ -21,9 +21,10 @@ def get_ethereum_address_from_private_key(private_key_seed_ascii: str) -> str:
     return "0x" + binascii.hexlify(sha3(pub)[12:]).decode("ascii")
 
 
-def get_address_as_bytes(address: str):
-    """Convert Ethereum address to byte format for signing."""
-    address_bytes = binascii.unhexlify(address)
+def get_address_as_bytes(address: str) -> bytes:
+    """Convert Ethereum address to byte data payload for signing."""
+    assert address.startswith("0x")
+    address_bytes = binascii.unhexlify(address[2:])
     return address_bytes
 
 
@@ -52,8 +53,8 @@ def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha
 
     # Make sure we use bytes data and zero padding stays
     # good across different systems
-    r_hex = binascii.hexlify(r_bytes)
-    s_hex = binascii.hexlify(s_bytes)
+    r_hex = binascii.hexlify(r_bytes).decode("ascii")
+    s_hex = binascii.hexlify(s_bytes).decode("ascii")
 
     # Convert to Etheruem address format
     addr = utils.big_endian_to_int(utils.sha3(bitcoin.encode_pubkey(pub, 'bin')[1:])[12:])
@@ -66,8 +67,8 @@ def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha
         "s": s,
         "r_bytes": r_bytes,
         "s_bytes": s_bytes,
-        "r_hex": r_hex,
-        "s_hex": s_hex,
+        "r_hex": "0x" + r_hex,
+        "s_hex": "0x" + s_hex,
         "address_bitcoin": addr,
         "address_ethereum": get_ethereum_address_from_private_key(priv),
         "public_key": pub,

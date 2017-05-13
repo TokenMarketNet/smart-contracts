@@ -1,4 +1,4 @@
-"""Signed address."""
+"""Signed address investing."""
 
 import uuid
 
@@ -55,14 +55,13 @@ def test_only_owner_change_change_policy(crowdsale, customer, signer_address):
 def test_participate_with_signed_address(chain, crowdsale, customer, customer_id, token, private_key):
     """Buy tokens with a proper signed address."""
 
-    import pdb ; pdb.set_trace()
     address_bytes = get_address_as_bytes(customer)
     sign_data = sign(address_bytes, private_key)
 
     time_travel(chain, crowdsale.call().startsAt() + 1)
     wei_value = to_wei(1, "ether")
     assert crowdsale.call().getState() == CrowdsaleState.Funding
-    crowdsale.transact({"from": customer, "value": wei_value}).buyWithSignedAddress(customer_id, sign_data["v"], sign_data["r_hex"], sign_data["s_hex"])
+    crowdsale.transact({"from": customer, "value": wei_value}).buyWithSignedAddress(customer_id, sign_data["v"], sign_data["r_bytes"], sign_data["s_bytes"])
 
     # We got credited
     assert token.call().balanceOf(customer) > 0
@@ -76,12 +75,18 @@ def test_participate_with_signed_address(chain, crowdsale, customer, customer_id
     assert e["args"]["customerId"] == customer_id
 
 
-def test_participate_missing_customer_id(chain, crowdsale, customer, customer_id, token):
-    """Cannot bypass customer id process."""
+def test_participate_bad_signature(chain, crowdsale, customer, customer_id, token):
+    """Investment does not happen with a bad signature.."""
+
+    address_bytes = get_address_as_bytes(customer)
+    sign_data = sign(address_bytes, private_key)
 
     time_travel(chain, crowdsale.call().startsAt() + 1)
     wei_value = to_wei(1, "ether")
     assert crowdsale.call().getState() == CrowdsaleState.Funding
 
+    sign_data["s_bytes"] = b'ABC'  # Corrupt signature data
+
     with pytest.raises(TransactionFailed):
-        crowdsale.transact({"from": customer, "value": wei_value}).buy()
+        crowdsale.transact({"from": customer, "value": wei_value}).buyWithSignedAddress(customer_id, sign_data["v"], sign_data["r_bytes"], sign_data["s_bytes"])
+
