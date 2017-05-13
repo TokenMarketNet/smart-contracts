@@ -3,22 +3,18 @@ pragma solidity ^0.4.6;
 import "./PricingStrategy.sol";
 import "./Crowdsale.sol";
 import "./SafeMathLib.sol";
+import "zeppelin/contracts/ownership/Ownable.sol";
 
 
-/**
- * Time milestone based pricing with special support for pre-ico deals.
- */
-contract MilestonePricing is PricingStrategy {
+/// @dev Time milestone based pricing with special support for pre-ico deals.
+contract MilestonePricing is PricingStrategy, Ownable {
 
   using SafeMathLib for uint;
 
   uint public constant MAX_MILESTONE = 10;
 
-  // This is our PresaleFundCollector contract
-  address public preicoContractAddress;
-
-  // Price for presale investors weis per toke
-  uint public preicoPrice;
+  // This contains all pre-ICO addresses, and their prices (weis per token)
+  mapping (address => uint) public preicoAddresses;
 
   /**
   * Define pricing schedule using milestones.
@@ -40,16 +36,9 @@ contract MilestonePricing is PricingStrategy {
   // How many active milestones we have
   uint public milestoneCount;
 
-  /**
-   * @param _preicoContractAddress PresaleFundCollector address
-   * @param _preicoPrice How many weis one token cost for pre-ico investors
-   * @param _milestones uint[] miletones Pairs of (time, price)
-   */
-  function MilestonePricing(address _preicoContractAddress, uint _preicoPrice, uint[] _milestones) {
-
-    preicoContractAddress = _preicoContractAddress;
-    preicoPrice = _preicoPrice;
-
+  /// @dev Contruction, creating a list of milestones
+  /// @param _milestones uint[] milestones Pairs of (time, price)
+  function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
     if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
       throw;
@@ -77,15 +66,21 @@ contract MilestonePricing is PricingStrategy {
     }
   }
 
-  /**
-   * Iterate through milestones.
-   *
-   * You reach end of milestones when price = 0
-   *
-   * @return tuple (time, price)
-   */
+  /// @dev This is invoked once for every pre-ICO address, set pricePerToken
+  ///      to 0 to disable
+  /// @param preicoAddress PresaleFundCollector address
+  /// @param pricePerToken How many weis one token cost for pre-ico investors
+  function setPreicoAddress(address preicoAddress, uint pricePerToken)
+    public
+    onlyOwner
+  {
+    preicoAddresses[preicoAddress] = pricePerToken;
+  }
+
+  /// @dev Iterate through milestones. You reach end of milestones when price = 0
+  /// @return tuple (time, price)
   function getMilestone(uint n) public constant returns (uint, uint) {
-     return (milestones[n].time, milestones[n].price);
+    return (milestones[n].time, milestones[n].price);
   }
 
   function getFirstMilestone() private constant returns (Milestone) {
@@ -109,14 +104,10 @@ contract MilestonePricing is PricingStrategy {
     return crowdsale.startsAt() == getPricingStartsAt() && crowdsale.endsAt() == getPricingEndsAt();
   }
 
-  /**
-   * Get the current milestone or bail out if we are not in the milestone periods.
-   *
-   * @return {[type]} [description]
-   */
+  /// @dev Get the current milestone or bail out if we are not in the milestone periods.
+  /// @return {[type]} [description]
   function getCurrentMilestone() private constant returns (Milestone) {
     uint i;
-    uint price;
 
     for(i=0; i<milestones.length; i++) {
       if(now < milestones[i].time) {
@@ -125,25 +116,20 @@ contract MilestonePricing is PricingStrategy {
     }
   }
 
-  /**
-   * Get the current price.
-   *
-   * @return The current price or 0 if we are outside milestone period
-   */
+  /// @dev Get the current price.
+  /// @return The current price or 0 if we are outside milestone period
   function getCurrentPrice() public constant returns (uint result) {
     return getCurrentMilestone().price;
   }
 
-  /**
-   * Calculate the current price for buy in amount.
-   */
+  /// @dev Calculate the current price for buy in amount.
   function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
 
     // This investor is coming through pre-ico
-    if(msgSender == preicoContractAddress) {
-      return value.times(multiplier) / preicoPrice;
+    if(preicoAddresses[msgSender] > 0) {
+      return value.times(multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice();

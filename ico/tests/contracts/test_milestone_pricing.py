@@ -61,13 +61,11 @@ def fractional_token(chain, token_name, token_symbol, team_multisig) -> Contract
 
 
 @pytest.fixture
-def milestone_pricing(chain, presale_fund_collector, start_time, end_time):
+def milestone_pricing(chain, presale_fund_collector, start_time, end_time, team_multisig):
 
     week = 24*3600*7
 
     args = [
-        presale_fund_collector.address,
-        to_wei("0.05", "ether"),
         [
             start_time + 0, to_wei("0.10", "ether"),
             start_time + week*1, to_wei("0.12", "ether"),
@@ -78,9 +76,12 @@ def milestone_pricing(chain, presale_fund_collector, start_time, end_time):
     ]
 
     tx = {
-        "gas": 4000000
+        "gas": 4000000,
+        "from": team_multisig
     }
     contract, hash = chain.provider.deploy_contract('MilestonePricing', deploy_args=args, deploy_transaction=tx)
+
+    contract.transact({"from": team_multisig}).setPreicoAddress(presale_fund_collector.address, to_wei("0.05", "ether"))
     return contract
 
 

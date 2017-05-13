@@ -110,8 +110,6 @@ def milestone_pricing(chain, start_time, end_time):
     week = 24*3600 * 7
 
     args = [
-        "0x0000000000000000000000000000000000000000",
-        to_wei("0.00001", "ether"),
         [
             start_time + 0, to_wei("0.0009", "ether"),
             start_time + week*1, to_wei("0.0009", "ether"),
@@ -299,6 +297,3 @@ def test_rebuild_success_crowdsale_with_new_token(chain, new_token, relaunched_c
     assert new_token.call().totalSupply() == int(before_final * 1.20)
 
     assert new_token.call().released()
-
-
-
