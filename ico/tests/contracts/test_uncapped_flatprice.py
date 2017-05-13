@@ -12,6 +12,7 @@ from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 
 
+
 @pytest.fixture
 def ico(uncapped_flatprice, uncapped_flatprice_finalizer):
     """Set up a crowdsale for this test module with finalizer in place."""

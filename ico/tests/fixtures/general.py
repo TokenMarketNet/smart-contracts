@@ -28,6 +28,7 @@ def customer_2(accounts) -> str:
     """Get another customer address."""
     return accounts[2]
 
+
 @pytest.fixture
 def beneficiary(accounts) -> str:
     """The team control address."""
