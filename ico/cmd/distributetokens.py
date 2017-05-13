@@ -1,18 +1,18 @@
 """Distribute tokens in centrally issued crowdsale."""
 import csv
 import time
-import sys
-import datetime
 
 import click
 from decimal import Decimal
 from eth_utils import from_wei
-from eth_utils import to_wei
 from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
 
 from ico.utils import check_succesful_tx
+from ico.utils import check_multiple_succesful_txs
+from ico.etherscan import verify_contract
+from ico.etherscan import get_etherscan_link%cpas
 from ico.utils import get_constructor_arguments
 
 
@@ -33,6 +33,8 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
     All token counts are multiplied by token contract decimal specifier. E.g. if CSV has amount 15.5,
     token has 2 decimal places, we will issue out 1550 raw token amount.
+
+    To speed up the issuance, transactions are verified in batches. Each batch is 16 transactions at a time.
 
     Example (first run):
 
@@ -56,6 +58,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         # Goes through geth account unlock process if needed
         if is_account_locked(web3, address):
             request_account_unlock(c, address, timeout=3600*6)
+            assert not is_account_locked(web3, address)
 
         Token = c.provider.get_base_contract_factory('CentrallyIssuedToken')
         token = Token(address=token)
@@ -68,6 +71,8 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         print("Token decimal places is", decimals)
         assert decimals >= 0
 
+        decimal_multiplier = 10**decimals
+
         transaction = {"from": address}
 
         Issuer = c.provider.get_base_contract_factory('Issuer')
@@ -76,15 +81,35 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             args = [address, address, token.address]
             print("Deploying new issuer contract", args)
             issuer, txhash = c.provider.deploy_contract("Issuer", deploy_transaction=transaction, deploy_args=args)
-            token.transact({"from": address}).approve(issuer.address, token.call().totalSupply())
+            check_succesful_tx(web3, txhash)
+
+            txid = token.transact({"from": address}).approve(issuer.address, token.call().totalSupply())
+            check_succesful_tx(web3, txid)
+
+            const_args = get_constructor_arguments(issuer, args)
+            chain_name = chain
+            fname = "Issuer.sol"
+            browser_driver = "chrome"
+            verify_contract(
+                project=project,
+                libraries={},  # TODO: Figure out how to pass around
+                chain_name=chain_name,
+                address=issuer.address,
+                contract_name="Issuer",
+                contract_filename=fname,
+                constructor_args=const_args,
+                # libraries=runtime_data["contracts"][name]["libraries"],
+                browser_driver=browser_driver)
+            link = get_etherscan_link(chain_name, issuer.address)
+
+            print("Issuer verified contract is", link)
         else:
             print("Reusing existing issuer contract")
             issuer = Issuer(address=issuer_address)
 
         print("Issuer contract is", issuer.address)
         print("Currently issued", issuer.call().issuedCount())
-
-        multiplier = 10**decimals
+        print("Issuer allowance", token.call().allowance(address, issuer.address))
 
         print("Reading data", csv_file)
         with open(csv_file, "rt") as inp:
@@ -102,16 +127,19 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         # Start distribution
         start_time = time.time()
         start_balance = from_wei(web3.eth.getBalance(address), "ether")
+
+        tx_to_confirm = []   # List of txids to confirm
+        tx_batch_size = 16  # How many transactions confirm once
+
         for i in range(start_from, min(start_from+limit, len(rows))):
             data = rows[i]
             addr = data[address_column].strip()
             tokens = Decimal(data[amount_column].strip())
 
-            tokens *= multiplier
+            tokens *= decimal_multiplier
 
             end_balance = from_wei(web3.eth.getBalance(address), "ether")
             spent = start_balance - end_balance
-            print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent)
 
             if tokens == 0:
                 if not allow_zero:
@@ -125,12 +153,23 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
             tokens = int(tokens)
 
+            print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent)
+
             if issuer.call().issued(addr):
                 print("Already issued, skipping")
                 continue
 
             txid = issuer.transact(transaction).issue(addr, tokens)
-            check_succesful_tx(web3, txid)
+
+            tx_to_confirm.append(txid)
+
+            # Confirm N transactions when batch max size is reached
+            if len(tx_to_confirm) >= tx_batch_size:
+                check_multiple_succesful_txs(web3, tx_to_confirm)
+                tx_to_confirm = []
+
+        # Confirm dangling transactions
+        check_multiple_succesful_txs(web3, tx_to_confirm)
 
         end_balance = from_wei(web3.eth.getBalance(address), "ether")
         print("Deployment cost is", start_balance - end_balance, "ETH")

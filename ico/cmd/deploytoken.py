@@ -25,7 +25,7 @@ from ico.etherscan import get_etherscan_link
 @click.option('--minting-agent', nargs=1, help='Address that acts as a minting agent (can be same as owner)', default=None)
 @click.option('--name', nargs=1, required=True, help='Token name', type=str)
 @click.option('--symbol', nargs=1, required=True, help='Token symbol', type=str)
-@click.option('--supply', nargs=1, default=21000000, help='What is the initial token supply', type=int)
+@click.option('--supply', nargs=1, default=21000000, help='Initial token supply (multipled with decimals)', type=int)
 @click.option('--decimals', nargs=1, default=0, help='How many decimal points the token has', type=int)
 @click.option('--verify/--no-verify', default=False, help='Verify contract on EtherScan.io')
 @click.option('--verify-filename', nargs=1, help='Solidity source file of the token contract for verification', default=None)
@@ -52,8 +52,10 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
         if is_account_locked(web3, address):
             request_account_unlock(c, address, None)
 
+        decimal_multiplier = 10 ** decimals
+
         transaction = {"from": address}
-        args = [name, symbol, supply, decimals]
+        args = [name, symbol, supply * decimal_multiplier, decimals]
 
         if contract_name == "CentrallyIssuedToken":
             # TODO: Generalize settings contract args
@@ -98,6 +100,8 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
             link = get_etherscan_link(chain_name, contract.address)
 
             print("Verified contract is", link)
+
+        print("Token supply:", contract.call().totalSupply())
 
         # Do some contract reads to see everything looks ok
         try:
