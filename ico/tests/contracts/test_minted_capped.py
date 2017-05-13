@@ -52,15 +52,13 @@ def milestone_pricing(chain, start_time, end_time):
     week = 24*3600 * 7
 
     args = [
-        "0x0000000000000000000000000000000000000000",
-        to_wei("0.05", "ether"),
         [
             start_time + 0, to_wei("0.10", "ether"),
             start_time + week*1, to_wei("0.11", "ether"),
             start_time + week*2, to_wei("0.12", "ether"),
             start_time + week*3, to_wei("0.13", "ether"),
             end_time, 0,
-        ],
+        ]
     ]
 
     tx = {
