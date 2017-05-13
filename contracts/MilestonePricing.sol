@@ -108,7 +108,6 @@ contract MilestonePricing is PricingStrategy, Ownable {
   /// @return {[type]} [description]
   function getCurrentMilestone() private constant returns (Milestone) {
     uint i;
-    uint price;
 
     for(i=0; i<milestones.length; i++) {
       if(now < milestones[i].time) {
