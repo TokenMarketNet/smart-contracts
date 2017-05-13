@@ -2,7 +2,10 @@
 
 import uuid
 
+import binascii
+import bitcoin
 import pytest
+from eth_utils import force_bytes
 from ethereum.tester import TransactionFailed
 from eth_utils import to_wei
 
@@ -43,6 +46,13 @@ def customer_id(uncapped_flatprice, uncapped_flatprice_finalizer, team_multisig)
     """Generate UUID v4 customer id as a hex string."""
     customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
     return customer_id
+
+
+@pytest.fixture
+def pad_contract(chain):
+    """Token contract we are buying."""
+    contract, hash = chain.provider.deploy_contract('TestSolidityAddressHash')
+    return contract
 
 
 def test_only_owner_change_change_policy(crowdsale, customer, signer_address):
@@ -90,3 +100,22 @@ def test_participate_bad_signature(chain, crowdsale, customer, customer_id, toke
     with pytest.raises(TransactionFailed):
         crowdsale.transact({"from": customer, "value": wei_value}).buyWithSignedAddress(customer_id, sign_data["v"], sign_data["r_bytes"], sign_data["s_bytes"])
 
+
+def test_left_pad(pad_contract):
+    """Ensure we handle leading zero in the address correctly."""
+
+    address_bytes = get_address_as_bytes(pad_contract.call().leftPad())
+    hash = bitcoin.bin_sha256(address_bytes)
+    val = pad_contract.call().getHashLeftPad()
+    val = force_bytes(val)
+    assert hash == val
+
+
+def test_right_pad(pad_contract):
+    """Ensure we handle trailing zero in the address correctly."""
+
+    address_bytes = get_address_as_bytes(pad_contract.call().rightPad())
+    hash = bitcoin.bin_sha256(address_bytes)
+    val = pad_contract.call().getHashRightPad()
+    val = force_bytes(val)
+    assert hash == val
