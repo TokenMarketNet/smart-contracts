@@ -151,6 +151,8 @@ contract Crowdsale is Haltable {
    * Crowdsale must be running for one to invest.
    * We must have not pressed the emergency brake.
    *
+   * @param receiver The Ethereum address who receives the tokens
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side
    *
    */
   function investInternal(address receiver, uint128 customerId) inState(State.Funding) stopInEmergency private {
@@ -214,6 +216,15 @@ contract Crowdsale is Haltable {
     if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer.
+   *
+   */
+  function buyWithCustomerId(uint128 customerId) public payable {
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investWithCustomerId(msg.sender, customerId);
   }
 
   /**
