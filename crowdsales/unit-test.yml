@@ -89,8 +89,6 @@ unit_test:
             contract_name: MilestonePricing
             contract_file: MilestonePricing.sol
             arguments:
-                _preicoPrice: "{{ to_wei('0.008', 'ether') }}"
-                _preicoContractAddress: "{{contracts.preico.address}}"
                 _milestones:
                     - 1492272000
                     - "{{ to_wei('0.010', 'ether') }}"
@@ -161,6 +159,9 @@ unit_test:
         # Set token upgrade master
         confirm_tx(token.transact({"from": deploy_address}).setUpgradeMaster(team_multisig.address))
 
+        # Set a pre-ICO address here
+        confirm_tx(pricing_strategy.transact({"from": deploy_address}).setPreicoAddress(preico.address, 123456))
+
     # Make sure that everything we have deployed all contracts in good state
     # and their internal state is sane
     verify_actions: |
@@ -176,4 +177,3 @@ unit_test:
         # To be used with the deposit instructions for contributors
         sig_data = crowdsale._prepare_transaction("buy")
         print("Crowdsale.buy() data payload is", sig_data["data"])
-
