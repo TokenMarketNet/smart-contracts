@@ -50,6 +50,11 @@ contract EthTranchePricing is PricingStrategy, Ownable {
 
     uint highestAmount = 0;
 
+    // We need to start from zero
+    if(tranches[i].amount != 0) {
+      throw;
+    }
+
     for(uint i=0; i<_tranches.length/2; i++) {
       tranches[i].amount = _tranches[i*2];
       tranches[i].price = _tranches[i*2+1];

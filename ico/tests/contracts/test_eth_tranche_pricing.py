@@ -150,6 +150,8 @@ def test_wei_tranche_data(chain, wei_tranche_pricing, start_time):
 def test_wei_tranche_prices(chain, wei_tranche_pricing, start_time, end_time, customer):
     """We get correct wei_tranche prices for different dates."""
 
+    assert wei_tranche_pricing.call().getCurrentPrice(0) == 6666660000000000
+
     #TODO: Instead of timetravel, buy tokens here after this line, and then copy this
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.00666666", "ether"),
