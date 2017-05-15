@@ -12,7 +12,6 @@ from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 
 
-
 @pytest.fixture
 def ico(uncapped_flatprice, uncapped_flatprice_finalizer):
     """Set up a crowdsale for this test module with finalizer in place."""
@@ -44,7 +43,6 @@ def test_buy_early(chain: TestRPCChain, ico: Contract, customer: str, preico_sta
         ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
 
 
-
 def test_buy_early_whitelisted(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, team_multisig, uncapped_token):
     """Whitelisted participants can buy earliy."""
 
@@ -54,6 +52,14 @@ def test_buy_early_whitelisted(chain: TestRPCChain, ico: Contract, customer: str
     ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
     assert uncapped_token.call().balanceOf(customer) > 0
 
+
+def test_early_whitelist_only_owner(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, team_multisig, uncapped_token):
+    """Only owner can early whitelist."""
+
+    time_travel(chain, preico_starts_at - 1)
+    assert ico.call().getState() == CrowdsaleState.PreFunding
+    with pytest.raises(TransactionFailed):
+        ico.transact({"from": customer}).setEarlyParicipantWhitelist(customer, True)
 
 
 def test_buy_one_investor(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):
@@ -314,3 +320,47 @@ def test_finalize(chain: TestRPCChain, web3: Web3, ico: Contract, malicious_addr
 
     with pytest.raises(TransactionFailed):
         ico.transact({"from": malicious_address}).halt()
+
+
+def test_close_early(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
+    """Soft cap triggered, close crowdsale early."""
+
+    # Close earlier than anticipated
+    new_early = preico_starts_at + 1*3600
+    assert new_early < preico_ends_at
+
+    time_travel(chain, preico_starts_at + 1)
+    assert ico.call().getState() == CrowdsaleState.Funding
+    ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+    ico.transact({"from": team_multisig}).setEndsAt(new_early)
+
+    time_travel(chain, new_early + 1)
+    assert ico.call().getState() == CrowdsaleState.Failure
+    with pytest.raises(TransactionFailed):
+        ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+
+
+def test_close_late(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
+    """Extend crowdsale."""
+
+    new_end = preico_ends_at + 1*3600
+    assert new_end > preico_ends_at
+
+    time_travel(chain, preico_starts_at + 1)
+    assert ico.call().getState() == CrowdsaleState.Funding
+    ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+
+    ico.transact({"from": team_multisig}).setEndsAt(new_end)
+
+    time_travel(chain, preico_ends_at + 1)
+    assert ico.call().getState() == CrowdsaleState.Funding
+    ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+
+
+def test_change_end_at_only_owner(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
+    """Only own can change end date."""
+
+    new_early = preico_starts_at + 1*3600
+
+    with pytest.raises(TransactionFailed):
+        ico.transact({"from": customer}).setEndsAt(new_early)
