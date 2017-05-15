@@ -6,7 +6,10 @@ import "./SafeMathLib.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 /// @dev Tranche based pricing with special support for pre-ico deals.
-contract TranchePricing is PricingStrategy, Ownable {
+///      Implementing "first price" tranches, meaning, that if byers order is
+///      covering more than one tranche, the price of the lowest tranche will apply
+///      to the whole order.
+contract EthTranchePricing is PricingStrategy, Ownable {
 
   using SafeMathLib for uint;
 
@@ -37,7 +40,7 @@ contract TranchePricing is PricingStrategy, Ownable {
 
   /// @dev Contruction, creating a list of tranches
   /// @param _tranches uint[] tranches Pairs of (start amount, price)
-  function TranchePricing(uint[] _tranches) {
+  function EthTranchePricing(uint[] _tranches) {
     // Need to have tuples, length check
     if(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2) {
       throw;
@@ -107,23 +110,23 @@ contract TranchePricing is PricingStrategy, Ownable {
   }
 
   /// @dev Get the current tranche or bail out if we are not in the tranche periods.
-  /// @param tokensSold total amount of tokens sold, for calculating the current tranche
+  /// @param weiRaised total amount of weis raised, for calculating the current tranche
   /// @return {[type]} [description]
-  function getCurrentTranche(uint tokensSold) private constant returns (Tranche) {
+  function getCurrentTranche(uint weiRaised) private constant returns (Tranche) {
     uint i;
 
     for(i=0; i < tranches.length; i++) {
-      if(tokensSold < tranches[i].amount) {
+      if(weiRaised < tranches[i].amount) {
         return tranches[i-1];
       }
     }
   }
 
   /// @dev Get the current price.
-  /// @param tokensSold total amount of tokens sold, for calculating the current tranche
+  /// @param weiRaised total amount of weis raised, for calculating the current tranche
   /// @return The current price or 0 if we are outside trache ranges
-  function getCurrentPrice(uint tokensSold) public constant returns (uint result) {
-    return getCurrentTranche(tokensSold).price;
+  function getCurrentPrice(uint weiRaised) public constant returns (uint result) {
+    return getCurrentTranche(weiRaised).price;
   }
 
   /// @dev Calculate the current price for buy in amount.
@@ -136,7 +139,7 @@ contract TranchePricing is PricingStrategy, Ownable {
       return value.times(multiplier) / preicoAddresses[msgSender];
     }
 
-    uint price = getCurrentPrice(tokensSold);
+    uint price = getCurrentPrice(weiRaised);
     return value.times(multiplier) / price;
   }
 

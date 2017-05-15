@@ -42,7 +42,7 @@ def end_time(start_time) -> int:
 
 @pytest.fixture
 def token(uncapped_token) -> Contract:
-    """Token contract used in tranche tests"""
+    """Token contract used in wei_tranche tests"""
     return uncapped_token
 
 
@@ -61,17 +61,17 @@ def fractional_token(chain, token_name, token_symbol, team_multisig) -> Contract
 
 
 @pytest.fixture
-def tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_multisig):
-
-    week = 24*3600*7
-
+def wei_tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_multisig):
     args = [
         [
-            0, to_wei("0.10", "ether"),
-            123, to_wei("0.12", "ether"),
-            1234, to_wei("0.13", "ether"),
-            12345, to_wei("0.14", "ether"),
-            123456, to_wei("0", "ether"),
+            to_wei("0", "ether"), to_wei("0.00666666", "ether"),
+            to_wei("10001", "ether"), to_wei("0.00714285", "ether"),
+            to_wei("30001", "ether"), to_wei("0.00769230", "ether"),
+            to_wei("50001", "ether"), to_wei("0.00833333", "ether"),
+            to_wei("75001", "ether"), to_wei("0.00909090", "ether"),
+            to_wei("100001", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000000", "ether"), to_wei("0.00", "ether")
         ],
     ]
 
@@ -79,19 +79,19 @@ def tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_mu
         "gas": 4000000,
         "from": team_multisig
     }
-    contract, hash = chain.provider.deploy_contract('TranchePricing', deploy_args=args, deploy_transaction=tx)
+    contract, hash = chain.provider.deploy_contract('EthTranchePricing', deploy_args=args, deploy_transaction=tx)
 
     contract.transact({"from": team_multisig}).setPreicoAddress(presale_fund_collector.address, to_wei("0.05", "ether"))
     return contract
 
 
 @pytest.fixture
-def tranche_ico(chain, team_multisig, start_time, tranche_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector, end_time) -> Contract:
-    """Create a crowdsale contract that uses tranche based pricing."""
+def wei_tranche_ico(chain, team_multisig, start_time, wei_tranche_pricing, preico_cap, preico_funding_goal, token, presale_fund_collector, end_time) -> Contract:
+    """Create a crowdsale contract that uses wei_tranche based pricing."""
 
     args = [
         token.address,
-        tranche_pricing.address,
+        wei_tranche_pricing.address,
         team_multisig,
         start_time,
         end_time,
@@ -115,108 +115,124 @@ def tranche_ico(chain, team_multisig, start_time, tranche_pricing, preico_cap, p
 
 
 @pytest.fixture()
-def finalizer(chain, token, tranche_ico, team_multisig) -> Contract:
+def finalizer(chain, token, wei_tranche_ico, team_multisig) -> Contract:
     """Set crowdsale end strategy."""
 
     # Create finalizer contract
     args = [
         token.address,
-        tranche_ico.address,
+        wei_tranche_ico.address,
     ]
     contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
 
     token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    tranche_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    wei_tranche_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
     return contract
 
 
-def test_tranche_getter(chain, tranche_pricing, start_time):
+def test_wei_tranche_getter(chain, wei_tranche_pricing, start_time):
     """Tranche data is exposed to the world."""
 
-    amount, price = tranche_pricing.call().getTranche(0)
+    amount, price = wei_tranche_pricing.call().getTranche(0)
     assert amount == 0 #Tranche amount
-    assert price == 100000000000000000
+    assert price == 6666660000000000
 
 
-def test_tranche_data(chain, tranche_pricing, start_time):
+def test_wei_tranche_data(chain, wei_tranche_pricing, start_time):
     """Tranche data can be read."""
 
     for i in range(0, 4):
-        time, price = tranche_pricing.call().getTranche(i)
+        time, price = wei_tranche_pricing.call().getTranche(i)
         print("-", time)
         print("-", price)
 
 
-def test_tranche_prices(chain, tranche_pricing, start_time, end_time, customer):
-    """We get correct tranche prices for different dates."""
+def test_wei_tranche_prices(chain, wei_tranche_pricing, start_time, end_time, customer):
+    """We get correct wei_tranche prices for different dates."""
 
     #TODO: Instead of timetravel, buy tokens here after this line, and then copy this
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.10", "ether"),
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.00666666", "ether"),
         0,
         0,
         customer,
         0,
     ) == 1
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.10", "ether"),
-        122,
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.00714285", "ether"),
         0,
+        to_wei("10000", "ether"),
         customer,
         0,
     ) == 1
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.12", "ether"),
-        123,
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.00714285", "ether"),
         0,
+        to_wei("10001", "ether"),
         customer,
         0,
     ) == 1
 
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.03000000", "ether"),
+        0,
+        to_wei("100001", "ether"),
+        customer,
+        0,
+    ) == 3
 
-def test_non_fractional_price(chain, tranche_pricing, customer, end_time):
+
+def test_non_fractional_price(chain, wei_tranche_pricing, customer, end_time):
     """We divide price correctly for integer only amount."""
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.28", "ether"),
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.01333332", "ether"),
         0,
         0,
         customer,
         0,
     ) == 2
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.281", "ether"),
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.01333335", "ether"),
         0,
         0,
         customer,
         0,
     ) == 2
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.11", "ether"),
-        122,
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.00666666", "ether"),
         0,
+        to_wei("10000", "ether"),
         customer,
         0,
     ) == 1
 
-    assert tranche_pricing.call().calculatePrice(
-        to_wei("0.25", "ether"),
-        123,
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.01428570", "ether"),
         0,
+        to_wei("10001", "ether"),
         customer,
         0,
     ) == 2
 
+    assert wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.03000000", "ether"),
+        0,
+        to_wei("100001", "ether"),
+        customer,
+        0,
+    ) == 3
 
-def test_tranche_calculate_preico_price(chain, tranche_pricing, start_time, presale_fund_collector):
+
+def test_wei_tranche_calculate_preico_price(chain, wei_tranche_pricing, start_time, presale_fund_collector):
     """Preico contributors get their special price."""
 
     # Pre-ico address always buys at the fixed price
-    assert tranche_pricing.call().calculatePrice(
+    assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.05", "ether"),
         0,
         0,
@@ -225,32 +241,32 @@ def test_tranche_calculate_preico_price(chain, tranche_pricing, start_time, pres
     ) == 1
 
 
-def test_presale_move_to_tranche_based_crowdsale(chain, presale_fund_collector, tranche_ico, finalizer, token, start_time, team_multisig, customer, customer_2):
-    """When pre-ico contract funds are moved to the crowdsale, the pre-sale investors gets tokens with a preferred price and not the current tranche price."""
+def test_presale_move_to_wei_tranche_based_crowdsale(chain, presale_fund_collector, wei_tranche_ico, finalizer, token, start_time, team_multisig, customer, customer_2):
+    """When pre-ico contract funds are moved to the crowdsale, the pre-sale investors gets tokens with a preferred price and not the current wei_tranche price."""
 
     value = to_wei(50, "ether")
     presale_fund_collector.transact({"from": customer, "value": value}).invest()
 
     # ICO begins, Link presale to an actual ICO
-    presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(tranche_ico.address)
+    presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(wei_tranche_ico.address)
     time_travel(chain, start_time)
 
-    assert tranche_ico.call().getState() == CrowdsaleState.Funding
+    assert wei_tranche_ico.call().getState() == CrowdsaleState.Funding
 
     # Load funds to ICO
     presale_fund_collector.transact().parcipateCrowdsaleAll()
 
     # Tokens received, paid by preico price
-    tranche_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
+    wei_tranche_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
     token.call().balanceOf(customer) == 50 / 0.050
 
 
-def test_fractional_preico_pricing(presale_fund_collector, tranche_pricing, fractional_token):
+def test_fractional_preico_pricing(presale_fund_collector, wei_tranche_pricing, fractional_token):
     """Pre-ICO amount is calculated correctly for a token having fractions.
 
     """
 
-    amount = tranche_pricing.call().calculatePrice(
+    amount = wei_tranche_pricing.call().calculatePrice(
         to_wei("0.05", "ether"),
         0,
         0,
@@ -267,21 +283,21 @@ def test_fractional_preico_pricing(presale_fund_collector, tranche_pricing, frac
     assert d.as_tuple() == Decimal("1.00000000").as_tuple()
 
 
-def test_fractional_tranche_pricing(chain, presale_fund_collector, tranche_pricing, fractional_token, customer):
+def test_fractional_wei_tranche_pricing(chain, presale_fund_collector, wei_tranche_pricing, fractional_token, customer):
     """Tranche amount is calculated correctly for a token having fractions."""
 
-    amount = tranche_pricing.call().calculatePrice(
-        to_wei("0.512345678", "ether"),
+    amount = wei_tranche_pricing.call().calculatePrice(
+        to_wei("0.01000000", "ether"),
         0,
-        0,
+        to_wei("100001", "ether"),
         customer,
         fractional_token.call().decimals()
     )
 
-    assert amount == 512345678
+    assert amount == 100000000
     d = decimalize_token_amount(fractional_token, amount)
 
-    assert d == Decimal("5.12345678")
+    assert d == Decimal("1.00000000")
 
     # Make sure we get decimals right
-    assert d.as_tuple() == Decimal("5.12345678").as_tuple()
+    assert d.as_tuple() == Decimal("1.00000000").as_tuple()
