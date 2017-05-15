@@ -163,12 +163,18 @@ contract Crowdsale is Haltable {
    */
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
 
-    // Are we whitelisted for early deposit
-    if(!earlyParticipantWhitelist[receiver]) {
-      if(getState() != State.Funding) {
-        // Retail participants can only come in when the crowdsale is running
+    // Determine if it's a good time to accept investment from this participant
+    if(getState() == State.PreFunding) {
+      // Are we whitelisted for early deposit
+      if(!earlyParticipantWhitelist[receiver]) {
         throw;
       }
+    } else if(getState() == State.Funding) {
+      // Retail participants can only come in when the crowdsale is running
+      // pass
+    } else {
+      // Unwanted state
+      throw;
     }
 
     uint weiAmount = msg.value;
