@@ -64,11 +64,14 @@ def fractional_token(chain, token_name, token_symbol, team_multisig) -> Contract
 def wei_tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_multisig):
     args = [
         [
-            0, to_wei("0.10", "ether"),
-            123, to_wei("0.12", "ether"),
-            1234, to_wei("0.13", "ether"),
-            12345, to_wei("0.14", "ether"),
-            123456, to_wei("0", "ether"),
+            to_wei("0", "ether"), to_wei("0.00666666", "ether"),
+            to_wei("10001", "ether"), to_wei("0.00714285", "ether"),
+            to_wei("30001", "ether"), to_wei("0.00769230", "ether"),
+            to_wei("50001", "ether"), to_wei("0.00833333", "ether"),
+            to_wei("75001", "ether"), to_wei("0.00909090", "ether"),
+            to_wei("100001", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000000", "ether"), to_wei("0.00", "ether")
         ],
     ]
 
@@ -132,7 +135,7 @@ def test_wei_tranche_getter(chain, wei_tranche_pricing, start_time):
 
     amount, price = wei_tranche_pricing.call().getTranche(0)
     assert amount == 0 #Tranche amount
-    assert price == 100000000000000000
+    assert price == 6666660000000000
 
 
 def test_wei_tranche_data(chain, wei_tranche_pricing, start_time):
@@ -149,7 +152,7 @@ def test_wei_tranche_prices(chain, wei_tranche_pricing, start_time, end_time, cu
 
     #TODO: Instead of timetravel, buy tokens here after this line, and then copy this
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.10", "ether"),
+        to_wei("0.00666666", "ether"),
         0,
         0,
         customer,
@@ -157,25 +160,25 @@ def test_wei_tranche_prices(chain, wei_tranche_pricing, start_time, end_time, cu
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.10", "ether"),
+        to_wei("0.00714285", "ether"),
         0,
-        122,
+        to_wei("10000", "ether"),
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.12", "ether"),
+        to_wei("0.00714285", "ether"),
         0,
-        123,
+        to_wei("10001", "ether"),
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.39", "ether"),
+        to_wei("0.03000000", "ether"),
         0,
-        1234,
+        to_wei("100001", "ether"),
         customer,
         0,
     ) == 3
@@ -185,7 +188,7 @@ def test_non_fractional_price(chain, wei_tranche_pricing, customer, end_time):
     """We divide price correctly for integer only amount."""
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.28", "ether"),
+        to_wei("0.01333332", "ether"),
         0,
         0,
         customer,
@@ -193,7 +196,7 @@ def test_non_fractional_price(chain, wei_tranche_pricing, customer, end_time):
     ) == 2
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.281", "ether"),
+        to_wei("0.01333335", "ether"),
         0,
         0,
         customer,
@@ -201,25 +204,25 @@ def test_non_fractional_price(chain, wei_tranche_pricing, customer, end_time):
     ) == 2
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.11", "ether"),
+        to_wei("0.00666666", "ether"),
         0,
-        122,
+        to_wei("10000", "ether"),
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.25", "ether"),
+        to_wei("0.01428570", "ether"),
         0,
-        123,
+        to_wei("10001", "ether"),
         customer,
         0,
     ) == 2
 
     assert wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.40", "ether"),
+        to_wei("0.03000000", "ether"),
         0,
-        1234,
+        to_wei("100001", "ether"),
         customer,
         0,
     ) == 3
@@ -284,17 +287,17 @@ def test_fractional_wei_tranche_pricing(chain, presale_fund_collector, wei_tranc
     """Tranche amount is calculated correctly for a token having fractions."""
 
     amount = wei_tranche_pricing.call().calculatePrice(
-        to_wei("0.512345678", "ether"),
+        to_wei("0.01000000", "ether"),
         0,
-        0,
+        to_wei("100001", "ether"),
         customer,
         fractional_token.call().decimals()
     )
 
-    assert amount == 512345678
+    assert amount == 100000000
     d = decimalize_token_amount(fractional_token, amount)
 
-    assert d == Decimal("5.12345678")
+    assert d == Decimal("1.00000000")
 
     # Make sure we get decimals right
-    assert d.as_tuple() == Decimal("5.12345678").as_tuple()
+    assert d.as_tuple() == Decimal("1.00000000").as_tuple()
