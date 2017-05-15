@@ -80,6 +80,9 @@ contract Crowdsale is Haltable {
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
+  /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
+  mapping (address => bool) public earlyParticipantWhitelist;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -103,6 +106,9 @@ contract Crowdsale is Haltable {
 
   // The rules were changed what kind of investments we accept
   event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -155,7 +161,15 @@ contract Crowdsale is Haltable {
    * @param customerId (optional) UUID v4 to track the successful payments on the server side
    *
    */
-  function investInternal(address receiver, uint128 customerId) inState(State.Funding) stopInEmergency private {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+
+    // Are we whitelisted for early deposit
+    if(!earlyParticipantWhitelist[receiver]) {
+      if(getState() != State.Funding) {
+        // Retail participants can only come in when the crowdsale is running
+        throw;
+      }
+    }
 
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
@@ -299,6 +313,16 @@ contract Crowdsale is Haltable {
     signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
+
+  /**
+   * Allow addresses to do early participation.
+   *
+   */
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+    earlyParticipantWhitelist[addr] = status;
+    Whitelisted(addr, status);
+  }
+
 
   /**
    * Allow to (re)set pricing strategy.

@@ -35,13 +35,25 @@ def test_initialized(ico: Contract, uncapped_token: Contract, team_multisig, pre
     assert ico.call().minimumFundingGoal() == preico_funding_goal
 
 
-def test_buy_early(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at):
+def test_buy_early(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, uncapped_token):
     """Cannot buy too early."""
 
     time_travel(chain, preico_starts_at - 1)
     assert ico.call().getState() == CrowdsaleState.PreFunding
     with pytest.raises(TransactionFailed):
         ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+
+
+
+def test_buy_early_whitelisted(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, team_multisig, uncapped_token):
+    """Whitelisted participants can buy earliy."""
+
+    time_travel(chain, preico_starts_at - 1)
+    assert ico.call().getState() == CrowdsaleState.PreFunding
+    ico.transact({"from": team_multisig}).setEarlyParicipantWhitelist(customer, True)
+    ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
+    assert uncapped_token.call().balanceOf(customer) > 0
+
 
 
 def test_buy_one_investor(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):

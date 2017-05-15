@@ -12,7 +12,7 @@ from populus.utils.cli import request_account_unlock
 from ico.utils import check_succesful_tx
 from ico.utils import check_multiple_succesful_txs
 from ico.etherscan import verify_contract
-from ico.etherscan import get_etherscan_link%cpas
+from ico.etherscan import get_etherscan_link
 from ico.utils import get_constructor_arguments
 
 
