@@ -1,8 +1,10 @@
-"""Minted and capped crowdsale."""
+"""Token capped crowdsale."""
 import datetime
 
 import pytest
+from eth_utils import from_wei
 from eth_utils import to_wei
+from ethereum.tester import TransactionFailed
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
@@ -36,45 +38,39 @@ def minimum_funding_goal() -> int:
 @pytest.fixture
 def cap() -> int:
     """What is our maximum tokens sold capacity."""
-    return 4000000
+    return to_wei(888888, "ether")
 
 
 @pytest.fixture
 def founder_allocation() -> float:
     """How much tokens are allocated to founders, etc."""
-    return 0.2
+    return 7.0/3.0
 
 
 @pytest.fixture
-def milestone_pricing(chain, start_time, end_time):
-    """Milestone pricing, do not set presale collection contract."""
+def pricing_strategy(chain, start_time, end_time, team_multisig):
 
     week = 24*3600 * 7
 
     args = [
-        [
-            start_time + 0, to_wei("0.10", "ether"),
-            start_time + week*1, to_wei("0.11", "ether"),
-            start_time + week*2, to_wei("0.12", "ether"),
-            start_time + week*3, to_wei("0.13", "ether"),
-            end_time, 0,
-        ]
+       to_wei(1, "ether")
     ]
 
     tx = {
-        "gas": 4000000
+        "from": team_multisig,
     }
-    contract, hash = chain.provider.deploy_contract('MilestonePricing', deploy_args=args, deploy_transaction=tx)
+
+    contract, hash = chain.provider.deploy_contract('FlatPricing', deploy_args=args, deploy_transaction=tx)
     return contract
 
 
 @pytest.fixture
-def crowdsale(chain, team_multisig, start_time, end_time, milestone_pricing, preico_cap, minimum_funding_goal, cap, token) -> Contract:
+def crowdsale(chain, team_multisig, start_time, end_time, pricing_strategy, preico_cap, minimum_funding_goal, cap, token) -> Contract:
     """Create a crowdsale contract that has a minting cap and bonus % and token sold limit."""
 
     args = [
         token.address,
-        milestone_pricing.address,
+        pricing_strategy.address,
         team_multisig,
         start_time,
         end_time,
@@ -86,11 +82,11 @@ def crowdsale(chain, team_multisig, start_time, end_time, milestone_pricing, pre
         "from": team_multisig,
     }
 
-    contract, hash = chain.provider.deploy_contract('MintedTokenCappedCrowdsale', deploy_args=args, deploy_transaction=tx)
+    contract, hash = chain.provider.deploy_contract('MintedEthCappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
     assert contract.call().owner() == team_multisig
     assert not token.call().released()
-    assert contract.call().maximumSellableTokens() == cap
+    assert contract.call().weiCap() == cap
 
     # Allow crowdsale contract to do mint()
     token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
@@ -124,44 +120,7 @@ def finalizer(chain, token, crowdsale, team_multisig, founder_allocation) -> Con
     return contract
 
 
-def test_buy_some(chain, crowdsale, token, finalizer, start_time, end_time, team_multisig, customer, minimum_funding_goal, founder_allocation):
-    """Buy some token and finalize crowdsale."""
-
-    # Buy on first week
-    time_travel(chain, start_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Funding
-
-    # Buy minimum funding goal
-    wei_value = minimum_funding_goal
-    crowdsale.transact({"from": customer, "value": wei_value}).buy()
-    assert crowdsale.call().isMinimumGoalReached()
-
-    # Close the deal
-    time_travel(chain, end_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Success
-    crowdsale.transact({"from": team_multisig}).finalize()
-    assert crowdsale.call().getState() == CrowdsaleState.Finalized
-
-    customer_tokens = 7500 / 0.10
-
-    # See that we counted bonus correctly
-    assert finalizer.call().allocatedBonus() == customer_tokens * 0.2
-
-    # See that bounty tokens do not count against tokens sold
-    assert crowdsale.call().tokensSold() == customer_tokens
-    assert token.call().totalSupply() == customer_tokens * (1+founder_allocation)
-
-    # See that customers get their tokens
-    assert token.call().balanceOf(customer) == crowdsale.call().tokensSold()
-
-    # See that team multisig got our bonus tokens
-    assert token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
-
-    # Token is transferable
-    assert token.call().released()
-
-
-def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_multisig, customer, cap, founder_allocation):
+def test_buy_all(chain, web3, crowdsale, token, finalizer, start_time, end_time, team_multisig, customer, cap, founder_allocation):
     """Buy all tokens and finalize crowdsale."""
 
     # Buy on first week
@@ -169,7 +128,8 @@ def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_
     assert crowdsale.call().getState() == CrowdsaleState.Funding
 
     # Buy all cap
-    wei_value = cap * to_wei("0.10", "ether")
+    wei_value = cap
+    print(from_wei(web3.eth.getBalance(customer), "ether"))
     crowdsale.transact({"from": customer, "value": wei_value}).buy()
     assert crowdsale.call().isCrowdsaleFull()
 
@@ -179,20 +139,22 @@ def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_
     crowdsale.transact({"from": team_multisig}).finalize()
     assert crowdsale.call().getState() == CrowdsaleState.Finalized
 
-    customer_tokens = 4000000
-
     # See that we counted bonus correctly
-    assert finalizer.call().allocatedBonus() == 800000
-
-    # See that bounty tokens do not count against tokens sold
-    assert crowdsale.call().tokensSold() == customer_tokens
-    assert token.call().totalSupply() == customer_tokens * (1 + founder_allocation)
-
-    # See that customers get their tokens
-    assert token.call().balanceOf(customer) == crowdsale.call().tokensSold()
-
-    # See that team multisig got our bonus tokens
-    assert token.call().balanceOf(team_multisig) == crowdsale.call().tokensSold() * founder_allocation
+    team_bonus = token.call().totalSupply() * 7 / 10
+    assert abs(finalizer.call().allocatedBonus() - team_bonus) < 10  # We lose some in decimal rounding
 
     # Token is transferable
     assert token.call().released()
+
+
+def test_buy_all_plus_one(chain, web3, crowdsale, token, finalizer, start_time, end_time, team_multisig, customer, cap, founder_allocation):
+    """Buy too many tokens."""
+
+    # Buy on first week
+    time_travel(chain, start_time + 1)
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+
+    # Buy all cap
+    wei_value = cap + 1
+    with pytest.raises(TransactionFailed):
+        crowdsale.transact({"from": customer, "value": wei_value}).buy()
