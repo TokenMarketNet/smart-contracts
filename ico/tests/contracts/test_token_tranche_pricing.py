@@ -79,7 +79,7 @@ def tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_mu
         "gas": 4000000,
         "from": team_multisig
     }
-    contract, hash = chain.provider.deploy_contract('TranchePricing', deploy_args=args, deploy_transaction=tx)
+    contract, hash = chain.provider.deploy_contract('TokenTranchePricing', deploy_args=args, deploy_transaction=tx)
 
     contract.transact({"from": team_multisig}).setPreicoAddress(presale_fund_collector.address, to_wei("0.05", "ether"))
     return contract
@@ -175,6 +175,14 @@ def test_tranche_prices(chain, tranche_pricing, start_time, end_time, customer):
         0,
     ) == 1
 
+    assert tranche_pricing.call().calculatePrice(
+        to_wei("0.39", "ether"),
+        1234,
+        0,
+        customer,
+        0,
+    ) == 3
+
 
 def test_non_fractional_price(chain, tranche_pricing, customer, end_time):
     """We divide price correctly for integer only amount."""
@@ -210,6 +218,14 @@ def test_non_fractional_price(chain, tranche_pricing, customer, end_time):
         customer,
         0,
     ) == 2
+
+    assert tranche_pricing.call().calculatePrice(
+        to_wei("0.40", "ether"),
+        1234,
+        0,
+        customer,
+        0,
+    ) == 3
 
 
 def test_tranche_calculate_preico_price(chain, tranche_pricing, start_time, presale_fund_collector):
