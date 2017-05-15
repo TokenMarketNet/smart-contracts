@@ -339,6 +339,18 @@ def test_close_early(chain: TestRPCChain, ico: Contract, customer: str, preico_s
     with pytest.raises(TransactionFailed):
         ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
 
+    args = [
+        1,
+    ]
+    tx = {
+        "from": team_multisig,
+    }
+    pricing_strategy, hash = chain.provider.deploy_contract('FlatPricing', deploy_args=args, deploy_transaction=tx)
+
+    ico.transact({"from": team_multisig}).setPricingStrategy(pricing_strategy.address)
+    assert ico.call().pricingStrategy() == pricing_strategy.address
+
+
 
 def test_close_late(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
     """Extend crowdsale."""
