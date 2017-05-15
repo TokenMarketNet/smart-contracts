@@ -334,8 +334,24 @@ def test_close_early(chain: TestRPCChain, ico: Contract, customer: str, preico_s
     ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
     ico.transact({"from": team_multisig}).setEndsAt(new_early)
 
+    # Here we try to switch the strategy, and buy again, 1 wei for 1 token
+    args = [
+        1,
+    ]
+    tx = {
+        "from": team_multisig,
+    }
+    pricing_strategy, hash = chain.provider.deploy_contract('FlatPricing', deploy_args=args, deploy_transaction=tx)
+
+    ico.transact({"from": team_multisig}).setPricingStrategy(pricing_strategy.address)
+    assert ico.call().pricingStrategy() == pricing_strategy.address
+
+    ico.transact({"from": customer, "value": 1}).buy()
+
+    # Finally, here we travel in time to situation after the early closing:
     time_travel(chain, new_early + 1)
     assert ico.call().getState() == CrowdsaleState.Failure
+
     with pytest.raises(TransactionFailed):
         ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
 
