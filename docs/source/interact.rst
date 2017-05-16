@@ -212,3 +212,32 @@ Example triggering the funds transfer to ICO:
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
+
+
+Whitelisting crowdsale participants
+===================================
+
+Here is an example how to whitelist ICO participants before the ICO beings:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25"  # Our controller account on Kovan
+
+    with p.get_chain("kovan") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "Crowdsale")
+        contract = Contract(address="0x06829437859594e19276f87df601436ef55af4f2")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = contract.transact({"from": account}).setEarlyParicipantWhitelist("0x65cbd9a48c366f66958196b0a2af81fc73987ba3", True)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
