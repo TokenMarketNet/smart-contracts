@@ -50,11 +50,6 @@ contract EthTranchePricing is PricingStrategy, Ownable {
 
     uint highestAmount = 0;
 
-    // We need to start from zero
-    if(tranches[i].amount != 0) {
-      throw;
-    }
-
     for(uint i=0; i<_tranches.length/2; i++) {
       tranches[i].amount = _tranches[i*2];
       tranches[i].price = _tranches[i*2+1];
@@ -65,6 +60,11 @@ contract EthTranchePricing is PricingStrategy, Ownable {
       }
 
       highestAmount = tranches[i].amount;
+    }
+
+    // We need to start from zero, otherwise we blow up our deployment
+    if(tranches[0].amount != 0) {
+      throw;
     }
 
     // Last tranche price must be zero, terminating the crowdale
