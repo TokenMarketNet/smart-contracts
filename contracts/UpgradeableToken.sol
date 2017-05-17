@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/contracts/token/ERC20.sol";
-import "zeppelin/contracts/token/StandardToken.sol";
+import './StandardToken.sol';
 import "./UpgradeAgent.sol";
 
 /**

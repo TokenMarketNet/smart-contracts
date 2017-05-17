@@ -1,6 +1,6 @@
 import "zeppelin/contracts/token/ERC20.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
-import "zeppelin/contracts/token/StandardToken.sol";
+import './StandardToken.sol';
 import "./SafeMathLib.sol";
 
 pragma solidity ^0.4.6;
