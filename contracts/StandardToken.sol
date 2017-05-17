@@ -70,4 +70,37 @@ contract StandardToken is ERC20, SafeMath {
     return allowed[_owner][_spender];
   }
 
+  /**
+   * Atomic increment of approved spending
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
+   */
+  function addApproval(address _spender, uint _addedValue)
+  onlyPayloadSize(2)
+  returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      return true;
+  }
+
+  /**
+   * Atomic decrement of approved spending.
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   */
+  function subApproval(address _spender, uint _subtractedValue)
+  onlyPayloadSize(2)
+  returns (bool success) {
+
+      uint oldVal = allowed[msg.sender][_spender];
+
+      if (_subtractedValue > oldVal) {
+          allowed[msg.sender][_spender] = 0;
+      } else {
+          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
+      }
+      return true;
+  }
+
 }

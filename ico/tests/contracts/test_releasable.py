@@ -110,3 +110,4 @@ def test_transfer_with_allowance_exceeded(released_token: Contract, customer: st
 
     with pytest.raises(TransactionFailed):
         token.transact({"from": allowed_party}).transferFrom(customer, empty_address, amount+1)
+
