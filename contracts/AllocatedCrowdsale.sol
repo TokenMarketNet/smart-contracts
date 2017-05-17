@@ -4,28 +4,20 @@ pragma solidity ^0.4.8;
 import "./Crowdsale.sol";
 
 /**
- * PreICO crowdsale contract.
+ * A crowdsale that is selling tokens from a preallocated pool
  *
- *
- * Intended usage
  *
  * - Tokens have precreated supply "premined"
- * - Small share of tokens of the actual crowdsale
- * - A short time window
- * - Flat price
- * - beneficiary is the party who is supplying the tokens for this ICO
+ *
+ * - Token owner must transfer sellable tokens to the crowdsale contract using ERC20.approve()
  *
  */
-contract PreminedCappedCrowdsale is Crowdsale {
-
-  /** How many ETH in max we are allowed to raise */
-  uint public weiCap;
+contract AllocatedCrowdsale is Crowdsale {
 
   /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
   address public beneficiary;
 
-  function PreminedCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
-    weiCap = _weiCap;
+  function AllocatedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
     beneficiary = _beneficiary;
   }
 
@@ -40,6 +32,9 @@ contract PreminedCappedCrowdsale is Crowdsale {
     }
   }
 
+  /**
+   * We are sold out when our approve pool becomes empty.
+   */
   function isCrowdsaleFull() public constant returns (bool) {
     return getTokensLeft() == 0;
   }
@@ -51,8 +46,12 @@ contract PreminedCappedCrowdsale is Crowdsale {
     return token.allowance(owner, this);
   }
 
+  /**
+   * Transfer tokens from approve() pool to the buyer.
+   *
+   * Use approve() given to this crowdsale to distribute the tokens.
+   */
   function assignTokens(address receiver, uint tokenAmount) private {
-    // Use approve() given to this crowdsale to distribute the tokens
     if(!token.transferFrom(beneficiary, receiver, tokenAmount)) throw;
   }
 }
