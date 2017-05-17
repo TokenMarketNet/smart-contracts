@@ -30,7 +30,7 @@ contract StandardToken is ERC20, SafeMath {
      _;
   }
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
