@@ -163,24 +163,24 @@ def test_wei_tranche_prices(chain, wei_tranche_pricing, start_time, end_time, cu
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.00714285", "ether"),
-        0,
         to_wei("10000", "ether"),
+        0,
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.00714285", "ether"),
-        0,
         to_wei("10001", "ether"),
+        0,
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.03000000", "ether"),
-        0,
         to_wei("100001", "ether"),
+        0,
         customer,
         0,
     ) == 3
@@ -207,24 +207,24 @@ def test_non_fractional_price(chain, wei_tranche_pricing, customer, end_time):
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.00666666", "ether"),
-        0,
         to_wei("10000", "ether"),
+        0,
         customer,
         0,
     ) == 1
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.01428570", "ether"),
-        0,
         to_wei("10001", "ether"),
+        0,
         customer,
         0,
     ) == 2
 
     assert wei_tranche_pricing.call().calculatePrice(
         to_wei("0.03000000", "ether"),
-        0,
         to_wei("100001", "ether"),
+        0,
         customer,
         0,
     ) == 3
@@ -290,8 +290,8 @@ def test_fractional_wei_tranche_pricing(chain, presale_fund_collector, wei_tranc
 
     amount = wei_tranche_pricing.call().calculatePrice(
         to_wei("0.01000000", "ether"),
-        0,
         to_wei("100001", "ether"),
+        0,
         customer,
         fractional_token.call().decimals()
     )

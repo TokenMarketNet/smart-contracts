@@ -213,16 +213,16 @@ def test_non_fractional_price(chain, tranche_pricing, customer, end_time):
 
     assert tranche_pricing.call().calculatePrice(
         to_wei("0.25", "ether"),
-        123,
         0,
+        123,
         customer,
         0,
     ) == 2
 
     assert tranche_pricing.call().calculatePrice(
         to_wei("0.40", "ether"),
-        1234,
         0,
+        1234,
         customer,
         0,
     ) == 3

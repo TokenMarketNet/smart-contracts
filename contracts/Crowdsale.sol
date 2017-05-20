@@ -450,6 +450,11 @@ contract Crowdsale is Haltable {
     ownerTestValue = val;
   }
 
+  /** Interface marker. */
+  function isCrowdsale() public constant returns (bool) {
+    return true;
+  }
+
   //
   // Modifiers
   //

@@ -22,7 +22,7 @@ contract FlatPricing is PricingStrategy {
    *
    * @param  {uint amount} Buy-in value in wei.
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint) {
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
     uint multiplier = 10 ** decimals;
     return value.times(multiplier) / tokenPrice;
   }
