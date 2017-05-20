@@ -46,6 +46,8 @@ contract PreICOProxyBuyer is Ownable {
    /** How many investors have claimed their tokens */
   uint public claimCount;
 
+  uint public totalClaimed;
+
   /** Our ICO contract where we will move the funds */
   Crowdsale public crowdsale;
 
@@ -169,7 +171,7 @@ contract PreICOProxyBuyer is Ownable {
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    getClaimAmount(investor).minus(claimed[investor]);
+    return getClaimAmount(investor).minus(claimed[investor]);
   }
 
   /**
@@ -186,12 +188,22 @@ contract PreICOProxyBuyer is Ownable {
   function claim(uint amount) {
     address investor = msg.sender;
 
+    if(amount == 0) {
+      throw;
+    }
+
     if(getClaimLeft(investor) < amount) {
       // Woops we cannot get more than we have left
       throw;
     }
 
+    // We track who many investor have (partially) claimed their tokens
+    if(claimed[investor] == 0) {
+      claimCount++;
+    }
+
     claimed[investor] = claimed[investor].plus(amount);
+    totalClaimed = totalClaimed.plus(amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);

@@ -429,6 +429,20 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Check if the contract relationship looks good.
+   */
+  function isFinalizerSane() public constant returns (bool sane) {
+    return finalizeAgent.isSane();
+  }
+
+  /**
+   * Check if the contract relationship looks good.
+   */
+  function isPricingSane() public constant returns (bool sane) {
+    return pricingStrategy.isSane(address(this));
+  }
+
+  /**
    * Crowdfund state machine management.
    *
    * We make it a function and do not assign the result to a variable, so there is no chance of the variable being stale.
