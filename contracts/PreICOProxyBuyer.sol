@@ -13,6 +13,8 @@ import "./StandardToken.sol";
  * - Allow owner to set the crowdsale
  * - Have refund after X days as a safety hatch if the crowdsale doesn't materilize
  * - Allow unlimited investors
+ * - Tokens are distributed on PreICOProxyBuyer smart contract first
+ * - The original investors can claim their tokens from the smart contract after the token transfer has been released
  *
  */
 contract PreICOProxyBuyer is Ownable {
