@@ -195,3 +195,33 @@ def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_mult
 
     with pytest.raises(TransactionFailed):
         proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+
+def test_proxy_buy_claim_too_much(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """You cannot claim more you got in the fair sahre"""
+
+    assert proxy_buyer.call().getState() == 1
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+    # We got our tokens
+    assert proxy_buyer.call().getState() == 2
+    assert proxy_buyer.call().getClaimAmount(customer) == 12000000
+    assert proxy_buyer.call().getClaimLeft(customer) == 12000000
+    assert proxy_buyer.call().tokensBought() == 36000000
+
+    # Tokens cannot be claimed before they are released
+    time_travel(chain, crowdsale.call().endsAt()+1)
+    crowdsale.transact({"from": team_multisig}).finalize()
+    assert token.call().released()
+
+    # Claim too many tokens
+    with pytest.raises(TransactionFailed):
+        proxy_buyer.transact({"from": customer}).claim(12000000+1)
