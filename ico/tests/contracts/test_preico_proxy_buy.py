@@ -84,6 +84,7 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
     assert proxy_buyer.call().crowdsale() == crowdsale.address
     proxy_buyer.transact({"from": customer}).buyForEverybody()
+    assert web3.eth.getBalance(proxy_buyer.address) == 0
 
     # We got our tokens
     assert proxy_buyer.call().getState() == 2
@@ -112,4 +113,85 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
 
 
 
+def test_proxy_buy_claim_twice(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """Claim in two batches, uneven divide."""
 
+    assert proxy_buyer.call().getState() == 1
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+    # We got our tokens
+    assert proxy_buyer.call().getState() == 2
+    assert proxy_buyer.call().getClaimAmount(customer) == 12000000
+    assert proxy_buyer.call().getClaimLeft(customer) == 12000000
+    assert proxy_buyer.call().tokensBought() == 12000000
+
+    # Tokens cannot be claimed before they are released
+    time_travel(chain, crowdsale.call().endsAt()+1)
+    crowdsale.transact({"from": team_multisig}).finalize()
+    assert token.call().released()
+
+    # Claim tokens
+    proxy_buyer.transact({"from": customer}).claim(int(12000000/2))
+    assert proxy_buyer.call().totalClaimed() == 12000000/2
+    assert proxy_buyer.call().claimCount() == 1
+    assert proxy_buyer.call().claimed(customer) == 12000000/2
+
+    # Claim more
+    assert proxy_buyer.call().getClaimLeft(customer) == 12000000/2
+    proxy_buyer.transact({"from": customer}).claim(int(12000000/2))
+
+    # Check investors got their tokens
+    assert proxy_buyer.call().totalClaimed() == 12000000
+    assert proxy_buyer.call().claimCount() == 1
+    assert proxy_buyer.call().claimed(customer) == 12000000
+    assert token.call().balanceOf(customer) == 12000000
+
+
+
+def test_proxy_buy_refund(chain, web3, proxy_buyer, crowdsale, customer, customer_2):
+    """We can refund"""
+
+    value = to_wei(1, "ether")
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+
+    time_travel(chain, proxy_buyer.call().freezeEndsAt() + 1)
+    assert proxy_buyer.call().getState() == 3  # Refunding
+
+    before_refund = web3.eth.getBalance(customer)
+    proxy_buyer.transact({"from": customer}).refund()
+    after_refund = web3.eth.getBalance(customer)
+
+    assert from_wei(after_refund - before_refund, "ether") > 0.99  # gas cost epsilon
+    assert proxy_buyer.call().balances(customer) == 0
+
+
+def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """We move funds only once."""
+
+    assert proxy_buyer.call().getState() == 1
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+
+    # Everything funder
+    assert proxy_buyer.call().weiRaisedTotal() == to_wei(30000, "ether")
+    assert web3.eth.getBalance(proxy_buyer.address) == to_wei(30000, "ether")
+    assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
+    assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+    with pytest.raises(TransactionFailed):
+        proxy_buyer.transact({"from": customer}).buyForEverybody()

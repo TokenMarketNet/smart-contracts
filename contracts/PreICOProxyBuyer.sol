@@ -161,6 +161,8 @@ contract PreICOProxyBuyer is Ownable {
    * How may tokens each investor gets.
    */
   function getClaimAmount(address investor) public constant returns (uint) {
+
+    // Claims can be only made if we manage to buy tokens
     if(getState() != State.Distributing) {
       throw;
     }
