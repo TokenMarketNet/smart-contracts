@@ -73,7 +73,7 @@ def token_owner(beneficiary):
 def token(chain, team_multisig, token_name, token_symbol, initial_supply) -> Contract:
     """Create the token contract."""
 
-    args = [token_name, token_symbol, initial_supply, 0]  # Owner set
+    args = [token_name, token_symbol, initial_supply, 0, True]  # Owner set
 
     tx = {
         "from": team_multisig
@@ -87,7 +87,7 @@ def token(chain, team_multisig, token_name, token_symbol, initial_supply) -> Con
 def empty_token(chain, team_multisig, token_name, token_symbol) -> Contract:
     """Create the token contract without initial supply."""
 
-    args = [token_name, token_symbol, 0, 0]  # Owner set
+    args = [token_name, token_symbol, 0, 0, True]  # Owner set
 
     tx = {
         "from": team_multisig

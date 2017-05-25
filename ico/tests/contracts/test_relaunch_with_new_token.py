@@ -22,7 +22,7 @@ def token(empty_token):
 def new_token(chain, team_multisig, token_name, token_symbol) -> Contract:
     """Get another token contract with 0 initial issuance."""
 
-    args = [token_name, token_symbol, 0, 0]  # Owner set
+    args = [token_name, token_symbol, 0, 0, True]  # Owner set
 
     tx = {
         "from": team_multisig

@@ -60,7 +60,7 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
     setInvestorData(_addr, _weiAmount, _tokenAmount, _originalTxHash);
 
     // Check that we did not bust the cap in the restoration process
-    if(isBreakingCap(_tokenAmount, _weiAmount, weiRaised, tokensSold)) {
+    if(isBreakingCap(_weiAmount, _tokenAmount, weiRaised, tokensSold)) {
       throw;
     }
 

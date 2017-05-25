@@ -50,7 +50,7 @@ def token(uncapped_token) -> Contract:
 def fractional_token(chain, token_name, token_symbol, team_multisig) -> Contract:
     """Token contract having 8 decimal places."""
 
-    args = [token_name, token_symbol, 0, 8]  # Owner set
+    args = [token_name, token_symbol, 0, 8, True]  # Owner set
 
     tx = {
         "from": team_multisig

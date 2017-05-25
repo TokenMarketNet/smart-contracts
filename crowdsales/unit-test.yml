@@ -76,6 +76,7 @@ unit_test:
                 _symbol: EXA
                 _initialSupply: 0
                 _decimals: 0
+                _mintable: True
         #
         # Pricing strategy
         #

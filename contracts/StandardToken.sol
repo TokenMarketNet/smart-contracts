@@ -37,7 +37,7 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
+    uint _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
@@ -81,6 +81,7 @@ contract StandardToken is ERC20, SafeMath {
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
@@ -100,6 +101,7 @@ contract StandardToken is ERC20, SafeMath {
       } else {
           allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
       }
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 

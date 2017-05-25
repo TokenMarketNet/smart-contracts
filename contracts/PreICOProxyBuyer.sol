@@ -108,6 +108,8 @@ contract PreICOProxyBuyer is Ownable {
     // Cannot invest anymore through crowdsale when moving has begun
     if(getState() != State.Funding) throw;
 
+    if(msg.value == 0) throw; // No empty buys
+
     address investor = msg.sender;
 
     bool existing = balances[investor] > 0;

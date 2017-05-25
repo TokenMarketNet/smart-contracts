@@ -19,7 +19,7 @@ def token(chain, team_multisig):
     amount = 66588888
     decimals = 8
 
-    args = ["Cowbits", "COW", amount * 10**decimals, decimals]  # Owner set
+    args = ["Cowbits", "COW", amount * 10**decimals, decimals, False]  # Owner set
 
     tx = {
         "from": team_multisig

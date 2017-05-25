@@ -2,6 +2,7 @@
 import copy
 import textwrap
 from collections import Counter
+from collections import defaultdict
 from typing import Tuple
 import os
 
@@ -48,6 +49,14 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
     kwargs = dict(**contract_def["arguments"])  # Unwrap YAML CommentedMap
 
     print("Starting", contract_name, "deployment, with arguments ", kwargs)
+
+    # TODO: Workaround when deploying the same contract twice in run,
+    # because Populus contract_identity allows only one contract_identity per contract class
+    # print(chain.registrar.contract_addresses)
+    if "JSONFile" in chain.registrar.registrar_backends:
+        del chain.registrar.registrar_backends["JSONFile"]
+    chain.registrar.registrar_backends["Memory"].contract_addresses = defaultdict(set)
+
     try:
         contract, txhash = chain.provider.deploy_contract(contract_name, deploy_transaction=transaction, deploy_kwargs=kwargs)
     except Exception as e:

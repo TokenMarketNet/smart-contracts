@@ -225,3 +225,4 @@ def test_proxy_buy_claim_too_much(chain, web3, customer, customer_2, team_multis
     # Claim too many tokens
     with pytest.raises(TransactionFailed):
         proxy_buyer.transact({"from": customer}).claim(12000000+1)
+
