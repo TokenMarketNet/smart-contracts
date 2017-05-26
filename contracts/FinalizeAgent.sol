@@ -20,7 +20,7 @@ contract FinalizeAgent {
    */
   function isSane() public constant returns (bool);
 
-  /** Called once by crowdsale finalize() if the sale was success. */
+  /** Called once by crowdsale finalize() if the sale was a success. */
   function finalizeCrowdsale();
 
 }

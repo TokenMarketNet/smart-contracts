@@ -15,7 +15,7 @@ contract ReleasableToken is ERC20, Ownable {
   /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
   bool public released = false;
 
-  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
+  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possibly the team multisig itself. */
   mapping (address => bool) public transferAgents;
 
   /**

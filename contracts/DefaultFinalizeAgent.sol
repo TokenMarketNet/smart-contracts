@@ -23,7 +23,7 @@ contract DefaultFinalizeAgent is FinalizeAgent {
     return (token.releaseAgent() == address(this));
   }
 
-  /** Called once by crowdsale finalize() if the sale was success. */
+  /** Called once by crowdsale finalize() if the sale was a success. */
   function finalizeCrowdsale() public {
     if(msg.sender != address(crowdsale)) {
       throw;

@@ -74,7 +74,7 @@ contract UpgradeableToken is StandardToken {
   }
 
   /**
-   * Set an upgrade agent that handles
+   * Set an upgrade agent that handles the update process
    */
   function setUpgradeAgent(address agent) external {
 
@@ -121,7 +121,7 @@ contract UpgradeableToken is StandardToken {
   }
 
   /**
-   * Child contract can enable to provide the condition when the upgrade can begun.
+   * Child contract can enable to provide the condition when the upgrade can begin.
    */
   function canUpgrade() public constant returns(bool) {
      return true;

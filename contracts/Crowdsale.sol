@@ -32,7 +32,7 @@ contract Crowdsale is Haltable {
   /* Post-success callback */
   FinalizeAgent public finalizeAgent;
 
-  /* tokens will be transfered from this address */
+  /* ether will be transferred to this address */
   address public multisigWallet;
 
   /* if the funding goal is not reached, investors may withdraw their funds */
@@ -211,7 +211,7 @@ contract Crowdsale is Haltable {
     // Pocket the money
     if(!multisigWallet.send(weiAmount)) throw;
 
-    // Tell us invest was success
+    // Tell us investment was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
   }
 
@@ -243,7 +243,7 @@ contract Crowdsale is Haltable {
 
     assignTokens(receiver, tokenAmount);
 
-    // Tell us invest was success
+    // Tell us investment was success
     Invested(receiver, weiAmount, tokenAmount, 0);
   }
 
@@ -303,7 +303,7 @@ contract Crowdsale is Haltable {
   /**
    * Finalize a succcesful crowdsale.
    *
-   * The owner can triggre a call the contract that provides post-crowdsale actions, like releasing the tokens.
+   * The owner can trigger a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
