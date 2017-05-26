@@ -459,11 +459,6 @@ contract Crowdsale is Haltable {
     else return State.Failure;
   }
 
-  /** This is for manual testing of multisig wallet interaction */
-  function setOwnerTestValue(uint val) onlyOwner {
-    ownerTestValue = val;
-  }
-
   /** Interface marker. */
   function isCrowdsale() public constant returns (bool) {
     return true;
