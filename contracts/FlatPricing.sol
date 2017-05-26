@@ -11,10 +11,10 @@ contract FlatPricing is PricingStrategy {
   using SafeMathLib for uint;
 
   /* How many weis one token costs */
-  uint public tokenPrice;
+  uint public oneTokenInWei;
 
-  function FlatPricing(uint _tokenPrice) {
-    tokenPrice = _tokenPrice;
+  function FlatPricing(uint _oneTokenInWei) {
+    oneTokenInWei = _oneTokenInWei;
   }
 
   /**
@@ -24,7 +24,7 @@ contract FlatPricing is PricingStrategy {
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
     uint multiplier = 10 ** decimals;
-    return value.times(multiplier) / tokenPrice;
+    return value.times(multiplier) / oneTokenInWei;
   }
 
 }

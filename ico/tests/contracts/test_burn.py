@@ -42,13 +42,6 @@ def test_burn(token_with_customer_balance: Contract, customer: str):
     assert token.call().balanceOf(customer) == initial_balance - amount
     assert token.call().totalSupply() == initial_supply - amount
 
-    events = token.pastEvents("Transfer").get()
-    assert len(events) == 1 + 1  # plus initial transfer
-    e = events[-1]
-    assert e["args"]["to"] == '0x0000000000000000000000000000000000000000'
-    assert e["args"]["from"] == customer
-    assert e["args"]["value"] == amount
-
     events = token.pastEvents("Burned").get()
     assert len(events) == 1
     e = events[-1]

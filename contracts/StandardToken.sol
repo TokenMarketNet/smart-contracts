@@ -13,6 +13,8 @@ import 'zeppelin/contracts/SafeMath.sol';
  */
 contract StandardToken is ERC20, SafeMath {
 
+  event Minted(address receiver, uint amount);
+
   mapping(address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 

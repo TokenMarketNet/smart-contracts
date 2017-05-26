@@ -19,9 +19,5 @@ contract BurnableToken is StandardToken {
     balances[burner] = safeSub(balances[burner], burnAmount);
     totalSupply = safeSub(totalSupply, burnAmount);
     Burned(burner, burnAmount);
-
-    // Keep exchanges happy by sending the burned amount to
-    // "burn address"
-    Transfer(burner, BURN_ADDRESS, burnAmount);
   }
 }

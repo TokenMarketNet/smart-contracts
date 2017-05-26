@@ -55,6 +55,10 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     // Create initially all balance on the team multisig
     balances[owner] = totalSupply;
 
+    if(totalSupply > 0) {
+      Minted(owner, totalSupply);
+    }
+
     // No more new supply allowed after the token creation
     if(!_mintable) {
       mintingFinished = true;

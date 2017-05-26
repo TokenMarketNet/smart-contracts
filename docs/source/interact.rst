@@ -243,7 +243,6 @@ Here is an example how to whitelist ICO participants before the ICO beings:
         print("OK")
 
 
-
 Change pricing strategy
 =======================
 
@@ -268,6 +267,74 @@ To mix fat finger errors:
             request_account_unlock(chain, account, None)
 
         txid = contract.transact({"from": account}).setPricingStrategy("0x")
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+
+Test buy token
+==============
+
+Try to buy from a whitelisted address or on a testnet with a generated customer id:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei
+
+    import uuid
+
+    p = populus.Project()
+    account = "0x"  # Our controller account on Kovan
+
+    with p.get_chain("kovan") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "Crowdsale")
+        contract = Contract(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
+
+        txid = contract.transact({"from": account, "value": to_wei(2, "ether")}).buyWithCustomerId(customer_id)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+
+Halt payment forwarder
+======================
+
+After a token sale is ended, stop ETH payment forwarder.
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei
+
+    import uuid
+
+    p = populus.Project()
+    account = "0x"  # Our controller account on Kovan
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "PaymentForwarder")
+        contract = Contract(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
+
+        txid = contract.transact({"from": account, "value": to_wei(2, "ether")}).buyWithCustomerId(customer_id)
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
