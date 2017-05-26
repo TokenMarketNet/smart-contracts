@@ -233,7 +233,7 @@ contract Crowdsale is Haltable {
   function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
 
     uint tokenAmount = fullTokens * 10**token.decimals();
-    uint weiAmount = weiPrice * tokenAmount; // This can be also 0, we give out tokens for free
+    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
 
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);

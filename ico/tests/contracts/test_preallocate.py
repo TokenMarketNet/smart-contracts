@@ -162,7 +162,7 @@ def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_
     multiplier = 10**8
     assert crowdsale.call().getTokensLeft() == 100000 * multiplier
     assert token.call().balanceOf(early_investor_pool) == (33588888 - 100000) * multiplier
-    assert crowdsale.call().weiRaised() == 8860000000000000
+    assert crowdsale.call().weiRaised() == 88600000
     assert crowdsale.call().tokensSold() == (33588888 - 100000) * multiplier
 
     # Buy on first week
