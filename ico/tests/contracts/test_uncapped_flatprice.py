@@ -48,7 +48,7 @@ def test_buy_early_whitelisted(chain: TestRPCChain, ico: Contract, customer: str
 
     time_travel(chain, preico_starts_at - 1)
     assert ico.call().getState() == CrowdsaleState.PreFunding
-    ico.transact({"from": team_multisig}).setEarlyParicipantWhitelist(customer, True)
+    ico.transact({"from": team_multisig}).setEarlyParticipantWhitelist(customer, True)
     ico.transact({"from": customer, "value": to_wei(1, "ether")}).buy()
     assert uncapped_token.call().balanceOf(customer) > 0
 
@@ -59,7 +59,7 @@ def test_early_whitelist_only_owner(chain: TestRPCChain, ico: Contract, customer
     time_travel(chain, preico_starts_at - 1)
     assert ico.call().getState() == CrowdsaleState.PreFunding
     with pytest.raises(TransactionFailed):
-        ico.transact({"from": customer}).setEarlyParicipantWhitelist(customer, True)
+        ico.transact({"from": customer}).setEarlyParticipantWhitelist(customer, True)
 
 
 def test_buy_one_investor(chain: TestRPCChain, web3: Web3, ico: Contract, uncapped_token: Contract, customer: str, preico_token_price, preico_starts_at, team_multisig):

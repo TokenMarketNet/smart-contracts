@@ -237,7 +237,7 @@ Here is an example how to whitelist ICO participants before the ICO beings:
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = contract.transact({"from": account}).setEarlyParicipantWhitelist("0x65cbd9a48c366f66958196b0a2af81fc73987ba3", True)
+        txid = contract.transact({"from": account}).setEarlyParticipantWhitelist("0x65cbd9a48c366f66958196b0a2af81fc73987ba3", True)
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
