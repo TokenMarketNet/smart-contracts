@@ -148,13 +148,6 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * Don't expect to just send in money and get tokens.
-   */
-  function() payable {
-    throw;
-  }
-
-  /**
    * Make an investment.
    *
    * Crowdsale must be running for one to invest.
