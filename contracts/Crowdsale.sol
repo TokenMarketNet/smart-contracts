@@ -364,15 +364,13 @@ contract Crowdsale is Haltable {
    * This is useful e.g. for a manual soft cap implementation:
    * - after X amount is reached determine manual closing
    *
-   * This may put the crowdsale to an invalid state,
-   * but we trust owners know what they are doing.
+   * Now you can't anymore set a new endsAt if endsAt is already been reached.
    *
    */
   function setEndsAt(uint time) onlyOwner {
 
-    if(now > time) {
-      throw; // Don't change past
-    }
+    if(now > time || now > endsAt)
+      throw; // Don't change past, or try to re-activate already closed crowdsale
 
     endsAt = time;
     EndsAtChanged(endsAt);
