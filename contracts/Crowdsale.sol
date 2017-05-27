@@ -188,7 +188,7 @@ contract Crowdsale is Haltable {
       throw;
     }
 
-    if(investedAmountOf[receiver] == 0) {
+    if(tokenAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
