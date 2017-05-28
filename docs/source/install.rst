@@ -46,6 +46,36 @@ Create virtualenv for Python package management in the project root folder (same
     source venv/bin/activate
     pip install -r requirements.txt
 
+Setting up - Ubuntu Linux 16.04
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Install dependencies:
+
+.. code-block:: console
+
+    sudo apt install -y git build-essential libssl-dev python3 python3-venv python3-setuptools python3-dev
+
+`Install Go Ethereum <https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Ubuntu>`_:
+
+.. code-block:: console
+
+    sudo apt-get install software-properties-common
+    sudo add-apt-repository -y ppa:ethereum/ethereum
+    sudo apt-get update
+    sudo apt-get install -y ethereum solc
+
+Then:
+
+.. code-block:: console
+
+    git clone # ...
+    cd Smart-Contracts
+    python3.5 -m venv venv
+    source venv/bin/activate
+    pip install wheel
+    pip install -r requirements.txt
+    pip install -e .
+
 Setting up - Ubuntu Linux 14.04
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

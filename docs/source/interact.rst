@@ -340,4 +340,28 @@ After a token sale is ended, stop ETH payment forwarder.
         print("OK")
 
 
+Getting data field value for a function call
+============================================
 
+You can get the function signature (data field payload for a tranaction) for any smart contract function using the following:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei
+
+    import uuid
+
+    p = populus.Project()
+    account = "0x"  # Our controller account on Kovan
+
+    with p.get_chain("kovan") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "PreICOProxyBuyer")
+        # contract = Contract(address="0x")
+
+        sig_data = Contract._prepare_transaction("claimAll")
+        print("Data payload is", sig_data["data"])
