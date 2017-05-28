@@ -14,6 +14,7 @@ from web3.contract import Contract
 
 from ico.state import CrowdsaleState
 from ico.utils import check_succesful_tx
+from ico.utils import check_multiple_succesful_txs
 
 
 def _datetime(*args) -> datetime.datetime:
@@ -72,12 +73,16 @@ def get_post_actions_context(section_data: str, runtime_data: dict, contracts: D
     def _confirm_tx(txid):
         check_succesful_tx(web3, txid)
 
+    def _confirm_multiple_txs(*txids, timeout=180):
+        check_multiple_succesful_txs(web3, txids, timeout=timeout)
+
     # Make contracts available in the context
     for name, contract in contracts.items():
         context[name] = contract
 
     context["CrowdsaleState"] = CrowdsaleState
     context["confirm_tx"] = _confirm_tx
+    context["confirm_multiple_txs"] = _confirm_multiple_txs
 
     return context
 
