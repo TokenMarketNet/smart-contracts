@@ -164,17 +164,29 @@ def exec_lines(lines: str, context: dict, print_prefix=None):
     :param print_prefix: Echo all lines we evaluate
     """
 
+    buffer = ""
+
     for line in lines.split("\n"):
 
         if not line.strip():
             continue
 
+        line = line.strip()
+
+        if line.endswith("\\"):
+            buffer += line.strip("\\")
+            continue
+        else:
+            buffer += line
+
         if print_prefix:
-            print(print_prefix, line)
+            print(print_prefix, buffer)
         try:
-            exec(line, context)
+            exec(buffer, context)
         except Exception as e:
-            raise RuntimeError("Failed when running: {}".format(line)) from e
+            raise RuntimeError("Failed when running: {}".format(buffer)) from e
+
+        buffer = ""
 
 
 def perform_post_actions(chain, runtime_data: dict, contracts: dict):
@@ -209,27 +221,38 @@ def perform_verify_actions(chain, runtime_data: dict, contracts: dict):
         print("No verify defined")
 
 
+
+def _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_address):
+    """
+    :param project:
+    :param chain:
+    :param chain_data:
+    :param deploy_address:
+    :return:
+    """
+
+    address = deploy_address
+    print("Web3 provider is", web3.currentProvider)
+    print("Owner address is", address)
+    start_balance = from_wei(web3.eth.getBalance(address), "ether")
+    print("Owner balance is", start_balance, "ETH")
+
+    runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, deploy_address)
+    perform_post_actions(chain, runtime_data, contracts)
+    perform_verify_actions(chain, runtime_data, contracts)
+    write_deployment_report(yaml_filename, runtime_data)
+    end_balance = from_wei(web3.eth.getBalance(address), "ether")
+    print("Deployment cost is", start_balance - end_balance, "ETH")
+    return runtime_data, statistics, contracts
+
+
 def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_name: str, deploy_address: str):
     """Deploy crowdsale plan."""
     chain_data = load_crowdsale_definitions(yaml_filename, deployment_name)
     chain_name = chain_data["chain"]
-    address = deploy_address
 
     with project.get_chain(chain_name) as chain:
-
         web3 = chain.web3
+        return _deploy_contracts(project, chain, web3, chain_data, deploy_address)
 
-        print("Web3 provider is", web3.currentProvider)
-        print("Owner address is", address)
-        start_balance = from_wei(web3.eth.getBalance(address), "ether")
-        print("Owner balance is", start_balance, "ETH")
-
-        runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, deploy_address)
-        perform_post_actions(chain, runtime_data, contracts)
-        perform_verify_actions(chain, runtime_data, contracts)
-        write_deployment_report(yaml_filename, runtime_data)
-        end_balance = from_wei(web3.eth.getBalance(address), "ether")
-        print("Deployment cost is", start_balance - end_balance, "ETH")
-
-    return runtime_data, statistics, contracts
 

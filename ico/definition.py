@@ -34,6 +34,29 @@ def _time() -> int:
     return int(time.time())
 
 
+def load_investor_data(contract: Contract, deploy_address: str, fname: str):
+    """Load investor data to a MultiVault contract.
+
+    Mysterium specific data loader.
+
+    :return: List of unconfirmed transaction ids
+    """
+
+    assert fname.endswith(".csv")
+
+    txs = []
+    with open(fname, "rt") as inp:
+        for line in inp:
+            address, amount = line.split(",")
+            address = address.strip()
+            amount = amount.strip()
+            assert address.startswith("0x")
+            amount = int(float(amount) * 10000)  # Use this precision
+            txs.append(contract.transact({"from": deploy_address}).addInvestor(address, amount))
+
+    return txs
+
+
 def extract_deployment_details(yaml_filename: str, chain: str) -> dict:
     """Read yaml definition file and interpolate all variables."""
     with open(yaml_filename, "rt") as inp:
@@ -83,7 +106,7 @@ def get_post_actions_context(section_data: str, runtime_data: dict, contracts: D
     context["CrowdsaleState"] = CrowdsaleState
     context["confirm_tx"] = _confirm_tx
     context["confirm_multiple_txs"] = _confirm_multiple_txs
-
+    context["load_investor_data"] = load_investor_data
     return context
 
 
