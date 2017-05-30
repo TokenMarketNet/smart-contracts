@@ -14,7 +14,7 @@ pragma solidity ^0.4.6;
  */
 contract MintableToken is StandardToken, Ownable {
 
-  using SafeMathLib for uint;
+  using SafeMathLib for uint;g
 
   bool public mintingFinished = false;
 

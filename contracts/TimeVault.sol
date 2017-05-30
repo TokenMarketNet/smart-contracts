@@ -39,7 +39,6 @@ contract TimeVault is SafeMath {
     return token.balanceOf(address(this));
   }
 
-  /// @notice Transfer locked tokens to Lunyr's multisig wallet
   function unlock() public {
     // Wait your turn!
     if (now < unlockedAt) throw;
