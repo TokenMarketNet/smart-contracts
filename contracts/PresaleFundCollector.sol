@@ -29,7 +29,7 @@ contract PresaleFundCollector is Ownable {
   /** How much they have invested */
   mapping(address => uint) public balances;
 
-  /** When our refund freeze is over (UNIT timestamp) */
+  /** When our refund freeze is over (UNIX timestamp) */
   uint public freezeEndsAt;
 
   /** What is the minimum buy in */
