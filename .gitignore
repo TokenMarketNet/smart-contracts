@@ -76,3 +76,5 @@ registrar.json
 # Crowdsale definitions
 crowdsales/*.yml
 *.csv
+
+test_client1.py
