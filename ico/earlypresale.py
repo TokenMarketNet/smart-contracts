@@ -1,6 +1,7 @@
 """Tools for moving funds from a presale contract to ICO contract early."""
 import logging
 
+from eth_utils import from_wei
 from web3 import Web3
 
 from ico.utils import check_succesful_tx
@@ -9,7 +10,7 @@ from ico.utils import check_succesful_tx
 logger = logging.getLogger(__name__)
 
 
-def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address: str, deploy_address: str) -> int:
+def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address: str, deploy_address: str, start=0, end=32) -> int:
     """Move funds over early.
 
     .. note ::
@@ -18,6 +19,10 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
         This process will open the presale investors an ability to participate to the crowdsale early,
         bypassing the retail investor start time. However they could also top up their existing
         preico accounts, so this is largerly no issue.
+
+
+    :param start: Move only n investors (for testing purposes)
+    :param end: Move only n investors (for testing purposes)
     """
 
     updated = 0
@@ -40,20 +45,23 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
     if not pricing_strategy.call().preicoAddresses(presale.address):
         raise RuntimeError("Was not listed as presale address for pricing: {}".format(presale.address))
 
-    for i in range(0, presale.call().investorCount()):
+    for i in range(start, min(end, presale.call().investorCount())):
 
         investor = presale.call().investors(i)
 
         if presale.call().balances(investor) > 0:
-            logger.info("Whitelisting for %s to crowdsale %s", investor, crowdsale.address)
+            print("Whitelisting for {} to crowdsale {}".format(investor, crowdsale.address))
             txid = crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(investor, True)
-            logger.info("Broadcasting whitelist transaction %s", txid)
+            print("Broadcasting whitelist transaction {}".format(txid))
 
-            logger.info("Moving funds for %s to presale %s", investor, presale.address)
+            funds = from_wei(presale.call().balances(investor), "ether")
+            print("Moving funds {} ETH for investor {} to presale {}".format(funds, investor, presale.address))
             txid = presale.transact({"from": deploy_address}).parcipateCrowdsaleInvestor(investor)
-            logger.info("Broadcasting transaction %s", txid)
+            print("Broadcasting transaction {}".format(txid))
             check_succesful_tx(web3, txid)
             updated += 1
+        else:
+            print("Investor already handled: {}".format(investor))
 
     return updated
 
