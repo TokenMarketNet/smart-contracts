@@ -2,7 +2,7 @@
   "chains": {
     "mainnet": {
       "chain": {
-        "class": "populus.chain.geth.MainnetChain"
+        "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
@@ -34,7 +34,7 @@
     },
     "kovan": {
       "chain": {
-        "class": "populus.chain.geth.TestnetChain"
+        "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
@@ -165,7 +165,7 @@
     "contracts_source_dir": "./contracts",
     "settings": {
       "optimize": true,
-      "import_remappings": ["zeppelin=zeppelin"]
+      "import_remappings": ["zeppelin=zeppelin", "ico=ico"]
     }
   },
   "contracts": {
