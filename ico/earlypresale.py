@@ -28,9 +28,17 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
     Crowdsale = chain.contract_factories.Crowdsale
     crowdsale = Crowdsale(address=crowdsale_address)
 
+    # Make sure presale is correctly set
     txid = presale.transact({"from": deploy_address}).setCrowdsale(crowdsale.address)
     logger.info("Setting presale crowdsale address to %s on txid", crowdsale.address, txid)
     check_succesful_tx(web3, txid)
+
+    # Double check presale has a presale price set
+    MilestonePricing = chain.contract_factories.MilestonePricing
+    pricing_strategy = MilestonePricing(address=crowdsale.call().pricingStrategy())
+
+    if not pricing_strategy.call().preicoAddresses(presale.address):
+        raise RuntimeError("Was not listed as presale address for pricing: {}".format(presale.address))
 
     for i in range(0, presale.call().investorCount()):
 
