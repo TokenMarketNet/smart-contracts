@@ -10,7 +10,7 @@ from ico.utils import check_succesful_tx
 logger = logging.getLogger(__name__)
 
 
-def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address: str, deploy_address: str, start=0, end=32) -> int:
+def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address: str, deploy_address: str, start=0, end=32, timeout=300) -> int:
     """Move funds over early.
 
     .. note ::
@@ -36,7 +36,7 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
     # Make sure presale is correctly set
     txid = presale.transact({"from": deploy_address}).setCrowdsale(crowdsale.address)
     logger.info("Setting presale crowdsale address to %s on txid", crowdsale.address, txid)
-    check_succesful_tx(web3, txid)
+    check_succesful_tx(web3, txid, timeout=timeout)
 
     # Double check presale has a presale price set
     MilestonePricing = chain.contract_factories.MilestonePricing
@@ -53,12 +53,13 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
             print("Whitelisting for {} to crowdsale {}".format(investor, crowdsale.address))
             txid = crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(investor, True)
             print("Broadcasting whitelist transaction {}".format(txid))
+            check_succesful_tx(web3, txid, timeout=timeout)
 
             funds = from_wei(presale.call().balances(investor), "ether")
             print("Moving funds {} ETH for investor {} to presale {}".format(funds, investor, presale.address))
             txid = presale.transact({"from": deploy_address}).parcipateCrowdsaleInvestor(investor)
             print("Broadcasting transaction {}".format(txid))
-            check_succesful_tx(web3, txid)
+            check_succesful_tx(web3, txid, timeout=timeout)
             updated += 1
         else:
             print("Investor already handled: {}".format(investor))
