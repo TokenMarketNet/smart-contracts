@@ -4,7 +4,6 @@ import './StandardToken.sol';
 import "./UpgradeableToken.sol";
 import "./ReleasableToken.sol";
 import "./MintableToken.sol";
-import "./SafeMathLib.sol";
 
 
 /**

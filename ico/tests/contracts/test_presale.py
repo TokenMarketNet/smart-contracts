@@ -10,6 +10,7 @@ from web3.contract import Contract
 from ico.tests.utils import time_travel
 from ico.utils import get_constructor_arguments
 from ico.state import CrowdsaleState
+from ico.earlypresale import participate_early
 
 
 @pytest.fixture()
@@ -130,6 +131,27 @@ def test_invest_presale_move_to_crowdsale_too_early(chain, presale_fund_collecto
 
     with pytest.raises(TransactionFailed):
         presale_fund_collector.transact().parcipateCrowdsaleAll()
+
+
+def test_invest_presale_move_to_crowdsale_early_whitelisted(chain, web3, presale_fund_collector, presale_crowdsale_miletstoned, customer, customer_2, preico_starts_at, team_multisig, finalizer, uncapped_token):
+    """Move funds to a crowdsale that has whitelisted our contract address."""
+
+    value = to_wei(1, "ether")
+    presale_fund_collector.transact({"from": customer, "value": value}).invest()
+
+    assert presale_crowdsale_miletstoned.call().getState() == CrowdsaleState.PreFunding
+
+    # Move funds over
+    updated = participate_early(chain, web3, presale_fund_collector.address, presale_crowdsale_miletstoned.address, team_multisig)
+    assert updated == 1
+
+    # The second run should not cause change
+    updated = participate_early(chain, web3, presale_fund_collector.address, presale_crowdsale_miletstoned.address, team_multisig)
+    assert updated == 0
+
+    # Check that we got a special price
+    expected_tokens = 1 / 0.08
+    assert uncapped_token.call().balanceOf(customer) == int(expected_tokens)
 
 
 def test_invest_presale_invest_too_late(chain, presale_fund_collector, presale_crowdsale, customer, customer_2, preico_starts_at, finalizer):

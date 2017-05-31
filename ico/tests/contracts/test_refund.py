@@ -36,8 +36,10 @@ def failed_ico(chain: TestRPCChain, web3, uncapped_flatprice: Contract, team_mul
     uncapped_flatprice.transact({"from": customer, "value": to_wei(50, "ether")}).buy()
     uncapped_flatprice.transact({"from": customer_2, "value": to_wei(70, "ether")}).buy()
 
+    assert not uncapped_flatprice.call().isMinimumGoalReached()
+
     # Make sure customer 1 has some token balance
-    time_travel(chain, preico_ends_at + 1)
+    time_travel(chain, uncapped_flatprice.call().endsAt() + 1)
     return uncapped_flatprice
 
 
