@@ -1,8 +1,7 @@
 pragma solidity ^0.4.6;
 
-
+import "zeppelin/contracts/SafeMath.sol";
 import "./Crowdsale.sol";
-import "./SafeMathLib.sol";
 import "./StandardToken.sol";
 import "./Haltable.sol";
 
@@ -19,9 +18,7 @@ import "./Haltable.sol";
  * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable, Haltable {
-
-  using SafeMathLib for uint;
+contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
   /** How many investors we have now */
   uint public investorCount;
@@ -120,7 +117,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = balances[investor].plus(msg.value);
+    balances[investor] = safeAdd(balances[investor], msg.value);
 
     // Need to fulfill minimum limit
     if(balances[investor] < weiMinimumLimit) {
@@ -133,7 +130,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
       investorCount++;
     }
 
-    weiRaisedTotal = weiRaisedTotal.plus(msg.value);
+    weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
     if(weiRaisedTotal > weiCap) {
       throw;
     }
@@ -179,14 +176,14 @@ contract PreICOProxyBuyer is Ownable, Haltable {
     if(getState() != State.Distributing) {
       throw;
     }
-    return balances[investor].times(tokensBought) / weiRaisedTotal;
+    return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
   }
 
   /**
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    return getClaimAmount(investor).minus(claimed[investor]);
+    return safeSub(getClaimAmount(investor), claimed[investor]);
   }
 
   /**
@@ -217,8 +214,8 @@ contract PreICOProxyBuyer is Ownable, Haltable {
       claimCount++;
     }
 
-    claimed[investor] = claimed[investor].plus(amount);
-    totalClaimed = totalClaimed.plus(amount);
+    claimed[investor] = safeAdd(claimed[investor], amount);
+    totalClaimed = safeAdd(totalClaimed, amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);
