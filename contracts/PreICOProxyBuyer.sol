@@ -4,6 +4,7 @@ pragma solidity ^0.4.6;
 import "./Crowdsale.sol";
 import "./SafeMathLib.sol";
 import "./StandardToken.sol";
+import "./Haltable.sol";
 
 /**
  * Collect funds from presale investors, buy tokens for them in a single transaction and distribute out tokens.
@@ -15,9 +16,10 @@ import "./StandardToken.sol";
  * - Allow unlimited investors
  * - Tokens are distributed on PreICOProxyBuyer smart contract first
  * - The original investors can claim their tokens from the smart contract after the token transfer has been released
+ * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable {
+contract PreICOProxyBuyer is Ownable, Haltable {
 
   using SafeMathLib for uint;
 
@@ -41,6 +43,9 @@ contract PreICOProxyBuyer is Ownable {
 
   /** What is the minimum buy in */
   uint public weiMinimumLimit;
+
+  /** How many weis total we are allowed to collect. */
+  uint public weiCap;
 
   /** How many tokens were bought */
   uint public tokensBought;
@@ -71,7 +76,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * Create presale contract where lock up period is given days
    */
-  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit) {
+  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiCap) {
 
     owner = _owner;
 
@@ -86,6 +91,7 @@ contract PreICOProxyBuyer is Ownable {
     }
 
     weiMinimumLimit = _weiMinimumLimit;
+    weiCap = _weiCap;
     freezeEndsAt = _freezeEndsAt;
   }
 
@@ -103,7 +109,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * Participate to a presale.
    */
-  function invest() public payable {
+  function invest() public stopInEmergency payable {
 
     // Cannot invest anymore through crowdsale when moving has begun
     if(getState() != State.Funding) throw;
@@ -128,6 +134,9 @@ contract PreICOProxyBuyer is Ownable {
     }
 
     weiRaisedTotal = weiRaisedTotal.plus(msg.value);
+    if(weiRaisedTotal > weiCap) {
+      throw;
+    }
 
     Invested(investor, msg.value);
   }
@@ -137,7 +146,7 @@ contract PreICOProxyBuyer is Ownable {
    *
    *
    */
-  function buyForEverybody() public {
+  function buyForEverybody() stopInEmergency public {
 
     if(getState() != State.Funding) {
       // Only allow buy once
@@ -191,7 +200,7 @@ contract PreICOProxyBuyer is Ownable {
    * Claim N bought tokens to the investor as the msg sender.
    *
    */
-  function claim(uint amount) {
+  function claim(uint amount) stopInEmergency {
     address investor = msg.sender;
 
     if(amount == 0) {
@@ -218,7 +227,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * ICO never happened. Allow refund.
    */
-  function refund() {
+  function refund() stopInEmergency {
 
     // Trying to ask refund too soon
     if(getState() != State.Refunding) throw;
@@ -237,7 +246,7 @@ contract PreICOProxyBuyer is Ownable {
   function setCrowdsale(Crowdsale _crowdsale) public onlyOwner {
     crowdsale = _crowdsale;
 
-    // Chck interface
+    // Check interface
     if(!crowdsale.isCrowdsale()) true;
   }
 

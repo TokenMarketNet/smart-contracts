@@ -365,3 +365,123 @@ You can get the function signature (data field payload for a tranaction) for any
 
         sig_data = Contract._prepare_transaction("claimAll")
         print("Data payload is", sig_data["data"])
+
+
+Set early participant pricing
+=============================
+
+Set pricing data for early investors using PresaleFundCollector + MilestonePricing contracts.
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei, from_wei
+
+    # The base price for which we are giving discount %
+    RETAIL_PRICE = 0.0005909090909090909
+
+    # contract, price tuples
+    PREICO_TIERS = [
+        # 40% bonus tier
+        ("0x78c6b7f1f5259406be3bc73eca1eaa859471b9f3", to_wei(RETAIL_PRICE * 1/1.4, "ether")),
+
+        # 35% tier A
+        ("0x6022c6c5de7c4ab22b070c36c3d5763669777f68", to_wei(RETAIL_PRICE * 1/1.35, "ether")),
+
+        # 35% tier B
+        ("0xd3fa03c67cfba062325cb6f4f4b5c1e642f1cffe", to_wei(RETAIL_PRICE * 1/1.35, "ether")),
+
+        # 35% tier C
+        ("0x9259b4e90c5980ad2cb16d685254c859f5eddde5", to_wei(RETAIL_PRICE * 1/1.35, "ether")),
+
+        # 25% tier
+        ("0xee3dfe33e53deb5256f31f63a59cffd14c94019d", to_wei(RETAIL_PRICE * 1/1.25, "ether")),
+
+        # 25% tier B
+        ("0x2d3a6cf3172f967834b59709a12d8b415465bb4c", to_wei(RETAIL_PRICE * 1/1.25, "ether")),
+
+        # 25% tier C
+        ("0x70b0505c0653e0fed13d2f0924ad63cdf39edefe", to_wei(RETAIL_PRICE * 1/1.25, "ether")),
+
+        # 25% tier D
+        ("0x7cfe55c0084bac03170ddf5da070aa455ca1b97d", to_wei(RETAIL_PRICE * 1/1.25, "ether")),
+    ]
+
+    p = populus.Project()
+    deploy_address = "0xe6b645a707005bb4086fa1e366fb82d59256f225"  # Our controller account on mainnet
+    pricing_strategy_address  = "0x9321a0297cde2f181926e9e6ac5c4f1d97c8f9d0"
+    crowdsale_address = "0xaa817e98ef1afd4946894c4476c1d01382c154e1"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+
+        # Safety check that Crodsale is using our pricing strategy
+        Crowdsale = chain.contract_factories.Crowdsale
+        crowdsale = Crowdsale(address=crowdsale_address)
+        assert crowdsale.call().pricingStrategy() == pricing_strategy_address
+
+        # Get owner access to pricing
+        MilestonePricing = chain.contract_factories.MilestonePricing
+        pricing_strategy = MilestonePricing(address=pricing_strategy_address)
+
+        PresaleFundCollector = chain.contract_factories.PresaleFundCollector
+        for preico_address, price_wei_per_token in PREICO_TIERS:
+
+            eth_price = from_wei(price_wei_per_token, "ether")
+            tokens_per_eth = 1 / eth_price
+            print("Tier", preico_address, "price per token", eth_price, "tokens per eth", round(tokens_per_eth, 2))
+
+            # Check presale contract is valid
+            presale = PresaleFundCollector(address=preico_address)
+            assert presale.call().investorCount() > 0, "No investors on contract {}".format(preico_address)
+
+            txid = pricing_strategy.transact({"from": deploy_address}).setPreicoAddress(preico_address, price_wei_per_token)
+            print("TX is", txid)
+            check_succesful_tx(web3, txid)
+
+Move early participant funds to crowdsale
+=========================================
+
+Move early participant funds from PresaleFundCollector to crowdsale.
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei, from_wei
+    from ico.earlypresale import participate_early
+
+    presale_addresses = [
+        "0x78c6b7f1f5259406be3bc73eca1eaa859471b9f3",
+        "0x6022c6c5de7c4ab22b070c36c3d5763669777f68",
+        "0xd3fa03c67cfba062325cb6f4f4b5c1e642f1cffe",
+        "0x9259b4e90c5980ad2cb16d685254c859f5eddde5",
+        "0xee3dfe33e53deb5256f31f63a59cffd14c94019d",
+        "0x2d3a6cf3172f967834b59709a12d8b415465bb4c",
+        "0x70b0505c0653e0fed13d2f0924ad63cdf39edefe",
+        "0x7cfe55c0084bac03170ddf5da070aa455ca1b97d",
+    ]
+
+    p = populus.Project()
+    deploy_address = "0x"  # Our controller account on mainnet
+    pricing_strategy_address = "0x"
+    crowdsale_address = "0x"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+
+        Crowdsale = chain.contract_factories.Crowdsale
+        crowdsale = Crowdsale(address=crowdsale_address)
+
+        for presale_address in presale_addresses:
+            print("Processing contract", presale_address)
+            participate_early(chain, web3, presale_address, crowdsale_address, deploy_address, timeout=3600)
+            print("Crowdsale collected", crowdsale.call().weiRaised() / 10**18, "tokens sold", crowdsale.call().tokensSold() / 10**8, "money left", from_wei(web3.eth.getBalance(deploy_address), "ether"))
+
