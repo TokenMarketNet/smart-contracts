@@ -147,6 +147,18 @@ contract Crowdsale is Haltable {
     minimumFundingGoal = _minimumFundingGoal;
   }
 
+  /// @dev Calculate tokens for investInternalinvestInternal() and preallocate()
+  /// @param receiver Address of the account receiving the tokens
+  /// @param tokenAmount Amount in tokens (calculated with decimals)
+  /// @param weiAmount Amount in weis
+  function calculateTokens(address receiver, uint tokenAmount, uint weiAmount) private {
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+  }
+
   /**
    * Make an investment.
    *
@@ -186,13 +198,7 @@ contract Crowdsale is Haltable {
        investorCount++;
     }
 
-    // Update investor
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-
-    // Update totals
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    calculateTokens(receiver, tokenAmount, weiAmount);
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
@@ -228,12 +234,7 @@ contract Crowdsale is Haltable {
     uint tokenAmount = fullTokens * 10**token.decimals();
     uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
 
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
-
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-
+    calculateTokens(receiver, tokenAmount, weiAmount);
     assignTokens(receiver, tokenAmount);
 
     // Tell us investment was success
