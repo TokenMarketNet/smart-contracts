@@ -300,13 +300,8 @@ contract Crowdsale is Haltable {
    * The owner can trigger a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
-
-    // Already finalized
-    if(finalized) {
-      throw;
-    }
-
-    // Finalizing is optional. We only call it if we are given a finalizing agent.
+    // Finalizing is optional. We only call it if we are given a finalizing agent,
+    // and only if the crowdsale is successful.
     if(address(finalizeAgent) != 0) {
       finalizeAgent.finalizeCrowdsale();
     }
