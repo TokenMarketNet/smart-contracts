@@ -28,7 +28,7 @@ contract MintableToken is StandardToken, Ownable {
    *
    * Only callable by the Mint Agent (usually our crowdsale contract).
    */
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
+  function mint(address receiver, uint amount) onlyMintAgent ifMinting public {
     totalSupply = totalSupply.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
 
@@ -40,7 +40,7 @@ contract MintableToken is StandardToken, Ownable {
   /**
    * Owner can allow a crowdsale contract to mint new tokens.
    */
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
+  function setMintAgent(address addr, bool state) onlyOwner ifMinting public {
     mintAgents[addr] = state;
     MintingAgentChanged(addr, state);
   }
@@ -54,7 +54,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 
   /** Make sure we are not done yet. */
-  modifier canMint() {
+  modifier ifMinting() {
     if(mintingFinished) throw;
     _;
   }
