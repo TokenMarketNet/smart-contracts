@@ -226,7 +226,7 @@ contract Crowdsale is Haltable {
    * @param weiPrice Price of a single full token in wei
    *
    */
-  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner stopInEmergency {
 
     uint tokenAmount = fullTokens * 10**token.decimals();
     uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
@@ -311,7 +311,7 @@ contract Crowdsale is Haltable {
    *
    * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
-  function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
+  function setFinalizeAgent(FinalizeAgent addr) onlyOwner stopInEmergency {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
@@ -324,7 +324,7 @@ contract Crowdsale is Haltable {
    * Set policy do we need to have server-side customer ids for the investments.
    *
    */
-  function setRequireCustomerId(bool value) onlyOwner {
+  function setRequireCustomerId(bool value) onlyOwner stopInEmergency {
     requireCustomerId = value;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
@@ -335,7 +335,7 @@ contract Crowdsale is Haltable {
    * This is e.g. for the accredited investor clearing.
    *
    */
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner stopInEmergency {
     requiredSignedAddress = value;
     signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
@@ -346,7 +346,7 @@ contract Crowdsale is Haltable {
    *
    * TODO: Fix spelling error in the name
    */
-  function setEarlyParticipantWhitelist(address addr, bool status) onlyOwner {
+  function setEarlyParticipantWhitelist(address addr, bool status) onlyOwner stopInEmergency {
     earlyParticipantWhitelist[addr] = status;
     Whitelisted(addr, status);
   }
@@ -360,7 +360,7 @@ contract Crowdsale is Haltable {
    * Now you can't anymore set a new endsAt if endsAt is already been reached.
    *
    */
-  function setEndsAt(uint time) onlyOwner {
+  function setEndsAt(uint time) onlyOwner stopInEmergency {
 
     if(now > time || now > endsAt)
       throw; // Don't change past, or try to re-activate already closed crowdsale
