@@ -44,7 +44,6 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     // Create any address, can be transferred
     // to team multisig via changeOwner(),
     // also remember to call setUpgradeMaster()
-    owner = msg.sender;
 
     name = _name;
     symbol = _symbol;

@@ -114,9 +114,6 @@ contract Crowdsale is Haltable {
   event EndsAtChanged(uint endsAt);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
-
-    owner = msg.sender;
-
     token = FractionalERC20(_token);
 
     setPricingStrategy(_pricingStrategy);
