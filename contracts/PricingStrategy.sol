@@ -13,10 +13,10 @@ contract PricingStrategy {
   /** Self check if all references are correctly set.
    *
    * Checks that pricing strategy matches crowdsale parameters.
+   * Making this abstract to make it harder for developers implementing
+   * pricing strategies to forget to implement this.
    */
-  function isSane(address crowdsale) public constant returns (bool) {
-    return true;
-  }
+  function isSane(address crowdsale) public constant returns (bool);
 
   /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.

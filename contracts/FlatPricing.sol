@@ -17,6 +17,11 @@ contract FlatPricing is PricingStrategy {
     oneTokenInWei = _oneTokenInWei;
   }
 
+  /// @dev This is here just to prove that we know what we are doing here ;)
+  function isSane(address _crowdsale) public constant returns (bool) {
+    return true;
+  }
+
   /**
    * Calculate the current price for buy in amount.
    *
