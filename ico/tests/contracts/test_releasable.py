@@ -50,12 +50,12 @@ def test_cannot_transfer(token: Contract, team_multisig, customer: str, customer
     assert not token.call().released()
 
     # team_multisig is on the whitelisted transfer agent list
-    assert token.call().transferAgents(team_multisig) == False
+    assert token.call().lockExemptions(team_multisig) == False
     with pytest.raises(TransactionFailed):
         token.transact({"from": team_multisig}).transfer(customer, 10000)
 
     # customer cannot transfer to customer 2 before release
-    assert token.call().transferAgents(customer) == False
+    assert token.call().lockExemptions(customer) == False
     with pytest.raises(TransactionFailed):
         token.transact({"from": customer}).transfer(customer_2, 10000)
 
@@ -110,4 +110,3 @@ def test_transfer_with_allowance_exceeded(released_token: Contract, customer: st
 
     with pytest.raises(TransactionFailed):
         token.transact({"from": allowed_party}).transferFrom(customer, empty_address, amount+1)
-
