@@ -485,3 +485,6 @@ Example:
             participate_early(chain, web3, presale_address, crowdsale_address, deploy_address, timeout=3600)
             print("Crowdsale collected", crowdsale.call().weiRaised() / 10**18, "tokens sold", crowdsale.call().tokensSold() / 10**8, "money left", from_wei(web3.eth.getBalance(deploy_address), "ether"))
 
+
+Exporting investment events
+===========================
