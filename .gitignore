@@ -77,4 +77,5 @@ registrar.json
 crowdsales/*.yml
 *.csv
 
-test_client1.py
+# Customer test cases
+test_client*.py

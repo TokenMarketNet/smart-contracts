@@ -380,3 +380,17 @@ def test_change_end_at_only_owner(chain: TestRPCChain, ico: Contract, customer: 
 
     with pytest.raises(TransactionFailed):
         ico.transact({"from": customer}).setEndsAt(new_early)
+
+
+def test_change_multisig(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
+    """Owner can update the multisig address."""
+
+    ico.transact({"from": team_multisig}).setMultisig(customer)
+    assert ico.call().multisigWallet() == customer
+
+
+def test_change_multisig_only_owner(chain: TestRPCChain, ico: Contract, customer: str, preico_starts_at, preico_ends_at, team_multisig):
+    """Only own can change the multisig address."""
+
+    with pytest.raises(TransactionFailed):
+        ico.transact({"from": customer}).setMultisig(customer)
