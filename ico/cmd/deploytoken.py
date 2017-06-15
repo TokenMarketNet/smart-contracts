@@ -29,7 +29,8 @@ from ico.etherscan import get_etherscan_link
 @click.option('--decimals', nargs=1, default=0, help='How many decimal points the token has', type=int)
 @click.option('--verify/--no-verify', default=False, help='Verify contract on EtherScan.io')
 @click.option('--verify-filename', nargs=1, help='Solidity source file of the token contract for verification', default=None)
-def main(chain, address, contract_name, name, symbol, supply, decimals, minting_agent, release_agent, verify, verify_filename):
+@click.option('--master-address', nargs=1, help='Move tokens and upgrade master to this account', default=None)
+def main(chain, address, contract_name, name, symbol, supply, decimals, minting_agent, release_agent, verify, verify_filename, master_address):
     """Deploy a token contract.
 
     Examples:
@@ -45,8 +46,8 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
 
         web3 = c.web3
         print("Web3 provider is", web3.currentProvider)
-        print("Owner address is", address)
-        print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
+        print("Deployer address is", address)
+        print("Deployer balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
 
         # Goes through geth account unlock process if needed
         if is_account_locked(web3, address):
@@ -62,10 +63,15 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
             # This sets the upgrade master
             args = [address] + args
 
-        # This does deployment with all dependencies linked in
+        # Make sure Populus does not pull up any cached instances of deployed contracts
+        # TODO: Fix Populus support this via an deploy argument
+        if "JSONFile" in c.registrar.registrar_backends:
+            del c.registrar.registrar_backends["JSONFile"]
 
         print("Starting contract deployment")
+        # This does deployment with all dependencies linked in
         contract, txhash = c.provider.deploy_contract(contract_name, deploy_transaction=transaction, deploy_args=args)
+        check_succesful_tx(web3, txhash)
         print("Contract address is", contract.address)
 
         # This is needed for Etherscan contract verification
@@ -81,6 +87,14 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
         if minting_agent:
             print("Setting minting agent")
             txid = contract.transact(transaction).setMintAgent(minting_agent, True)
+            check_succesful_tx(web3, txid)
+
+        if master_address:
+            print("Moving upgrade master to a team multisig wallet", master_address)
+            txid = contract.transact({"from": address}).setUpgradeMaster(master_address)
+            check_succesful_tx(web3, txid)
+            print("Moving total supply a team multisig wallet", master_address)
+            contract.transact({"from": address}).transfer(master_address, contract.call().totalSupply())
             check_succesful_tx(web3, txid)
 
         if verify:

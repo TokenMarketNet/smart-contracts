@@ -4,6 +4,8 @@ import time
 
 import click
 from decimal import Decimal
+
+import sys
 from eth_utils import from_wei
 from populus.utils.accounts import is_account_locked
 from populus import Project
@@ -25,9 +27,10 @@ from ico.utils import get_constructor_arguments
 @click.option('--amount-column', nargs=1, help='Name of CSV column containing decimal token amounts', default="amount")
 @click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
-@click.option('--issuer-address', nargs=1, help='Leave out for the first run. For subsequent runs use the existing issuer contract.', required=False, default=None)
+@click.option('--issuer-address', nargs=1, help='Leave out for the first run to deploy a new issuer contract.', required=False, default=None)
+@click.option('--master-address', nargs=1, help='The address that has given tokens for the issuer contracts to be distributed.', required=False, default=None)
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stop if the zero amount is encountered')
-def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero):
+def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address):
     """Distribute tokens to centrally issued crowdsale participant.
 
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
@@ -77,14 +80,17 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         Issuer = c.provider.get_base_contract_factory('Issuer')
         if not issuer_address:
+
+            # TODO: Fix Populus support this via an deploy argument
+            if "JSONFile" in c.registrar.registrar_backends:
+                del c.registrar.registrar_backends["JSONFile"]
+
             # Create issuer contract
-            args = [address, address, token.address]
+            assert master_address, "You need to give master-address"
+            args = [address, master_address, token.address]
             print("Deploying new issuer contract", args)
             issuer, txhash = c.provider.deploy_contract("Issuer", deploy_transaction=transaction, deploy_args=args)
             check_succesful_tx(web3, txhash)
-
-            txid = token.transact({"from": address}).approve(issuer.address, token.call().totalSupply())
-            check_succesful_tx(web3, txid)
 
             const_args = get_constructor_arguments(issuer, args)
             chain_name = chain
@@ -109,7 +115,15 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         print("Issuer contract is", issuer.address)
         print("Currently issued", issuer.call().issuedCount())
-        print("Issuer allowance", token.call().allowance(address, issuer.address))
+
+        if not master_address:
+            sys.exit("Please use Token.approve() to give some allowance for the issuer contract by master address")
+
+        allowance = token.call().allowance(master_address, issuer.address)
+        print("Issuer allowance", allowance)
+
+        if allowance == 0 or not master_address:
+            sys.exit("Please use Token.approve() to give some allowance for the issuer contract by master address")
 
         print("Reading data", csv_file)
         with open(csv_file, "rt") as inp:
