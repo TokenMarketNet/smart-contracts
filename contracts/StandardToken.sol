@@ -29,7 +29,7 @@ contract StandardToken is ERC20, SafeMath {
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
+     if(msg.data.length < size + 4) {
        throw;
      }
      _;
