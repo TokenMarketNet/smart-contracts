@@ -20,16 +20,16 @@ from ico.utils import get_constructor_arguments
 
 @click.command()
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
-@click.option('--address', nargs=1, help='Owner account (must exist on Ethereum node)', required=True)
-@click.option('--token', nargs=1, help='Token contract address where initial supply is owned by --address', required=True)
+@click.option('--address', nargs=1, help='The account that deploys the issuer contract, controls the contract and pays for the gas fees', required=True)
+@click.option('--token', nargs=1, help='Token contract address', required=True)
 @click.option('--csv-file', nargs=1, help='CSV file containing distribution data', required=True)
 @click.option('--address-column', nargs=1, help='Name of CSV column containing Ethereum addresses', default="address")
 @click.option('--amount-column', nargs=1, help='Name of CSV column containing decimal token amounts', default="amount")
 @click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
-@click.option('--issuer-address', nargs=1, help='Leave out for the first run to deploy a new issuer contract.', required=False, default=None)
-@click.option('--master-address', nargs=1, help='The address that has given tokens for the issuer contracts to be distributed.', required=False, default=None)
-@click.option('--allow-zero/--no-allow-zero', default=False, help='Stop if the zero amount is encountered')
+@click.option('--issuer-address', nargs=1, help='The address of the issuer contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
+@click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
+@click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
 def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address):
     """Distribute tokens to centrally issued crowdsale participant.
 
@@ -144,6 +144,8 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         tx_to_confirm = []   # List of txids to confirm
         tx_batch_size = 16  # How many transactions confirm once
+
+        print("Total rows", len(rows))
 
         for i in range(start_from, min(start_from+limit, len(rows))):
             data = rows[i]
