@@ -8,9 +8,11 @@ from web3.contract import Contract
 def token_new_name() -> str:
     return "New name"
 
+
 @pytest.fixture
 def token_new_symbol() -> str:
     return "NEW"
+
 
 def test_token_initialized(token: Contract, team_multisig: str, token_symbol: str, token_name: str, initial_supply: int):
     """Token is initialized with the parameters we want."""

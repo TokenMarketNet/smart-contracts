@@ -22,6 +22,11 @@ contract StandardToken is ERC20, SafeMath {
   /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
+
   /**
    *
    * Fix for the ERC20 short address attack

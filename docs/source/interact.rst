@@ -485,3 +485,110 @@ Example:
             participate_early(chain, web3, presale_address, crowdsale_address, deploy_address, timeout=3600)
             print("Crowdsale collected", crowdsale.call().weiRaised() / 10**18, "tokens sold", crowdsale.call().tokensSold() / 10**8, "money left", from_wei(web3.eth.getBalance(deploy_address), "ether"))
 
+Triggering presale proxy buy contract
+=====================================
+
+Move funds from the proxy buy contract to the actual crowdsale.
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei, from_wei
+
+    p = populus.Project()
+    deploy_address = "0x"  # Our controller account on mainnet
+    proxy_buy_address  = "0x"
+    crowdsale_address = "0x"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+
+        # Safety check that Crodsale is using our pricing strategy
+        Crowdsale = chain.contract_factories.Crowdsale
+        crowdsale = Crowdsale(address=crowdsale_address)
+
+        # Make sure we are getting special price
+        EthTranchePricing = chain.contract_factories.EthTranchePricing
+        pricing_strategy = EthTranchePricing(address=crowdsale.call().pricingStrategy())
+        assert crowdsale.call().earlyParticipantWhitelist(proxy_buy_address) == True
+        assert pricing_strategy.call().preicoAddresses(proxy_buy_address) > 0
+
+        # Get owner access to pricing
+        PreICOProxyBuyer = chain.contract_factories.PreICOProxyBuyer
+        proxy_buy = PreICOProxyBuyer(address=proxy_buy_address)
+        # txid = proxy_buy.transact({"from": deploy_address}).setCrowdsale(crowdsale.address)
+        # print("TXID", txid)
+
+        txid = proxy_buy.transact({"from": deploy_address}).buyForEverybody()
+        print("Buy txid", txid)
+
+
+Resetting token sale end time
+=============================
+
+The token sale owner might want to reset the end date. This can happen in the case the crowdsale has ended and tokens could not be fully sold, because of fractions. Alternatively, a manual soft cap is invoked because no more money is coming in and it makes sense to close the token sale.
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei, from_wei
+    from ico.utils import check_succesful_tx
+
+    p = populus.Project()
+    deploy_address = "0x"  # Our controller account on mainnet
+    crowdsale_address = "0x"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+
+        block = web3.eth.getBlock('latest')
+        timestamp = block["timestamp"]
+
+        # 15 minutes in the future
+        closing_time = int(timestamp + 15*60)
+
+        # Safety check that Crodsale is using our pricing strategy
+        Crowdsale = chain.contract_factories.Crowdsale
+        crowdsale = Crowdsale(address=crowdsale_address)
+        txid = crowdsale.transact({"from": deploy_address}).setEndsAt(closing_time)
+        print(crowdsale.call().getState())
+
+Finalizing a crowdsale
+======================
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei, from_wei
+    from ico.utils import check_succesful_tx
+
+    p = populus.Project()
+    deploy_address = "0x"  # Our controller account on mainnet
+    crowdsale_address = "0x"
+    team_multisig = "0x"
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+
+        Crowdsale = chain.contract_factories.Crowdsale
+        crowdsale = Crowdsale(address=crowdsale_address)
+
+        BonusFinalizeAgent = chain.contract_factories.BonusFinalizeAgent
+        finalize_agent = BonusFinalizeAgent(address=crowdsale.call().finalizeAgent())
+        assert finalize_agent.call().teamMultisig() == team_multisig
+        assert finalize_agent.call().bonusBasePoints() > 1000
+
+        # Safety check that Crodsale is using our pricing strategy
+        txid = crowdsale.transact({"from": deploy_address}).finalize()
+        print("Finalize txid is", txid)
+        check_succesful_tx(web3, txid)
+        print(crowdsale.call().getState())

@@ -7,6 +7,9 @@ import './StandardToken.sol';
  * Time-locked token vault of allocated founder tokens.
  *
  * First used by Lunyr https://github.com/Lunyr/crowdsale-contracts
+ *
+ *
+ * See TokenVault for multi user implementation.
  */
 contract TimeVault is SafeMath {
 
