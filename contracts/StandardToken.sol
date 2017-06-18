@@ -83,7 +83,6 @@ contract StandardToken is ERC20, SafeMath {
    *
    */
   function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
@@ -97,7 +96,6 @@ contract StandardToken is ERC20, SafeMath {
    * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    */
   function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
   returns (bool success) {
 
       uint oldVal = allowed[msg.sender][_spender];
