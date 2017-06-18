@@ -11,8 +11,8 @@ import "zeppelin/contracts/ownership/Ownable.sol";
  * - Prepare a spreadsheet for token allocation
  * - Deploy this contract, with the sum to tokens to be distributed, from the owner account
  * - Call setInvestor for all investors from the owner account using a local script and CSV input
- * - Call lock from the owner account
  * - Move tokensToBeAllocated in this contract usign StandardToken.transfer()
+ * - Call lock from the owner account
  * - Wait until the freeze period is over
  * - After the freeze time is over investors can call claim() from their address to get their tokens
  *
@@ -213,7 +213,7 @@ contract TokenVault is Ownable {
   /**
    * Resolve the contract umambigious state.
    */
-  function getState() public returns(State) {
+  function getState() public constant returns(State) {
     if(lockedAt == 0) {
       return State.Loading;
     } else if(now > freezeEndsAt) {
