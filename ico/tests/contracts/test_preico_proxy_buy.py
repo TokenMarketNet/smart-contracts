@@ -71,6 +71,10 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
 
     assert proxy_buyer.call().getState() == 1
 
+    #Change owner to customer_2, and back to team_multisig
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+    proxy_buyer.transact({"from": customer_2}).transferOwnership(team_multisig)
+
     proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
     proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
 
