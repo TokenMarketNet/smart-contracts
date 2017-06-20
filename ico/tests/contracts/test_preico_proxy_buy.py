@@ -71,6 +71,10 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
 
     assert proxy_buyer.call().getState() == 1
 
+    #Change owner to customer_2, and back to team_multisig
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+    proxy_buyer.transact({"from": customer_2}).transferOwnership(team_multisig)
+
     proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
     proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
 
@@ -80,9 +84,12 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
     assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")
 
+    # Change the owner again, in the middle, and run rest of the test as customer_2
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
-    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
+    proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
     assert proxy_buyer.call().crowdsale() == crowdsale.address
     proxy_buyer.transact({"from": customer}).buyForEverybody()
     assert web3.eth.getBalance(proxy_buyer.address) == 0
