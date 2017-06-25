@@ -59,7 +59,8 @@ def proxy_buyer(chain, uncapped_token, proxy_buyer_freeze_ends_at, team_multisig
     args = [
         team_multisig,
         proxy_buyer_freeze_ends_at,
-        1,  # 1 wei
+        2,  # 2 wei, to be able to test minimum buyin
+        to_wei(41000, "ether"),
         to_wei(100000, "ether"),
     ]
     contract, hash = chain.provider.deploy_contract('PreICOProxyBuyer', deploy_args=args)
@@ -241,6 +242,22 @@ def test_proxy_buy_too_much(chain, web3, customer, customer_2, team_multisig, pr
 
     with pytest.raises(TransactionFailed):
         proxy_buyer.transact({"value": to_wei(100001, "ether"), "from": customer}).invest()
+
+def test_proxy_min_buyin(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """Try to buy over the cap."""
+
+    assert proxy_buyer.call().getState() == 1
+
+    with pytest.raises(TransactionFailed):
+        proxy_buyer.transact({"value": 1, "from": customer}).invest()
+
+def test_proxy_max_buyin(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """Try to buy over the cap."""
+
+    assert proxy_buyer.call().getState() == 1
+
+    with pytest.raises(TransactionFailed):
+        proxy_buyer.transact({"value": to_wei(44001, "ether"), "from": customer}).invest()
 
 
 def test_proxy_buy_halted(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
