@@ -1,8 +1,11 @@
 """Extract crowdsale raw investmetn data."""
 import csv
 import datetime
+import json
+import os
 
 import click
+from decimal import Decimal
 from eth_utils import from_wei
 from populus import Project
 
@@ -18,6 +21,7 @@ def main(chain, address, csv_file):
     """
 
     project = Project()
+    timestamp_filename = "block-timestamps.json"
 
     with project.get_chain(chain) as c:
 
@@ -29,19 +33,55 @@ def main(chain, address, csv_file):
         Crowdsale = c.provider.get_base_contract_factory('MintedTokenCappedCrowdsale')
         crowdsale = Crowdsale(address=address)
 
+        Token = c.provider.get_base_contract_factory('CrowdsaleToken')
+        token = Token(address=crowdsale.call().token())
+
+        decimals = token.call().decimals()
+        decimal_multiplier = 10**decimals
+
+        print("We have", decimals, "decimals, multiplier is", decimal_multiplier)
+
         print("Total amount raised is", from_wei(crowdsale.call().weiRaised(), "ether"), "ether")
 
         print("Getting events")
         events = crowdsale.pastEvents("Invested").get(only_changes=False)
 
         print("Writing results to", csv_file)
+
+        # Block number -> timestamp mappings
+        timestamps = {}
+
+        # Load cached timestamps
+        if os.path.exists(timestamp_filename):
+            with open(timestamp_filename, "rt") as inp:
+                timestamps = json.load(inp)
+
         with open(csv_file, 'w', newline='') as out:
             writer = csv.writer(out)
 
             writer.writerow(["Address", "Payment at", "Tx hash", "Tx index", "Invested ETH", "Received tokens"])
 
-            for e in events:
-                timestamp = web3.eth.getBlock(e["blockNumber"])["timestamp"]
+            for idx, e in enumerate(events):
+
+                if idx % 100 == 0:
+                    print("Writing event", idx)
+                    # Save cached timestamps
+                    with open(timestamp_filename, "wt") as out:
+                        json.dump(timestamps, out)
+
+                block_number = e["blockNumber"]
+                if block_number not in timestamps:
+                    timestamps[block_number] = web3.eth.getBlock(block_number)["timestamp"]
+
+                amount = Decimal(e["args"]["tokenAmount"]) / Decimal(decimal_multiplier)
+
+                tokens = amount * decimal_multiplier
+
+                # http://stackoverflow.com/a/19965088/315168
+                if not tokens % 1 == 0:
+                    raise RuntimeError("Could not convert token amount to decimal format. It was not an integer after restoring non-fractional balance: {} {} {}".format(tokens, amount, decimal_multiplier))
+
+                timestamp = timestamps[block_number]
                 dt = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
                 writer.writerow([
                     e["args"]["investor"],
@@ -49,7 +89,7 @@ def main(chain, address, csv_file):
                     e["transactionHash"],
                     e["transactionIndex"],
                     from_wei(e["args"]["weiAmount"], "ether"),
-                    e["args"]["tokenAmount"],
+                    amount,
                 ])
 
         print("Total", len(events), "invest events")

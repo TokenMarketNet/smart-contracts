@@ -5,6 +5,7 @@ import sys
 import datetime
 
 import click
+from decimal import Decimal
 from eth_utils import from_wei
 from eth_utils import to_wei
 from populus.utils.accounts import is_account_locked
@@ -12,6 +13,7 @@ from populus import Project
 from populus.utils.cli import request_account_unlock
 
 from ico.utils import check_succesful_tx
+from ico.utils import check_multiple_succesful_txs
 from ico.utils import get_constructor_arguments
 
 
@@ -28,9 +30,13 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
     This allows you rerun investment data to fix potential errors in the contract.
 
-    Example:
+    Example::
 
-    rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
+        rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
+
+
+        rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
+
     """
 
     project = Project()
@@ -68,15 +74,25 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         start_time = time.time()
         start_balance = from_wei(web3.eth.getBalance(address), "ether")
+
+        tx_to_confirm = []   # List of txids to confirm
+        tx_batch_size = 16  # How many transactions confirm once
+        cap_check = True
+
         for i in range(start_from, min(start_from+limit, len(rows))):
             data = rows[i]
             addr = data["Address"]
             wei = to_wei(data["Invested ETH"], "ether")
-            tokens = int(data["Received tokens"])
+            fractional_tokens = Decimal(data["Received tokens"])
             orig_txid = int(data["Tx hash"], 16)
             # orig_tx_index = int(data["Tx index"])
 
-            tokens *= multiplier
+            tokens = fractional_tokens * multiplier
+
+            # http://stackoverflow.com/a/19965088/315168
+            if not tokens % 1 == 0:
+                raise RuntimeError("Could not issue tokens because after multiplication was not integer: {} {} {}".format(tokens, fractional_tokens, multiplier))
+
             end_balance = from_wei(web3.eth.getBalance(address), "ether")
             spent = start_balance - end_balance
             print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "ETH spent", spent, "time passed", time.time() - start_time)
@@ -85,8 +101,23 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
                 print("Already restored, skipping")
                 continue
 
+            tokens = int(tokens)
+
+            if cap_check:
+                # See if our cap calculation is screwed
+                if relaunched_crowdsale.call().isBreakingCap(wei, tokens, relaunched_crowdsale.call().weiRaised(), relaunched_crowdsale.call().tokensSold()):
+                    raise RuntimeError("Cap error")
+
             txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
-            check_succesful_tx(web3, txid)
+            tx_to_confirm.append(txid)
+
+            # Confirm N transactions when batch max size is reached
+            if len(tx_to_confirm) >= tx_batch_size:
+                check_multiple_succesful_txs(web3, tx_to_confirm)
+                tx_to_confirm = []
+
+        # Confirm dangling transactions
+        check_multiple_succesful_txs(web3, tx_to_confirm)
 
         end_balance = from_wei(web3.eth.getBalance(address), "ether")
         print("Deployment cost is", start_balance - end_balance, "ETH")

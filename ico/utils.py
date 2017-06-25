@@ -108,7 +108,7 @@ def decimalize_token_amount(contract: Contract, amount: int) -> Decimal:
 
     :param contract: ERC-20 token contract with decimals field
     :param amount: Raw token amount
-    :return: The resulting :py:class:`decimal.Decimal` carries a correct decimal places.
+    :return: The resultdroping :py:class:`decimal.Decimal` carries a correct decimal places.
     """
     val = Decimal(amount) / Decimal(10 ** contract.call().decimals())
     quantizer = Decimal(1) /  Decimal(10 ** contract.call().decimals())

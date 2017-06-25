@@ -66,6 +66,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         Token = c.provider.get_base_contract_factory('CentrallyIssuedToken')
         token = Token(address=token)
 
+        print("Token is", token.address)
         print("Total supply is", token.call().totalSupply())
         print("Upgrade master is", token.call().upgradeMaster())
         print("Owner token balance master is", token.call().balanceOf(address))
