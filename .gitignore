@@ -79,3 +79,5 @@ crowdsales/*.yml
 
 # Customer test cases
 test_client*.py
+
+block-timestamps.json

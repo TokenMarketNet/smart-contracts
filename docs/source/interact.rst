@@ -332,9 +332,8 @@ After a token sale is ended, stop ETH payment forwarder.
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
-
-        txid = contract.transact({"from": account, "value": to_wei(2, "ether")}).buyWithCustomerId(customer_id)
+        initial_gas_price = web3.eth.gasPrice
+        txid = contract.transact({"from": account, "gasPrice": initial_gas_price*5}).halt()
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
@@ -592,3 +591,57 @@ Example:
         print("Finalize txid is", txid)
         check_succesful_tx(web3, txid)
         print(crowdsale.call().getState())
+
+
+Send ends at
+============
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0x51b9311eb6ec8beb049dafeafe389ee2818b1b20"  # Our controller account on Kovan
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Contract = getattr(chain.contract_factories, "Crowdsale")
+        contract = Contract(address="0xace62f87abe9f4ee9fd6e115d91548df24ca0943")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = contract.transact({"from": account}).setEndsAt(1497778200 + 1800)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+
+Approving tokens
+================
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0x"  # Our controller account on Kovan
+
+    with p.get_chain("kovan") as chain:
+        web3 = chain.web3
+        Token = getattr(chain.contract_factories, "CentrallyIssuedToken")
+        token = Token(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).approve("0x", token.call().totalSupply())
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
