@@ -62,7 +62,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
         print("Source data has", len(rows), "rows")
         print("Importing rows", start_from, "-", start_from + limit)
 
-        RelaunchedCrowdsale = c.provider.get_contract_factory('RelaunchedCrowdsale')
+        RelaunchedCrowdsale = c.provider.get_base_contract_factory('RelaunchedCrowdsale')
         relaunched_crowdsale = RelaunchedCrowdsale(address=contract_address)
 
         print("Crowdsale contract is", contract_address)
