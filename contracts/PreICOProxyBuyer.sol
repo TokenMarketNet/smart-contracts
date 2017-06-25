@@ -233,7 +233,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    if(!investor.send(amount)) throw;
+    if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
 
