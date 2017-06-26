@@ -52,11 +52,6 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
         if is_account_locked(web3, address):
             request_account_unlock(c, address, timeout=3600*6)
 
-        transaction = {
-            "from": address,
-            "gasPrice": int(web3.eth.gasPrice * 1.1)
-        }
-
         print("Reading data", csv_file)
         with open(csv_file, "rt") as inp:
             reader = csv.DictReader(inp)
@@ -91,6 +86,15 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             # orig_tx_index = int(data["Tx index"])
 
             tokens = fractional_tokens * multiplier
+
+            transaction = {
+                "from": address,
+                "gasPrice": int(web3.eth.gasPrice * 1.2)
+            }
+
+            # 40 GWei should be the low
+            if transaction["gasPrice"] < 38 * 10**9:
+                raise RuntimeError("Got lowish gas price: {}".format(transaction))
 
             # http://stackoverflow.com/a/19965088/315168
             if not tokens % 1 == 0:
