@@ -93,8 +93,9 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             }
 
             # 40 GWei should be the low
-            if transaction["gasPrice"] < 38 * 10**9:
-                raise RuntimeError("Got lowish gas price: {}".format(transaction))
+            if transaction["gasPrice"] < 35 * 10**9:
+                print("Got lowish gas price: {}".format(transaction))
+                transaction["gasPrice"] = 35 * 10**9
 
             # http://stackoverflow.com/a/19965088/315168
             if not tokens % 1 == 0:
