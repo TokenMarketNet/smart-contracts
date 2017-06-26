@@ -54,7 +54,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         transaction = {
             "from": address,
-            "gasPrice": int(web3.eth.gasPrice * 1.25)
+            "gasPrice": int(web3.eth.gasPrice * 1.1)
         }
 
         print("Reading data", csv_file)
