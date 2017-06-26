@@ -52,7 +52,10 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
         if is_account_locked(web3, address):
             request_account_unlock(c, address, timeout=3600*6)
 
-        transaction = {"from": address}
+        transaction = {
+            "from": address,
+            "gasPrice": int(web3.eth.gasPrice * 1.25)
+        }
 
         print("Reading data", csv_file)
         with open(csv_file, "rt") as inp:

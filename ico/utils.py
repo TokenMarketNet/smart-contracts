@@ -57,11 +57,10 @@ def check_succesful_tx(web3: Web3, txid: str, timeout=180) -> dict:
     return receipt
 
 
-def check_multiple_succesful_txs(web3: Web3, tx_list: list, timeout=180):
+def check_multiple_succesful_txs(web3: Web3, tx_list: list, timeout=1800):
     """Check that multiple transactions confirmed"""
     for tx in tx_list:
         check_succesful_tx(web3, tx, timeout)
-
 
 
 def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwargs: Optional[dict]=None):
