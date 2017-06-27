@@ -19,6 +19,7 @@ import "./MintableToken.sol";
  */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
+  /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
@@ -85,7 +86,13 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
   }
 
   /**
-   * Owner can update token information here
+   * Owner can update token information here.
+   *
+   * It is often useful to conceal the actual token association, until
+   * the token operations, like central issuance or reissuance have been completed.
+   *
+   * This function allows the token owner to rename the token after the operations
+   * have been completed and then point the audience to use the token contract.
    */
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
