@@ -34,7 +34,6 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
         rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
 
-
         rebuild-crowdsale --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25  --chain=kovan --contract-address=0xf09e4a27a02afd29590a989cb2dda9af8eebc77f --start-from=0 --limit=600 --multiplier=12 --csv-file=inputdata.csv
 
     """
@@ -91,11 +90,6 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
                 "from": address,
                 "gasPrice": int(web3.eth.gasPrice * 1.2)
             }
-
-            # 40 GWei should be the low
-            if transaction["gasPrice"] < 35 * 10**9:
-                print("Got lowish gas price: {}".format(transaction))
-                transaction["gasPrice"] = 35 * 10**9
 
             # http://stackoverflow.com/a/19965088/315168
             if not tokens % 1 == 0:
