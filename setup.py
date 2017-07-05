@@ -63,5 +63,6 @@ setup(
     rebuild-crowdsale=ico.cmd.rebuildcrowdsale:main
     distribute-tokens=ico.cmd.distributetokens:main
     token-vault=ico.cmd.tokenvault:main
+    refund=ico.cmd.refund:main
     ''',
 )
