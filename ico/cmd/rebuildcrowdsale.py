@@ -97,7 +97,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
             end_balance = from_wei(web3.eth.getBalance(address), "ether")
             spent = start_balance - end_balance
-            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "ETH spent", spent, "time passed", time.time() - start_time)
+            print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "ETH spent", spent, "time passed", time.time() - start_time, "gas price", transaction["gasPrice"])
 
             if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid):
                 print("Already restored, skipping")
