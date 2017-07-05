@@ -431,6 +431,9 @@ contract Crowdsale is Haltable {
 
   /**
    * Investors can claim refund.
+   *
+   * Note that any refunds from proxy buyers should be handled separately,
+   * and not through this contract.
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
@@ -442,7 +445,7 @@ contract Crowdsale is Haltable {
   }
 
   /**
-   * @return true if the crowdsale has raised enough money to be a succes
+   * @return true if the crowdsale has raised enough money to be a successful.
    */
   function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
