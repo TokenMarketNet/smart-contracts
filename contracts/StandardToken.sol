@@ -27,20 +27,7 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
