@@ -564,33 +564,33 @@ Example:
 
 .. code-block:: python
 
-    import populus
-    from populus.utils.cli import request_account_unlock
-    from populus.utils.accounts import is_account_locked
-    from eth_utils import to_wei, from_wei
-    from ico.utils import check_succesful_tx
+        import populus
+        from populus.utils.cli import request_account_unlock
+        from populus.utils.accounts import is_account_locked
+        from eth_utils import to_wei, from_wei
+        from ico.utils import check_succesful_tx
 
-    p = populus.Project()
-    deploy_address = "0x"  # Our controller account on mainnet
-    crowdsale_address = "0x"
-    team_multisig = "0x"
+        p = populus.Project()
+        deploy_address = "0x"  # Our controller account on mainnet
+        crowdsale_address = "0x"
+        team_multisig = "0x"
 
-    with p.get_chain("mainnet") as chain:
-        web3 = chain.web3
+        with p.get_chain("mainnet") as chain:
+            web3 = chain.web3
 
-        Crowdsale = chain.contract_factories.Crowdsale
-        crowdsale = Crowdsale(address=crowdsale_address)
+            Crowdsale = chain.contract_factories.Crowdsale
+            crowdsale = Crowdsale(address=crowdsale_address)
 
-        BonusFinalizeAgent = chain.contract_factories.BonusFinalizeAgent
-        finalize_agent = BonusFinalizeAgent(address=crowdsale.call().finalizeAgent())
-        assert finalize_agent.call().teamMultisig() == team_multisig
-        assert finalize_agent.call().bonusBasePoints() > 1000
+            BonusFinalizeAgent = chain.contract_factories.BonusFinalizeAgent
+            finalize_agent = BonusFinalizeAgent(address=crowdsale.call().finalizeAgent())
+            assert finalize_agent.call().teamMultisig() == team_multisig
+            assert finalize_agent.call().bonusBasePoints() > 1000
 
-        # Safety check that Crodsale is using our pricing strategy
-        txid = crowdsale.transact({"from": deploy_address}).finalize()
-        print("Finalize txid is", txid)
-        check_succesful_tx(web3, txid)
-        print(crowdsale.call().getState())
+            # Safety check that Crodsale is using our pricing strategy
+            txid = crowdsale.transact({"from": deploy_address}).finalize()
+            print("Finalize txid is", txid)
+            check_succesful_tx(web3, txid)
+            print(crowdsale.call().getState())
 
 
 Send ends at
@@ -606,17 +606,17 @@ Example:
     from populus.utils.accounts import is_account_locked
 
     p = populus.Project()
-    account = "0x"  # Our controller account on Kovan
+    account = "0x4af893ee43a0aa328090bcf164dfa535a1619c3a"  # Our controller account on Kovan
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
         Contract = getattr(chain.contract_factories, "Crowdsale")
-        contract = Contract(address="0x")
+        contract = Contract(address="0x0FB81a518dCa5495986C5c2ec29e989390e0E406")
 
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = contract.transact({"from": account}).setEndsAt(1497778200)
+        txid = contract.transact({"from": account}).setEndsAt(1498631400)
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
@@ -635,7 +635,7 @@ Example:
     from populus.utils.accounts import is_account_locked
 
     p = populus.Project()
-    account = "0x"  # Our controller account on Kovan
+    account = ""  # Our controller account on Kovan
 
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
@@ -649,3 +649,120 @@ Example:
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
+
+Whitelisting transfer agent
+===========================
+
+Token owner sets extra transfer agents to allow test tranfers for a locked up token.
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0x51b9311eb6ec8beb049dafeafe389ee2818b1b20"  # Our controller account
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = getattr(chain.contract_factories, "CrowdsaleToken")
+        token = Token(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setTransferAgent("0x", True)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+
+Set token name
+==============
+
+Update info of a token.
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+    account = "0x"  # Our controller account
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = getattr(chain.contract_factories, "CrowdsaleToken")
+        token = Token(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setTokenInformation("Tokenizer", "TOKE")
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+
+Read crowdsale variables
+========================
+
+Read a crowdsale contract variable.
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli  import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+
+    p = populus.Project()
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Crowdsale = getattr(chain.contract_factories, "Crowdsale")
+        crowdsale = Crowdsale(address="0x")
+
+        print(crowdsale.call().weiRaised() / (10**18))
+
+Participating presale
+=====================
+
+You can test presale proxy buy participation.
+
+Example:
+
+.. code-block:: python
+
+    from ico.utils import check_succesful_tx
+    import populus
+    from populus.utils.cli  import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from eth_utils import to_wei
+
+    p = populus.Project()
+
+    with p.get_chain("kovan") as chain:
+        web3 = chain.web3
+
+        PreICOProxyBuyer = getattr(chain.contract_factories, "PreICOProxyBuyer")
+        presale = PreICOProxyBuyer(address="0x4fe8b625118a212e56d301e0f748505504d41377")
+
+        print("Presale owner is", presale.call().owner())
+        print("Presale state is", presale.call().getState())
+
+        # Make sure minimum buy in threshold is exceeeded in the value
+        txid = presale.transact({"from": "0x001fc7d7e506866aeab82c11da515e9dd6d02c25", "value": to_wei(40, "ether")}).invest()
+        print("TXID", txid)
+        check_succesful_tx(web3, txid)
+
