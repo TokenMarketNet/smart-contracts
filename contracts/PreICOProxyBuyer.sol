@@ -41,6 +41,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /** What is the minimum buy in */
   uint public weiMinimumLimit;
 
+  /** What is the maximum buy in */
+  uint public weiMaximumLimit;
+
   /** How many weis total we are allowed to collect. */
   uint public weiCap;
 
@@ -73,7 +76,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /**
    * Create presale contract where lock up period is given days
    */
-  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiCap) {
+  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiMaximumLimit, uint _weiCap) {
 
     owner = _owner;
 
@@ -87,7 +90,12 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       throw;
     }
 
+    if(_weiMaximumLimit == 0) {
+      throw;
+    }
+
     weiMinimumLimit = _weiMinimumLimit;
+    weiMaximumLimit = _weiMaximumLimit;
     weiCap = _weiCap;
     freezeEndsAt = _freezeEndsAt;
   }
@@ -119,8 +127,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     balances[investor] = safeAdd(balances[investor], msg.value);
 
-    // Need to fulfill minimum limit
-    if(balances[investor] < weiMinimumLimit) {
+    // Need to satisfy minimum and maximum limits
+    if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
       throw;
     }
 
@@ -233,7 +241,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    if(!investor.send(amount)) throw;
+    // This was originally "send()" but was replaced with call.value()() to
+    // forward gas, if there happens to be a complicated multisig implementation
+    // which would need more gas than the gas stipend:
+    if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
 
