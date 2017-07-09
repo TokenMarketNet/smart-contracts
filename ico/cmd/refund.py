@@ -9,6 +9,7 @@ import shutil
 
 import click
 from eth_utils import from_wei
+from eth_utils import is_checksum_address
 from eth_utils import to_wei
 
 from populus.utils.accounts import is_account_locked
@@ -45,16 +46,16 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
     .. code-block:: csv
 
         Email,ETH,Refund address
-        yyy@xxx.com,61.52,0x0e78EF811B6564c996fD10012579633B1a518b9D
+        yyy@xxx.com,61.52,0x0078EF811B6564c996fD10012579633B1a518b9D
         yyy@xxx.com,111.21,0xf0b91641CCe2ADB4c0D7B90c54E7eE96CCCBc3d1
-        yyy@xxx.com,61.52,0x5dAbC71Faa8982bF23eE2c4979d22536F5101065
-        yyy@xxx.com,61.52,0x9B8EceBc18153166Beec1b568D510B55B560789D
+        yyy@xxx.com,61.52,0x0dAbC71Faa8982bF23eE2c4979d22536F5101065
+        yyy@xxx.com,61.52,0x0B8EceBc18153166Beec1b568D510B55B560789D
     """
 
     # Make a backup of the state file
     if os.path.exists(state_file):
         assert state_file.endswith(".json")
-        backup_name = state_file.replace(".json", datetime.datetime.utcnow().isoformat() + ".bak.json")
+        backup_name = state_file.replace(".json", "." + datetime.datetime.utcnow().isoformat() + ".bak.json")
         print("Backing up state file to", backup_name)
         shutil.copy(state_file, backup_name)
 
@@ -73,17 +74,22 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
             assert not is_account_locked(web3, hot_wallet_address)
 
         print("Reading data", csv_file)
-        with open(csv_file, "rt") as inp:
+        with open(csv_file, "rt", encoding='utf-8-sig') as inp:
             reader = csv.DictReader(inp)
             rows = [row for row in reader]
 
         # Check that we have unique addresses
         uniq_ids = set()
         for row in rows:
+            print(row)
             id = row[id_column].strip()
             if id in uniq_ids:
                 raise RuntimeError("Id appears twice in input data", id)
             uniq_ids.add(id)
+
+            addr = row[address_column]
+            if not is_checksum_address(addr):
+                print("Not a checksummed address", addr)
 
         # Start distribution
         start_time = time.time()
@@ -109,7 +115,7 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
                 continue
 
             # Use non-default gas price for speedier processing
-            gas_price = int(web3.eth.gasPrice * 1.2)
+            gas_price = int(web3.eth.gasPrice * 10)
 
             txid = web3.eth.sendTransaction({"from": hot_wallet_address, "to": addr, "value": amount_wei, "gasPrice": gas_price})
             duration = time.time() - start_time
@@ -122,7 +128,7 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
             check_succesful_tx(web3, txid)
 
         end_balance = from_wei(web3.eth.getBalance(hot_wallet_address), "ether")
-        print("Deployment cost is", start_balance - end_balance, "ETH")
+        print("Refund cost is", start_balance - end_balance, "ETH")
         print("All done! Enjoy your decentralized future.")
 
 
