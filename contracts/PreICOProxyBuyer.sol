@@ -62,7 +62,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   enum State{Unknown, Funding, Distributing, Refunding}
 
   /** Somebody loaded their investment money */
-  event Invested(address investor, uint value);
+  event Invested(address investor, uint value, uint128 customerId);
 
   /** Refund claimed */
   event Refunded(address investor, uint value);
@@ -114,7 +114,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   /**
    * Participate to a presale.
    */
-  function invest() public stopInEmergency payable {
+  function invest(uint128 customerId) private {
 
     // Cannot invest anymore through crowdsale when moving has begun
     if(getState() != State.Funding) throw;
@@ -143,8 +143,17 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       throw;
     }
 
-    Invested(investor, msg.value);
+    Invested(investor, msg.value, customerId);
   }
+
+  function investWithId(uint128 customerId) public stopInEmergency payable {
+    invest(customerId);
+  }
+
+  function investWithoutId() public stopInEmergency payable {
+    invest(0x0);
+  }
+
 
   /**
    * Load funds to the crowdsale for all investors.

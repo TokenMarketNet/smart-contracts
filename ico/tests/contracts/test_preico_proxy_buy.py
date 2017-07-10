@@ -1,5 +1,6 @@
 """Preico proxy buy."""
 import datetime
+import uuid
 
 import pytest
 from eth_utils import from_wei
@@ -76,8 +77,8 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
     proxy_buyer.transact({"from": customer_2}).transferOwnership(team_multisig)
 
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
-    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithoutId()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).investWithoutId()
 
     # Everything funder
     assert proxy_buyer.call().weiRaisedTotal() == to_wei(30000, "ether")
@@ -121,12 +122,26 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     assert token.call().balanceOf(customer_2) == 36000000/3*2
 
 
+def test_proxy_buy_with_id(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """Buy proxy as a customer we can link to a database entry."""
+
+    assert proxy_buyer.call().getState() == 1
+
+    customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithId(customer_id)
+
+    events = proxy_buyer.pastEvents("Invested").get()
+    assert len(events) == 1
+    e = events[-1]
+    assert e["args"]["customerId"] == customer_id
+
+
 def test_proxy_buy_claim_twice(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
     """Claim in two batches, uneven divide."""
 
     assert proxy_buyer.call().getState() == 1
 
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithoutId()
 
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
@@ -167,8 +182,8 @@ def test_proxy_buy_refund(chain, web3, proxy_buyer, crowdsale, customer, custome
     """We can refund"""
 
     value = to_wei(1, "ether")
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
-    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithoutId()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).investWithoutId()
 
     time_travel(chain, proxy_buyer.call().freezeEndsAt() + 1)
     assert proxy_buyer.call().getState() == 3  # Refunding
@@ -186,8 +201,8 @@ def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_mult
 
     assert proxy_buyer.call().getState() == 1
 
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
-    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithoutId()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).investWithoutId()
 
     # Everything funder
     assert proxy_buyer.call().weiRaisedTotal() == to_wei(30000, "ether")
@@ -210,8 +225,8 @@ def test_proxy_buy_claim_too_much(chain, web3, customer, customer_2, team_multis
 
     assert proxy_buyer.call().getState() == 1
 
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).invest()
-    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).invest()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).investWithoutId()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).investWithoutId()
 
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
@@ -241,7 +256,7 @@ def test_proxy_buy_too_much(chain, web3, customer, customer_2, team_multisig, pr
     assert proxy_buyer.call().getState() == 1
 
     with pytest.raises(TransactionFailed):
-        proxy_buyer.transact({"value": to_wei(100001, "ether"), "from": customer}).invest()
+        proxy_buyer.transact({"value": to_wei(100001, "ether"), "from": customer}).investWithoutId()
 
 def test_proxy_min_buyin(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
     """Try to buy over the cap."""
@@ -249,7 +264,7 @@ def test_proxy_min_buyin(chain, web3, customer, customer_2, team_multisig, proxy
     assert proxy_buyer.call().getState() == 1
 
     with pytest.raises(TransactionFailed):
-        proxy_buyer.transact({"value": 1, "from": customer}).invest()
+        proxy_buyer.transact({"value": 1, "from": customer}).investWithoutId()
 
 def test_proxy_max_buyin(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
     """Try to buy over the cap."""
@@ -257,7 +272,7 @@ def test_proxy_max_buyin(chain, web3, customer, customer_2, team_multisig, proxy
     assert proxy_buyer.call().getState() == 1
 
     with pytest.raises(TransactionFailed):
-        proxy_buyer.transact({"value": to_wei(44001, "ether"), "from": customer}).invest()
+        proxy_buyer.transact({"value": to_wei(44001, "ether"), "from": customer}).investWithoutId()
 
 
 def test_proxy_buy_halted(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
@@ -268,4 +283,4 @@ def test_proxy_buy_halted(chain, web3, customer, customer_2, team_multisig, prox
     proxy_buyer.transact({"from": team_multisig}).halt()
 
     with pytest.raises(TransactionFailed):
-        proxy_buyer.transact({"value": to_wei(1, "ether"), "from": customer}).invest()
+        proxy_buyer.transact({"value": to_wei(1, "ether"), "from": customer}).investWithoutId()
