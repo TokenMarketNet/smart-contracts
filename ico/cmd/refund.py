@@ -115,7 +115,7 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
                 continue
 
             # Use non-default gas price for speedier processing
-            gas_price = int(web3.eth.gasPrice * 10)
+            gas_price = int(web3.eth.gasPrice * 3)
 
             txid = web3.eth.sendTransaction({"from": hot_wallet_address, "to": addr, "value": amount_wei, "gasPrice": gas_price})
             duration = time.time() - start_time
@@ -125,7 +125,7 @@ def main(chain, hot_wallet_address, csv_file, limit, start_from, address_column,
             with open(state_file, "wt") as out:
                 json.dump(state, out)
 
-            check_succesful_tx(web3, txid)
+            check_succesful_tx(web3, txid, timeout=300)
 
         end_balance = from_wei(web3.eth.getBalance(hot_wallet_address), "ether")
         print("Refund cost is", start_balance - end_balance, "ETH")
