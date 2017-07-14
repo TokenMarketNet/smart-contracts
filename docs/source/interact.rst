@@ -31,6 +31,64 @@ Then start Jupyter Notebook:
 
     jupyter notebook
 
+Transferring tokens
+===================
+
+Example:
+
+.. code-block:: python
+
+    from decimal import Decimal
+    import populus
+    from populus.utils.accounts import is_account_locked
+    from populus.utils.cli import request_account_unlock
+    from eth_utils import from_wei
+    from ico.utils import check_succesful_tx
+
+    # Which network we deployed our contract
+    chain_name = "mainnet"
+
+    # Owner account on geth
+    owner_address = "0x"
+
+    # Where did we deploy our token
+    contract_address = "0x"
+
+    receiver = "0x"
+
+    amount = Decimal("1.0")
+
+    project = populus.Project()
+
+    with project.get_chain(chain_name) as chain:
+
+        web3 = chain.web3
+        print("Web3 provider is", web3.currentProvider)
+        print("Owner address is", owner_address)
+        print("Owner balance is", from_wei(web3.eth.getBalance(owner_address), "ether"), "ETH")
+
+        # Goes through geth account unlock process if needed
+        if is_account_locked(web3, owner_address):
+            request_account_unlock(chain, owner_address, None)
+
+        transaction = {"from": owner_address}
+        FractionalERC20 = chain.contract_factories.FractionalERC20
+
+        token = FractionalERC20(address=contract_address)
+        decimals = token.call().decimals()
+        decimal_multiplier = 10 ** decimals
+
+        print("Token has", decimals, "decimals")
+        print("Owner token balance is", token.call().balanceOf(owner_address) / decimal_multiplier)
+
+        # Use lowest denominator amount
+        normalized_amount = int(amount * decimal_multiplier)
+
+        # Transfer the tokens
+        txid = token.transact({"from": owner_address}).transfer(receiver, normalized_amount)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+
 Releasing a token
 =================
 
@@ -300,7 +358,7 @@ Try to buy from a whitelisted address or on a testnet with a generated customer 
 
         customer_id = int(uuid.uuid4().hex, 16)  # Customer ids are 128-bit UUID v4
 
-        txid = contract.transact({"from": account, "value": to_wei(2, "ether")}).buyWithCustomerId(customer_id)
+        txid = contract.transact({"from": account, "value": to_wei(2, "ether")}).buy()
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
@@ -640,7 +698,7 @@ Example:
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
         Token = getattr(chain.contract_factories, "CentrallyIssuedToken")
-        token = Token(address="0x")
+        token = Token(address="")
 
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
