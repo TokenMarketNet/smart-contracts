@@ -53,7 +53,7 @@ Install dependencies:
 
 .. code-block:: console
 
-    sudo apt install -y git build-essential libssl-dev python3 python3-venv python3-setuptools python3-dev cmake
+    sudo apt install -y git build-essential libssl-dev python3 python3-venv python3-setuptools python3-dev cmake libboost-all-dev
 
 `Install Go Ethereum <https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Ubuntu>`_:
 
