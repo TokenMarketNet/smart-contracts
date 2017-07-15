@@ -5,6 +5,7 @@ from collections import Counter
 from collections import defaultdict
 from typing import Tuple
 import os
+import time
 
 import jinja2
 import ruamel.yaml
@@ -218,6 +219,10 @@ def perform_verify_actions(chain, runtime_data: dict, contracts: dict):
 
         verify_actions = textwrap.dedent(verify_actions)
         print("Performing deployment verification")
+
+        # Allow some time for post_actions to be mined
+        time.sleep(60)
+
         exec_lines(verify_actions, context, print_prefix="Verification:")
     else:
         print("No verify defined")
