@@ -78,3 +78,6 @@ crowdsales/*.yml
 *.csv
 
 test_client1.py
+
+*.sol--
+*.swp

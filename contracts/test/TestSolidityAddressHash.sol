@@ -1,4 +1,4 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 /**
  * Test address hash behavior with left and right padded zeroes.
