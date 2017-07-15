@@ -15,7 +15,7 @@ def main(deployment_file, deployment_name, address):
 
     Example:
 
-    deploy-contracts --crowdsale-file=crowdsales/example.yml --deployment-name=ropsten --address=0xffffffffffff
+    deploy-contracts --deployment-file=crowdsales/example.yml --deployment-name=ropsten --address=0xffffffffffff
     """
 
     project = Project()

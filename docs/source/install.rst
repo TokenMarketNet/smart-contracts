@@ -45,6 +45,7 @@ Create virtualenv for Python package management in the project root folder (same
     python3.5 -m venv venv
     source venv/bin/activate
     pip install -r requirements.txt
+    pip install -e .
 
 Setting up - Ubuntu Linux 16.04
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
