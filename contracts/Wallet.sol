@@ -1,4 +1,4 @@
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 /**
  * This is a multisig wallet based on Gav's original implementation, daily withdraw limits removed.

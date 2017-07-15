@@ -1,5 +1,5 @@
 
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.11;
 
 import "./Crowdsale.sol";
 
