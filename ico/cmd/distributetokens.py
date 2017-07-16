@@ -168,6 +168,11 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             if not tokens % 1 == 0:
                 raise RuntimeError("Could not issue tokens because after multiplication was not integer")
 
+            transaction = {
+                "from": address
+                "gasPrice": int(web3.eth.gasPrice * 1.5)
+            }
+
             tokens = int(tokens)
 
             print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent)
