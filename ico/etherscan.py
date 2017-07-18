@@ -40,6 +40,8 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
 
     if chain_name == "mainnet":
         url = "https://etherscan.io/verifyContract"
+    elif chain_name == "rinkeby":
+        url = "https://rinkeby.etherscan.io/verifyContract"
     elif chain_name == "ropsten":
         url = "https://ropsten.etherscan.io/verifyContract"
     elif chain_name == "kovan":
@@ -99,6 +101,8 @@ def get_etherscan_link(network, address):
 
     if network == "mainnet":
         return "https://etherscan.io/address/" + address
+    elif network == "rinkeby":
+        return "https://rinkeby.etherscan.io/address/" + address
     elif network == "ropsten":
         return "https://ropsten.etherscan.io/address/" + address
     elif network == "kovan":
