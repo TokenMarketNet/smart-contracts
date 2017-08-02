@@ -67,7 +67,7 @@ Install dependencies:
 
 Currently only Solidity 0.4.8 is supported. Compile it from source. Do this under *a local UNIX user* you are going to solc with, not as root:
 
-.. code-block:: consoile
+.. code-block:: console
 
     git clone --recursive git@github.com:ethereum/solidity.git
     cd solidity
