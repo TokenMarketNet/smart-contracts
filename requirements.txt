@@ -7,7 +7,7 @@ contextlib2==0.5.4
 eth-testrpc==1.1.1
 ethereum==1.6.1
 ethereum-abi-utils==0.4.0
-ethereum-utils==0.2.0
+ethereum-utils==0.3.2
 json-rpc==1.10.3
 jsonschema==2.6.0
 pathtools==0.1.2

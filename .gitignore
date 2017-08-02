@@ -84,3 +84,9 @@ block-timestamps.json
 
 # JSON state files for refund script
 refund-state*
+
+# A folder for test CSV files
+csvs
+
+# Libreoffice tmp files
+.~*

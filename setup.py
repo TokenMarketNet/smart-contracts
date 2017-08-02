@@ -64,5 +64,6 @@ setup(
     distribute-tokens=ico.cmd.distributetokens:main
     token-vault=ico.cmd.tokenvault:main
     refund=ico.cmd.refund:main
+    combine-csvs=ico.cmd.combine:main
     ''',
 )
