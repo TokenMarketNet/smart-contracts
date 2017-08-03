@@ -61,7 +61,7 @@ These contracts have been tested, audited and used by several projects. Below ar
 Quick token sale walkthrough
 ============================
 
-.. image:: screenshots/walkthrough.png
+.. image:: https://ico.readthedocs.io/en/latest/_images/walkthrough.png
 
 Features and design goals
 =========================
