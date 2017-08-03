@@ -41,11 +41,11 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
     Example (first run):
 
-        distribute-tokens --chain=kovan --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25 --token=0x1644a421ae0a0869bac127fa4cce8513bd666705 --csv-file=input.csv --allow-zero --address-column="Ethereum address" --amount-column="Golden tickets earned"
+        distribute-tokens --chain=kovan --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25 --token=0x1644a421ae0a0869bac127fa4cce8513bd666705 --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a --csv-file=input.csv --allow-zero --address-column="Ethereum address" --amount-column="Token amount"
 
     Example (second run, continue after first run was interrupted):
 
-        distribute-tokens --chain=kovan --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25 --token=0x1644a421ae0a0869bac127fa4cce8513bd666705 --csv-file=input.csv --allow-zero --address-column="Ethereum address" --amount-column="Golden tickets earned" --issuer-address=0x2c9877534f62c8b40aebcd08ec9f54d20cb0a945
+        distribute-tokens --chain=kovan --address=0x001FC7d7E506866aEAB82C11dA515E9DD6D02c25 --token=0x1644a421ae0a0869bac127fa4cce8513bd666705 --csv-file=input.csv --allow-zero --address-column="Ethereum address" --amount-column="Token amount" --issuer-address=0x2c9877534f62c8b40aebcd08ec9f54d20cb0a945
 
     """
 

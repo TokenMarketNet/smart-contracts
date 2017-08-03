@@ -824,3 +824,51 @@ Example:
         print("TXID", txid)
         check_succesful_tx(web3, txid)
 
+Distributing bounties
+=====================
+
+There are two commands to support token bounty distribution
+
+* ``combine-csvs`` allows to merge externally managed bountry distribution sheets to one combined CSV distribution file
+
+* ``distribute-tokens`` deploys an issuer contract and handles the token transfers
+
+Prerequisites
+-------------
+
+* An account with gas money
+
+* A token contract address
+
+* CSV files for the token distribution (Twitter, Facebook, Youtube, translations, etc.)
+
+* A multisig wallet holding the source tokens
+
+Merge any CSV files
+-------------------
+
+Merge any or a single CSV files using ``combine-csvs``. This command will validate input Ethereum addresses and merge any duplicate transactions to a single address to one transaction.
+
+Deploy issuer contract
+----------------------
+
+Example:
+
+..code-block:: console
+
+    distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a
+
+Give approve() for the issuer contract
+--------------------------------------
+
+Use the multisig wallet to approve() the token distribution.
+
+Run the issuance
+----------------
+
+Example:
+
+..code-block:: console
+
+    distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined-bqx.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a --issuer-address=0x78d30c42a5f9fb19df60768e4c867b697e24b615
+

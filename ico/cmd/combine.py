@@ -115,11 +115,11 @@ def read_file(combined: dict, all_errors: List[tuple], book_keeping: collections
 def main(input_file: list, output_file: str, decimals: int, address_column: str, amount_column: str):
     """Combine multiple token distribution CSV files to a single CSV file good for an Issuer contract.
 
-    - Input is in format Ethereum address, number of tokens
+    - Input is a CSV file having columns Ethereum address, number of tokens
 
-    - Round all tokens to the same decimal out
+    - Round all tokens to the same decimal precision
 
-    - Combine multiple addresses to one
+    - Combine multiple transactions to a single address to one transaction
 
     Example:
 
@@ -164,6 +164,7 @@ def main(input_file: list, output_file: str, decimals: int, address_column: str,
     print("Valid entries:", book_keeping["total_entries"])
     print("Unique entries:", book_keeping["uniq_entries"])
     print("Total distribution", book_keeping["token_total"], "tokens")
+    print("Total distribution, raw approve() amount", int((book_keeping["token_total"] + 1) * 10**decimals), "tokens")
     print("Total", len(errors), "errors")
 
 if __name__ == "__main__":
