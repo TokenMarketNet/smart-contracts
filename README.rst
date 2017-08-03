@@ -39,6 +39,30 @@ This package provides
 
 * Deployment tools and scripts
 
+Token sales
+===========
+
+These contracts have been tested, audited and used by several projects. Below are some notable token sales that we have used these contracts
+
+* `Civic <https://www.civic.com/>`_
+
+* `Storj <https://storj.io/>`_
+
+* `Monaco <https://mona.co/>`_
+
+* `DENT <https://dentcoin.com/>`_
+
+* `Bitquence <https://www.bitquence.com/>`_
+
+* `InsureX <http://insurex.co/>`_
+
+* ... and many more!
+
+Quick token sale walkthrough
+============================
+
+.. image:: screenshots/walkthrough.png
+
 Features and design goals
 =========================
 

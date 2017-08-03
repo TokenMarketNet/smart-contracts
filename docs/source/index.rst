@@ -25,7 +25,6 @@ This project aims to provide standard, secure smart contracts and tools to creat
    support
 
 .. image:: screenshots/walkthrough.png
-    :width: 600
 
 Links
 =====
