@@ -24,6 +24,9 @@ This project aims to provide standard, secure smart contracts and tools to creat
    other
    support
 
+.. image:: screenshots/ipython.png
+    :width: 600
+
 Links
 =====
 

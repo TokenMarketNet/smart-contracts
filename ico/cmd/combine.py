@@ -121,9 +121,9 @@ def main(input_file: list, output_file: str, decimals: int, address_column: str,
 
     - Combine multiple transactions to a single address to one transaction
 
-    Example:
+    Example of cleaning up one file:
 
-        combine-csvs --input-file=bounties1.csv --input-file=bounties2.csv --output-file=combined.csv --decimals=8
+        combine-csvs --input-file=csvs/bounties-unclean.csv --output-file=combine.csv --decimals=8 --address-column="address" --amount-column="amount"
 
     Another example - combine all CSV files in a folder using zsh shell:
 
