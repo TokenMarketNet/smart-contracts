@@ -2,7 +2,7 @@
  * Originally from https://github.com/ConsenSys/MultiSigWallet
  */
 
-pragma solidity 0.4.8;
+pragma solidity ^0.4.8;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.

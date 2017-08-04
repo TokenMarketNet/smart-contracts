@@ -111,6 +111,7 @@ def test_left_pad(pad_contract):
     assert hash == val
 
 
+@pytest.mark.skip(reason="Solidity compiler 0.4.11 does not run this yet")
 def test_right_pad(pad_contract):
     """Ensure we handle trailing zero in the address correctly."""
 
