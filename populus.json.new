@@ -120,26 +120,13 @@
       "SolcAutoBackend": {
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
-          "solidity_input_description": {
-            "optimizer": {
-              "enabled": true,
-              "runs": 500
-            },
-            "remappings": ["zeppelin=./zeppelin"],
-            "outputSelection": {
-              "*": {
-                "*": [
-                  "abi",
-                  "metadata",
-                  "evm.bytecode",
-                  "evm.deployedBytecode"
-                ]
-              }
-            }
-          },
-          "command_line_options": {
-            "allow_paths": "/"
-          }
+          "optimize": true,
+          "output_values": [
+            "abi",
+            "bin",
+            "bin-runtime",
+            "metadata"
+          ]
         }
       },
       "SolcCombinedJSON": {
@@ -157,21 +144,19 @@
       "SolcStandardJSON": {
         "class": "populus.compilation.backends.SolcStandardJSONBackend",
         "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 500
-          },
-          "outputSelection": {
-            "*": {
-              "*": ["abi", "metadata"]
-            }
-          },
-          "allow_paths": ["./zeppelin"]
+          "optimize": true,
+          "output_values": [
+            "abi",
+            "bin",
+            "bin-runtime",
+            "metadata"
+          ],
+          "allow_paths": ["."]
         }
       }
     },
     "contracts_source_dir": "./contracts",
-    "import_remappings": []
+    "import_remappings": ["zeppelin=zeppelin", "ico=ico"]
   },
   "contracts": {
     "backends": {

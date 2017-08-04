@@ -114,13 +114,13 @@ contract Crowdsale is Haltable {
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
-  event EndsAtChanged(uint endsAt);
+  event EndsAtChanged(uint newEndsAt);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 

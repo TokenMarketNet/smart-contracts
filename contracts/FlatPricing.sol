@@ -26,7 +26,6 @@ contract FlatPricing is PricingStrategy {
   /**
    * Calculate the current price for buy in amount.
    *
-   * @param  {uint amount} Buy-in value in wei.
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
     uint multiplier = 10 ** decimals;

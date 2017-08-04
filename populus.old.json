@@ -2,7 +2,7 @@
   "chains": {
     "mainnet": {
       "chain": {
-        "class": "populus.chain.geth.MainnetChain"
+        "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
@@ -21,12 +21,85 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8545",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
+      }
+    },
+    "rinkeby": {
+      "chain": {
+        "class": "populus.chain.external.ExternalChain"
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8548",
+            "request_kwargs": {
+              "timeout": 180
+            }
+          }
+        }
+      }
+    },
+    "kovan": {
+      "chain": {
+        "class": "populus.chain.external.ExternalChain"
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8547",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
       }
     },
     "ropsten": {
       "chain": {
-        "class": "populus.chain.geth.TestnetChain"
+        "class": "populus.chain.geth.TestnetChain",
+        "timeout": 240
       },
       "contracts": {
         "backends": {
@@ -45,7 +118,15 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8546",
+            "request_kwargs": {
+                "timeout": 250
+            }
+          }
+        }
       }
     },
     "temp": {
@@ -113,65 +194,11 @@
     }
   },
   "compilation": {
-    "backend": {
-      "$ref": "compilation.backends.SolcAutoBackend"
-    },
-    "backends": {
-      "SolcAutoBackend": {
-        "class": "populus.compilation.backends.SolcAutoBackend",
-        "settings": {
-          "solidity_input_description": {
-            "optimizer": {
-              "enabled": true,
-              "runs": 500
-            },
-            "remappings": ["zeppelin=./zeppelin"],
-            "outputSelection": {
-              "*": {
-                "*": [
-                  "abi",
-                  "metadata",
-                  "evm.bytecode",
-                  "evm.deployedBytecode"
-                ]
-              }
-            }
-          },
-          "command_line_options": {
-            "allow_paths": "/"
-          }
-        }
-      },
-      "SolcCombinedJSON": {
-        "class": "populus.compilation.backends.SolcCombinedJSONBackend",
-        "settings": {
-          "optimize": true,
-          "output_values": [
-            "abi",
-            "bin",
-            "bin-runtime",
-            "metadata"
-          ]
-        }
-      },
-      "SolcStandardJSON": {
-        "class": "populus.compilation.backends.SolcStandardJSONBackend",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 500
-          },
-          "outputSelection": {
-            "*": {
-              "*": ["abi", "metadata"]
-            }
-          },
-          "allow_paths": ["./zeppelin"]
-        }
-      }
-    },
     "contracts_source_dir": "./contracts",
-    "import_remappings": []
+    "settings": {
+      "optimize": true,
+      "import_remappings": ["zeppelin=zeppelin", "ico=ico"]
+    }
   },
   "contracts": {
     "backends": {
@@ -196,7 +223,7 @@
       }
     }
   },
-  "version": "5",
+  "version": "3",
   "web3": {
     "GethIPC": {
       "provider": {

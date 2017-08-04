@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.6;
 
-import "zeppelin/contracts/SafeMath.sol";
+import "./SafeMath.sol";
 import "./Crowdsale.sol";
 import "./StandardToken.sol";
 import "./Haltable.sol";
@@ -77,7 +77,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   event TokensBoughts(uint count);
 
   /** We distributed tokens to an investor */
-  event Distributed(address investors, uint count);
+  event Distributed(address investor, uint count);
 
   /**
    * Create presale contract where lock up period is given days

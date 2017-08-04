@@ -35,7 +35,4 @@ library SafeMathLib {
     return c;
   }
 
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
 }
