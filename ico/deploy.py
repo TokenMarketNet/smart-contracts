@@ -11,11 +11,13 @@ import jinja2
 import ruamel.yaml
 
 from eth_utils import from_wei
+
 from populus import Project
 from populus.utils.cli import request_account_unlock
 from populus.utils.accounts import is_account_locked
 from web3.contract import Contract
 
+from ico.utils import get_contract_by_name
 from ico.definition import load_crowdsale_definitions
 from ico.definition import get_jinja_context
 from ico.definition import interpolate_data
@@ -111,7 +113,7 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
         address = contract_def.get("address")
         if address:
             print("Already deployed contract,", name, address)
-            Contract = getattr(chain.contract_factories, contract_name)
+            Contract = get_contract_by_name(chain, contract_name)
             contracts[name] = Contract(address=address)
             statistics["already_deployed"] += 1
             continue

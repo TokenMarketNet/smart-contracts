@@ -1,22 +1,18 @@
 from typing import Optional
 
 from decimal import Decimal
-from eth_abi import encode_abi
-from eth_abi.exceptions import EncodingError
+
+import web3
 from eth_utils import add_0x_prefix
-from eth_utils import encode_hex
-from eth_utils import force_bytes
-from eth_utils import force_obj_to_bytes
-from eth_utils import remove_0x_prefix
+from ethereum.chain import Chain
+from populus.utils.contracts import CONTRACT_FACTORY_FIELDS
 from web3 import Web3
 from web3.contract import Contract
-from web3.utils.abi import get_constructor_abi, get_abi_input_types, check_if_arguments_can_be_encoded, merge_args_and_kwargs
+from web3.utils.abi import get_constructor_abi, merge_args_and_kwargs
 from web3.utils.transactions import wait_for_transaction_receipt
 
 from populus.chain.base import BaseChain
-from populus.contracts.provider import Provider
-from populus.utils.linking import find_link_references
-
+from populus.contracts.contract import build_populus_meta, PopulusContract
 
 truthy = frozenset(('t', 'true', 'y', 'yes', 'on', '1'))
 falsey = frozenset(('f', 'false', 'n', 'no', 'off', '0'))
@@ -81,23 +77,34 @@ def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwa
         return deploy_data
 
 
-def get_libraries(chain: BaseChain, contract_name, contract: Contract) -> dict:
-    """Get libraries of a deployed contract.
+def get_libraries(chain: BaseChain, contract_name: str, contract: Contract) -> dict:
+    """Get library addresses of a deployed contract.
 
-    TODO: drop contract_name https://github.com/pipermerriam/web3.py/issues/172
+    * The contract must be deployed
+
+    * Chain stores linkrefs for deployed contracts
+
+    * Look the addresses of already deployed library contracts from the chain by name
+
+    TODO: Rewrite deployment and linking logic so that libraries are correctly shared across the contracts
+
+    :param name: Name of a (just) deployed contract
 
     :return dict: Library name -> address pairs
     """
 
-    unlinked = chain.provider.get_base_contract_factory(contract_name)
-    refs = find_link_references(unlinked.bytecode, chain.provider.get_all_contract_names())
+    contract_data = chain.provider.get_contract_data(contract_name)
+
+    # link_refs looks like:
+    # [{'name': 'SafeMathLib', 'length': 40, 'source_path': 'contracts/SafeMathLib.sol', 'start': 3304}]
+    link_refs = contract_data["linkrefs"]
 
     def get_address(name):
         return chain.registrar.get_contract_addresses(name)[0]
 
     libraries = {
         contract_name: get_address(contract_name)
-        for contract_name in set(ref.full_name for ref in refs)
+        for contract_name in set(ref["name"] for ref in link_refs)
     }
     return libraries
 
@@ -112,5 +119,30 @@ def decimalize_token_amount(contract: Contract, amount: int) -> Decimal:
     val = Decimal(amount) / Decimal(10 ** contract.call().decimals())
     quantizer = Decimal(1) /  Decimal(10 ** contract.call().decimals())
     return val.quantize(quantizer)
+
+
+def get_contract_by_name(chain: BaseChain, name: str) -> web3.contract.Contract:
+    """Get web3.Contract class by its name.
+
+    Sanity wrapper over everchanging Populus ABI.
+    """
+
+    contract_data = chain.provider.get_contract_data(name)
+
+    factory_kwargs = {
+        key: contract_data[key]
+        for key
+        in CONTRACT_FACTORY_FIELDS
+        if key in contract_data
+    }
+
+    populus_meta = build_populus_meta(chain, contract_data)
+    Contract = chain.web3.eth.contract(
+        ContractFactoryClass=PopulusContract,
+        populus_meta=populus_meta,
+        **factory_kwargs,
+    )
+
+    return Contract
 
 

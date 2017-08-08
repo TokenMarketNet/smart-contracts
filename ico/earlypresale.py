@@ -5,6 +5,7 @@ from eth_utils import from_wei
 from web3 import Web3
 
 from ico.utils import check_succesful_tx
+from ico.utils import get_contract_by_name
 
 
 logger = logging.getLogger(__name__)
@@ -27,10 +28,10 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
 
     updated = 0
 
-    PresaleFundCollector = chain.contract_factories.PresaleFundCollector
+    PresaleFundCollector = get_contract_by_name(chain, "PresaleFundCollector")
     presale = PresaleFundCollector(address=presale_address)
 
-    Crowdsale = chain.contract_factories.Crowdsale
+    Crowdsale = PresaleFundCollector = get_contract_by_name(chain, "Crowdsale")
     crowdsale = Crowdsale(address=crowdsale_address)
 
     # Make sure presale is correctly set
@@ -39,7 +40,7 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
     check_succesful_tx(web3, txid, timeout=timeout)
 
     # Double check presale has a presale price set
-    MilestonePricing = chain.contract_factories.MilestonePricing
+    MilestonePricing = get_contract_by_name(chain, "MilestonePricing")
     pricing_strategy = MilestonePricing(address=crowdsale.call().pricingStrategy())
 
     if not pricing_strategy.call().preicoAddresses(presale.address):
