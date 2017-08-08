@@ -120,7 +120,7 @@
       "SolcAutoBackend": {
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
-          "solidity_input_description": {
+          "stdin": {
             "optimizer": {
               "enabled": true,
               "runs": 500
