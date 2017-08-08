@@ -10,7 +10,6 @@ eth-testrpc==1.3.0
 ethereum==1.6.1
 ethereum-abi-utils==0.4.0
 ethereum-utils==0.3.2
--e git+git@github.com:TokenMarketNet/ico.git@2812481546c7119e85574ce4abf0ee83ced19899#egg=ico
 idna==2.5
 Jinja2==2.9.6
 json-rpc==1.10.3
@@ -18,7 +17,7 @@ jsonschema==2.6.0
 MarkupSafe==1.0
 pathtools==0.1.2
 pbkdf2==1.3
--e git+git@github.com:pipermerriam/populus.git@7c90e4fac987d8a3d7ca8cada017ce661d000b53#egg=populus
+-e git+git@github.com:pipermerriam/populus.git@2ef95031997690c859be45fec715f299c8bac8dd#egg=populus
 py==1.4.34
 py-geth==1.9.0
 py-solc==1.2.2
@@ -41,4 +40,5 @@ toposort==1.5
 urllib3==1.22
 watchdog==0.8.3
 web3==3.11.0
+-e git+git@github.com:miohtama/web3.py.git@c9a8f06c97047454278d47dee4c76c2b5ef1c88e#egg=web3
 Werkzeug==0.12.2
