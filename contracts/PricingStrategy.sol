@@ -26,6 +26,8 @@ contract PricingStrategy {
 
   /**
    * @dev Pricing tells if this is a presale purchase or not.
+     @param purchaser Address of the purchaser
+     @return False by default, true if a presale purchaser
    */
   function isPresalePurchase(address purchaser) public constant returns (bool) {
     return false;
@@ -37,7 +39,7 @@ contract PricingStrategy {
    *
    * @param value - What is the value of the transaction send in as wei
    * @param tokensSold - how much tokens have been sold this far
-   * @param weiRaised - how much money has been raised this far in the main token sale - this number excludes
+   * @param weiRaised - how much money has been raised this far in the main token sale - this number excludes presale
    * @param msgSender - who is the investor of this transaction
    * @param decimals - how many decimal units the token has
    * @return Amount of tokens the investor receives

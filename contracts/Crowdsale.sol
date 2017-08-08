@@ -193,7 +193,7 @@ contract Crowdsale is Haltable {
     }
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised , tokensSold, msg.sender, token.decimals());
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -214,7 +214,7 @@ contract Crowdsale is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     if(pricingStrategy.isPresalePurchase(receiver)) {
-      presaleWeiRaised += weiAmount;
+      presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
 
     // Check that we did not bust the cap
