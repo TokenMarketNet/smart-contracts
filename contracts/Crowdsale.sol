@@ -59,6 +59,9 @@ contract Crowdsale is Haltable {
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
 
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
+
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
 
@@ -190,7 +193,7 @@ contract Crowdsale is Haltable {
     }
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised , tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -209,6 +212,10 @@ contract Crowdsale is Haltable {
     // Update totals
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
+
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+      presaleWeiRaised += weiAmount;
+    }
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
