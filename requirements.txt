@@ -39,6 +39,5 @@ toolz==0.8.2
 toposort==1.5
 urllib3==1.22
 watchdog==0.8.3
-web3==3.11.0
 -e git+git@github.com:miohtama/web3.py.git@c9a8f06c97047454278d47dee4c76c2b5ef1c88e#egg=web3
 Werkzeug==0.12.2
