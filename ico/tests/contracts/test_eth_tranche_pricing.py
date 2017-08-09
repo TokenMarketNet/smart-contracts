@@ -303,3 +303,49 @@ def test_fractional_wei_tranche_pricing(chain, presale_fund_collector, wei_tranc
 
     # Make sure we get decimals right
     assert d.as_tuple() == Decimal("1.00000000").as_tuple()
+
+
+def test_presale_update_counters(chain, presale_fund_collector, wei_tranche_ico, finalizer, token, start_time, team_multisig, customer, customer_2, wei_tranche_pricing):
+    """Check that presale counters work correctly.
+
+    Presale investments should not count against tranches giving in the retail,
+    but they are only effective in the main sale.
+
+    .. warn::
+
+        Use PreicoProxyBuyer contract instead of PrealeFundsCollector to handle this in
+        meaningful way.
+    """
+
+    # We have set up the contracts in the way the presale purchaser gets special pricing
+    assert wei_tranche_ico.call().pricingStrategy() == wei_tranche_pricing.address
+    wei_tranche_pricing.transact({"from": team_multisig}).setPreicoAddress(customer, to_wei("0.05", "ether"))
+
+    assert wei_tranche_pricing.call().isPresalePurchase(customer) == True
+
+    value = to_wei(20000, "ether")
+    presale_fund_collector.transact({"from": customer, "value": value}).invest()
+
+    # ICO begins, Link presale to an actual ICO
+    presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(wei_tranche_ico.address)
+    time_travel(chain, start_time)
+
+    assert wei_tranche_ico.call().getState() == CrowdsaleState.Funding
+
+    # Load funds to ICO
+    presale_fund_collector.transact().parcipateCrowdsaleAll()
+
+    assert wei_tranche_ico.call().weiRaised() == to_wei(20000, "ether")
+    assert wei_tranche_ico.call().presaleWeiRaised() == to_wei(20000, "ether")
+
+    # Tokens received, paid by preico price
+    wei_tranche_ico.call().investedAmountOf(customer) == to_wei(20000, "ether")
+    token.call().balanceOf(customer) == 20000 / 0.040
+
+    # Do a normal investment, should go to tranche 1, as presale investment does not
+    # count against tranches
+    wei_tranche_ico.transact({"from": customer_2, "value": to_wei(10, "ether")}).buy()
+    assert wei_tranche_ico.call().presaleWeiRaised() == to_wei(20000, "ether")
+    assert wei_tranche_ico.call().weiRaised() == to_wei(20010, "ether")
+    token.call().balanceOf(customer) == 10 / 0.00666666
+
