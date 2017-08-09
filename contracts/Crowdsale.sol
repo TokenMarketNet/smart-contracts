@@ -193,6 +193,8 @@ contract Crowdsale is Haltable {
     }
 
     uint weiAmount = msg.value;
+
+    // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
@@ -214,7 +216,7 @@ contract Crowdsale is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     if(pricingStrategy.isPresalePurchase(receiver)) {
-      presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
 
     // Check that we did not bust the cap
