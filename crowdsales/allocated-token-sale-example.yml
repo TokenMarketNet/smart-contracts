@@ -56,15 +56,24 @@ mainnet:
             contract_file: EthTranchePricing.sol
             arguments:
                 _tranches:
+                        # This trance starts instantly.
+                        # How many weis one token costs. 20% bonus tier.
+                        # Price is base_price / 1.2
                         - 0
-                        - 2272727272727  # 20% bonus tier
+                        - 2272727272727
 
+                        # This trance starts when we have sold 45k worth of tokens.
+                         # Token price is 10% bonus tokens (base price / 1.1)
                         - "{{ to_wei('45000.00', 'ether') }}"
-                        - 2380952380952 # 10% bonus tier after this milestone has been reached
+                        - 2380952380952
 
+                        # This is the base price that is effective until the token
+                        # sale ends.
                         - "{{ to_wei('90000.00', 'ether') }}"
                         - 2500000000000
 
+                        # Dummy milestone marker to mark the end
+                        # of the array.
                         - "{{ to_wei('999999999999999', 'ether') }}"
                         - 0
 
