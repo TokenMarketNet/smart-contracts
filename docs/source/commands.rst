@@ -25,6 +25,13 @@ deploy-contracts
 
 Scripted deployment of multiple related Ethereum smart contracts.
 
+Example YAML deployment scripts
+
+* `allocated-token-sale <https://github.com/TokenMarketNet/ico/blob/master/crowdsales/allocated-
+      token-sale-example.yml>`_ (based on DENT)
+
+* `dummy mintable token saale example <https://github.com/TokenMarketNet/ico/blob/master/crowdsales/example.yml>`_
+
 Help::
 
     Usage: deploy-contracts [OPTIONS]
