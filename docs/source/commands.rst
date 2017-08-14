@@ -9,15 +9,21 @@ Command line commands
 Introduction
 ============
 
-Here are listed command line commands.
+``ico`` package provides tooling around deploying and managing token sales and related tasks.
+
+Here are listed some of the available command line commands. For full list see `setup.py <https://github.com/TokenMarketNet/ico/blob/master/setup.py#L61>`_ ``[console-scripts]`` section.
 
 All commands read `populus.json` file for the chain configuration from the current working directory. The chain configuration should set up a Web3 HTTP provider how command line command talks to an Ethereum node. The Ethereum node must have an address with ETH balance for the operations. For more information see :ref:`chain-configuration`.
+
+The most important command is :ref:`deploy-contracts` that allows scripted and orchestrated deployment of multiple related Ethereum smart contracts.
 
 
 .. _deploy-contracts:
 
 deploy-contracts
 ================
+
+Scripted deployment of multiple related Ethereum smart contracts.
 
 Help::
 
