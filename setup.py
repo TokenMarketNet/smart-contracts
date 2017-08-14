@@ -21,7 +21,12 @@ requirements = [
 ]
 
 test_requirements = [
-    'pytest'
+    'pytest',
+
+]
+
+dev_requirements = [
+    'sphinxcontrib-autoprogram',
 ]
 
 setup(
@@ -56,7 +61,6 @@ setup(
     [console_scripts]
     deploy-presale=ico.cmd.deploypresale:main
     deploy-token=ico.cmd.deploytoken:main
-    deploy-multisig=ico.cmd.deploymultisig:main
     deploy-contracts=ico.cmd.deploycontracts:main
     extract-investor-data=ico.cmd.investors:main
     extract-raw-investment-data=ico.cmd.rawinvestments:main

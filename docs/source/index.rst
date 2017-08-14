@@ -20,6 +20,7 @@ This project aims to provide standard, secure smart contracts and tools to creat
    interact
    verification
    test
+   chain
    designchoices
    other
    support
