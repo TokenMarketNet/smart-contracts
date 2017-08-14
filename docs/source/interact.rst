@@ -855,7 +855,7 @@ Deploy issuer contract
 
 Example:
 
-..code-block:: console
+.. code-block:: console
 
     distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a
 
@@ -869,7 +869,7 @@ Run the issuance
 
 Example:
 
-..code-block:: console
+.. code-block:: console
 
     distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined-bqx.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a --issuer-address=0x78d30c42a5f9fb19df60768e4c867b697e24b615
 
