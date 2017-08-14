@@ -76,6 +76,8 @@ testnet:
                 _name: Example-testnet
                 _symbol: EXA
                 _initialSupply: 0
+                _decimals: 18  # Ethereum tokens are standardizing around 18 decimals
+                _mintable: true  # Tokens will be dynamically created over the token sale
         #
         # Pricing strategy
         #
