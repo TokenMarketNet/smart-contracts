@@ -132,6 +132,7 @@ Then copy and edit the following snippet with your address information:
         contract = Contract(address=contract_address)
         print("Attempting to release the token transfer")
         txid = contract.transact(transaction).releaseTokenTransfer()
+        print("TXID", txid)
         check_succesful_tx(web3, txid)
         print("Token released")
 

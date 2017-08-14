@@ -1,5 +1,4 @@
 """Preico proxy buy."""
-import datetime
 import uuid
 
 import pytest
@@ -9,8 +8,8 @@ from ethereum.tester import TransactionFailed
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
-from ico.utils import get_constructor_arguments
 from ico.state import CrowdsaleState
+
 
 @pytest.fixture()
 def finalizer(chain, presale_crowdsale, uncapped_token, team_multisig) -> Contract:
@@ -66,6 +65,39 @@ def proxy_buyer(chain, uncapped_token, proxy_buyer_freeze_ends_at, team_multisig
     ]
     contract, hash = chain.provider.deploy_contract('PreICOProxyBuyer', deploy_args=args)
     return contract
+
+
+
+@pytest.fixture
+def tranche_pricing(chain, proxy_buyer, team_multisig):
+    """ETH tanche pricing for testing presale counters."""
+    args = [
+        [
+            to_wei("0", "ether"), to_wei("0.00666666", "ether"),
+            to_wei("10001", "ether"), to_wei("0.00714285", "ether"),
+            to_wei("30001", "ether"), to_wei("0.00769230", "ether"),
+            to_wei("50001", "ether"), to_wei("0.00833333", "ether"),
+            to_wei("75001", "ether"), to_wei("0.00909090", "ether"),
+            to_wei("100001", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000", "ether"), to_wei("0.01000000", "ether"),
+            to_wei("1000000000000", "ether"), to_wei("0.00", "ether")
+        ],
+    ]
+
+    tx = {
+        "from": team_multisig
+    }
+    contract, hash = chain.provider.deploy_contract('EthTranchePricing', deploy_args=args, deploy_transaction=tx)
+
+    contract.transact({"from": team_multisig}).setPreicoAddress(proxy_buyer.address, to_wei("0.05", "ether"))
+    return contract
+
+
+@pytest.fixture()
+def tranche_crowdsale(chain, crowdsale, tranche_pricing, uncapped_token, team_multisig, finalizer) -> Contract:
+    """A crowdsale with tranches and a special price for presale participants."""
+    crowdsale.transact({"from": team_multisig}).setPricingStrategy(tranche_pricing.address)
+    return crowdsale
 
 
 def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
@@ -284,3 +316,52 @@ def test_proxy_buy_halted(chain, web3, customer, customer_2, team_multisig, prox
 
     with pytest.raises(TransactionFailed):
         proxy_buyer.transact({"value": to_wei(1, "ether"), "from": customer}).investWithoutId()
+
+
+def test_proxy_buy_presale_pricing(chain, proxy_buyer, tranche_crowdsale, finalizer, token,  team_multisig, customer, customer_2, tranche_pricing):
+    """Check that presale counters give a correct price.
+
+    Presale investments should not count against tranches giving in the retail,
+    but they are only effective in the main sale.
+    """
+
+    # We have set up the contracts in the way the presale purchaser gets special pricing
+    assert tranche_crowdsale.call().pricingStrategy() == tranche_pricing.address
+    assert tranche_pricing.call().isPresalePurchase(proxy_buyer.address) == True
+
+    value = to_wei(20000, "ether")
+    proxy_buyer.transact({"from": customer, "value": value}).investWithoutId()
+
+    assert tranche_crowdsale.call().getState() == CrowdsaleState.Funding
+
+    # Load funds to ICO
+    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(tranche_crowdsale.address)
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+    # Check that raised counters were correctly upgraded
+    assert tranche_crowdsale.call().weiRaised() == to_wei(20000, "ether")
+    assert tranche_crowdsale.call().presaleWeiRaised() == to_wei(20000, "ether")
+
+    # Tokens received, paid by preico price
+    tranche_crowdsale.call().investedAmountOf(proxy_buyer.address) == to_wei(20000, "ether")
+    token.call().balanceOf(proxy_buyer.address) == 20000 / 0.040
+
+    # Do a normal investment, should go to tranche 1, as presale investment does not
+    # count against tranches
+    tranche_crowdsale.transact({"from": customer_2, "value": to_wei(10, "ether")}).buy()
+    assert tranche_crowdsale.call().presaleWeiRaised() == to_wei(20000, "ether")
+    assert tranche_crowdsale.call().weiRaised() == to_wei(20010, "ether")
+
+    # We used tranche 1 price for customer despite already invested 20000 eth in presale
+    # customer_2 got the tokens with tier 1 price
+    token.call().balanceOf(customer_2) == 10 / 0.00666666
+
+    # Tokens cannot be claimed before they are released
+    time_travel(chain, tranche_crowdsale.call().endsAt()+1)
+    tranche_crowdsale.transact({"from": team_multisig}).finalize()
+    assert token.call().released()
+
+    # Check that presale participant gets his token with a presale price
+    proxy_buyer.transact({"from": customer}).claimAll()
+    token.call().balanceOf(customer) == 20000 / 0.05
+

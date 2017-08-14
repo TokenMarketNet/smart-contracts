@@ -140,6 +140,13 @@ contract EthTranchePricing is PricingStrategy, Ownable {
     return getCurrentTranche(weiRaised).price;
   }
 
+  function isPresalePurchase(address purchaser) public constant returns (bool) {
+    if(preicoAddresses[purchaser] > 0)
+      return true;
+    else
+      return false;
+  }
+
   /// @dev Calculate the current price for buy in amount.
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
 

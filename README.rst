@@ -1,4 +1,8 @@
-This package contains Ethereum smart contracts and Python based command line tools for launching your ICO crowdsale or token offering.
+This package contains Ethereum smart contracts and commnd line toolchain for launching and managing token sales.
+
+.. image:: https://badges.gitter.im/TokenMarketNet/ico.svg
+   :alt: Join the chat at https://gitter.im/TokenMarketNet/ico
+   :target: https://gitter.im/TokenMarketNet/ico?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 .. image:: https://img.shields.io/pypi/v/ico.svg
         :target: https://pypi.python.org/pypi/ico
@@ -84,4 +88,12 @@ Features and design goals
 * **Emergency stop**: To try to save the situation in the case we found an issue in the contract post-deploy
 
 * **Build upon a foundation**: Instead of building everything from the scratch, use `OpenZeppelin contracts <https://github.com/OpenZeppelin/zeppelin-solidity/>`_ as much as possible as they are the gold standard of Solidity development
+
+Support
+=======
+
+TokenMarket can be a launch and hosting partner for your token sale. We offer advisory, legal, technical and marketing services. For more information see `TokenMarket ICO services <https://tokenmarket.net/ico-professional-services>`_. TokenMarket requires everyone to have at least business plan or whitepaper draft ready before engaging into any discussions.
+
+Community support is available on the best effort basis - your mileage may vary. To get the most of the community support we expect you to be on a senior level of Solidity, Python and open source development. `Meet us at the Gitter support chat <https://gitter.im/TokenMarketNet/ico>`_.
+
 
