@@ -31,7 +31,7 @@ from ico.utils import get_constructor_arguments
 @click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
 def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address):
-    """Distribute tokens to centrally issued crowdsale participant.
+    """Distribute tokens to centrally issued crowdsale participant or bounty program participants.
 
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
     All token counts are multiplied by token contract decimal specifier. E.g. if CSV has amount 15.5,

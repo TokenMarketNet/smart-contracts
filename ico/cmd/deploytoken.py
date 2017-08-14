@@ -31,7 +31,7 @@ from ico.etherscan import get_etherscan_link
 @click.option('--verify-filename', nargs=1, help='Solidity source file of the token contract for verification', default=None)
 @click.option('--master-address', nargs=1, help='Move tokens and upgrade master to this account', default=None)
 def main(chain, address, contract_name, name, symbol, supply, decimals, minting_agent, release_agent, verify, verify_filename, master_address):
-    """Deploy a token contract.
+    """Deploy a single crowdsale token contract.
 
     Examples:
 

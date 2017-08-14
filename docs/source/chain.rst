@@ -1,3 +1,5 @@
+.. _chain-configuration:
+
 ===================
 Chain configuration
 ===================

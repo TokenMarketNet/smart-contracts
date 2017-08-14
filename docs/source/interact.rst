@@ -92,7 +92,7 @@ Example:
 Releasing a token
 =================
 
-See :ref:`deploy-token` example how to deploy a crowdsale token contract that is transfer locked up by default. The crowdsale tokens cannot be transferred until the release agent makes the token transferable. As we set our owner address as the release agent we can do this from Python console.
+See :ref:`deploy-contracts` example how to deploy crowdsale token contracts that have a transfer lock up. The crowdsale tokens cannot be transferred until the release agent makes the token transferable. As we set our owner address as the release agent we can do this from Python console.
 
 Then copy and edit the following snippet with your address information:
 
