@@ -154,8 +154,7 @@ testnet:
         crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address)
         token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address)
 
-        # Move ownership of all owned contracts to the team multisig address
-        crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
+        # Set the team multisig address as the upgraade master for the token
         token.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
 
     # Make sure that everything we have deployed all contracts in good state
