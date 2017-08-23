@@ -172,7 +172,7 @@
         "settings": {
           "stdin": {
             "optimizer": {
-              "enabled": true,
+              "enabled": false,
               "runs": 500
             },
             "outputSelection": {

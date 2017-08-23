@@ -92,6 +92,7 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
 
         print("Contract verification failed. Check the browser for details.")
         print("Make sure solc_version in your YAML file matches solc --version output.")
+        print("Make sure solc optimization settings are the same as what EtherScan thinks.")
         input("Press enter to continue")
 
     return src

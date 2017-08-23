@@ -10,6 +10,21 @@ testnet:
     # This is a semi automatic process using a Firefox browser.
     verify_on_etherscan: yes
 
+    # For available versions see
+    # https://etherscan.io/address/0xa8659f5af01796b39e0dfb3323acc00d8fe97ea2#code
+    # Click Verify and Publish
+    # See values in Compiler drop down.
+    # You can also get the local compiler version with:
+    #
+    #     solc --version
+    #
+    # Note that for EtherScan you need to add letter "v" at the front of the version
+    #
+    # Note: You need to have correct optmization settings for the compiler
+    # in populus.json that matches what EtherScan is expecting.
+    #
+    solc_version: v0.4.14+commit.c2215d46
+
     #
     # Contracts section defines different smart contracts that
     # are required to run the ICO.

@@ -9,6 +9,9 @@ unit_test:
     # This is a semi automatic process using a Firefox browser.
     verify_on_etherscan: no
 
+    # Not used in unit tests
+    solc_version: v0.4.14+commit.c2215d46
+
     #
     # Contracts section defines different smart contracts that
     # are required to run the ICO.

@@ -21,7 +21,12 @@ kovan:
     #
     #     solc --version
     #
-    solc_version: 0.4.14+commit.c2215d46
+    # Note that for EtherScan you need to add letter "v" at the front of the version
+    #
+    # Note: You need to have correct optmization settings for the compiler
+    # in populus.json that matches what EtherScan is expecting.
+    #
+    solc_version: v0.4.14+commit.c2215d46
 
     contracts:
         # This is the address of the multisig wallet where the paymnts eventually land

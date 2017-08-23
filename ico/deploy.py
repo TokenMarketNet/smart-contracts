@@ -145,7 +145,8 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
                 libraries=runtime_data["contracts"][name]["libraries"],
                 browser_driver=browser_driver,
-                compiler=solc_version)
+                compiler=solc_version,
+                optimization=False)
             runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
 
             # Write out our expanded contract
