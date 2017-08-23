@@ -91,6 +91,7 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
             time.sleep(1.0)
 
         print("Contract verification failed. Check the browser for details.")
+        print("Make sure solc_version in your YAML file matches solc --version output.")
         input("Press enter to continue")
 
     return src

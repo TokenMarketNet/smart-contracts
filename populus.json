@@ -57,7 +57,7 @@
         "provider": {
           "class": "web3.providers.rpc.HTTPProvider",
           "settings": {
-            "endpoint_uri": "http://127.0.0.1:8546",
+            "endpoint_uri": "http://127.0.0.1:8547",
             "request_kwargs": {
                 "timeout": 180
             }
@@ -90,7 +90,7 @@
         "provider": {
           "class": "web3.providers.rpc.HTTPProvider",
           "settings": {
-            "endpoint_uri": "http://127.0.0.1:8547",
+            "endpoint_uri": "http://127.0.0.1:8546",
             "request_kwargs": {
                 "timeout": 180
             }

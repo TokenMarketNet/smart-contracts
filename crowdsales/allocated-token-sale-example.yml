@@ -1,16 +1,27 @@
 # To deploy this file
 #
-# deploy-contracts --address=[my deploy address account on geth]  --deployment-file=crowdsales/allocated-token-sale-example.yml --deployment-name=mainnet
+# deploy-contracts --address=[my deploy account address account on geth having some Kovan ETH]  --deployment-file=crowdsales/allocated-token-sale-example.yml --deployment-name=kovan
 
-mainnet:
+kovan:
 
-    chain: mainnet
+    chain: kovan
 
     # Use automated Chrome to verify all contracts on etherscan.io
     # You need to install Splinter package:
     # pip install splinter
     verify_on_etherscan: yes
     browser_driver: chrome
+
+    # This is the Solidity version tag we verify on EtherScan.
+    # For available versions see
+    # https://etherscan.io/address/0xa8659f5af01796b39e0dfb3323acc00d8fe97ea2#code
+    # Click Verify and Publish
+    # See values in Compiler drop down.
+    # You can also get the local compiler version with:
+    #
+    #     solc --version
+    #
+    solc_version: 0.4.14+commit.c2215d46
 
     contracts:
         # This is the address of the multisig wallet where the paymnts eventually land

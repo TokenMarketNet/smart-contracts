@@ -102,6 +102,7 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
     chain_name = runtime_data["chain"]
     verify_on_etherscan = asbool(runtime_data["verify_on_etherscan"])
     browser_driver = runtime_data.get("browser_driver", "chrome")
+    solc_version = runtime_data["solc_version"]
 
     need_unlock = runtime_data.get("unlock_deploy_address", True)
 
@@ -143,7 +144,8 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
                 contract_filename=fname,
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
                 libraries=runtime_data["contracts"][name]["libraries"],
-                browser_driver=browser_driver)
+                browser_driver=browser_driver,
+                compiler=solc_version)
             runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
 
             # Write out our expanded contract
