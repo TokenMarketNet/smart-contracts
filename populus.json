@@ -125,15 +125,9 @@
               "enabled": true,
               "runs": 500
             },
-            "remappings": ["zeppelin=./zeppelin"],
             "outputSelection": {
               "*": {
-                "*": [
-                  "abi",
-                  "metadata",
-                  "evm.bytecode",
-                  "evm.deployedBytecode"
-                ]
+                "*": ["abi", "metadata"]
               }
             }
           },
@@ -166,11 +160,13 @@
               "*": ["abi", "metadata"]
             }
           },
-          "allow_paths": ["./zeppelin"]
+          "allow_paths": ["/"]
         }
       }
     },
-    "contracts_source_dir": "./contracts",
+    "contracts_source_dirs": [
+      "./contracts"
+    ],
     "import_remappings": []
   },
   "contracts": {
@@ -196,7 +192,7 @@
       }
     }
   },
-  "version": "5",
+  "version": "6",
   "web3": {
     "GethIPC": {
       "provider": {
