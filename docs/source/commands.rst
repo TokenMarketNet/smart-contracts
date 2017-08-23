@@ -25,6 +25,8 @@ deploy-contracts
 
 Scripted deployment of multiple related Ethereum smart contracts.
 
+See also :ref:`contract-verification`.
+
 Example YAML deployment scripts
 
 * `allocated-token-sale <https://github.com/TokenMarketNet/ico/blob/master/crowdsales/allocated-

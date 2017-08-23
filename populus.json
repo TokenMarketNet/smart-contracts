@@ -172,7 +172,7 @@
         "settings": {
           "stdin": {
             "optimizer": {
-              "enabled": false,
+              "enabled": true,
               "runs": 500
             },
             "outputSelection": {
@@ -202,7 +202,7 @@
         "class": "populus.compilation.backends.SolcStandardJSONBackend",
         "settings": {
           "optimizer": {
-            "enabled": true,
+            "enabled": false,
             "runs": 500
           },
           "outputSelection": {

@@ -1,32 +1,38 @@
 # To deploy this file
 #
-# deploy-contracts --address=[my deploy account address account on geth having some Kovan ETH]  --deployment-file=crowdsales/allocated-token-sale-example.yml --deployment-name=kovan
-
 kovan:
 
     chain: kovan
 
     # Use automated Chrome to verify all contracts on etherscan.io
-    # You need to install Splinter package:
-    # pip install splinter
     verify_on_etherscan: yes
     browser_driver: chrome
 
-    # This is the Solidity version tag we verify on EtherScan.
-    # For available versions see
-    # https://etherscan.io/address/0xa8659f5af01796b39e0dfb3323acc00d8fe97ea2#code
-    # Click Verify and Publish
-    # See values in Compiler drop down.
-    # You can also get the local compiler version with:
-    #
-    #     solc --version
-    #
-    # Note that for EtherScan you need to add letter "v" at the front of the version
-    #
-    # Note: You need to have correct optmization settings for the compiler
-    # in populus.json that matches what EtherScan is expecting.
-    #
-    solc_version: v0.4.14+commit.c2215d46
+    solc:
+
+        # This is the Solidity version tag we verify on EtherScan.
+        # For available versions see
+        # https://kovan.etherscan.io/verifyContract2
+        #
+        # See values in Compiler drop down.
+        # You can also get the local compiler version with:
+        #
+        #     solc --version
+        #
+        # Note that for EtherScan you need to add letter "v" at the front of the version
+        #
+        # Note: You need to have correct optmization settings for the compiler
+        # in populus.json that matches what EtherScan is expecting.
+        #
+        version: v0.4.14+commit.c2215d46
+
+        #
+        # We supply these to EtherScan as the solc settings we used to compile the contract.
+        # They must match values in populus.json compilication / backends section.
+        #
+        optimizations:
+            optimizer: true
+            runs: 500
 
     contracts:
         # This is the address of the multisig wallet where the paymnts eventually land
@@ -44,7 +50,7 @@ kovan:
         # We create the whole token supply upfront and no more token minting
         # happens ever.
         #
-        # Token has 18 decimals.
+        # Token has 18 decimals and supply of 1B tokens.
         #
         # Token supply is one billion tokens.
         #
@@ -72,26 +78,26 @@ kovan:
             contract_file: EthTranchePricing.sol
             arguments:
                 _tranches:
-                        # This trance starts instantly.
-                        # How many weis one token costs. 20% bonus tier.
-                        # Price is base_price / 1.2
-                        - 0
-                        - 2272727272727
+                    # This trance starts instantly.
+                    # How many weis one token costs. 20% bonus tier.
+                    # Price is base_price / 1.2
+                    - 0
+                    - 2272727272727
 
-                        # This trance starts when we have sold 45k worth of tokens.
-                         # Token price is 10% bonus tokens (base price / 1.1)
-                        - "{{ to_wei('45000.00', 'ether') }}"
-                        - 2380952380952
+                    # This trance starts when we have sold 45k worth of tokens.
+                     # Token price is 10% bonus tokens (base price / 1.1)
+                    - "{{ to_wei('45000.00', 'ether') }}"
+                    - 2380952380952
 
-                        # This is the base price that is effective until the token
-                        # sale ends.
-                        - "{{ to_wei('90000.00', 'ether') }}"
-                        - 2500000000000
+                    # This is the base price that is effective until the token
+                    # sale ends.
+                    - "{{ to_wei('90000.00', 'ether') }}"
+                    - 2500000000000
 
-                        # Dummy milestone marker to mark the end
-                        # of the array.
-                        - "{{ to_wei('999999999999999', 'ether') }}"
-                        - 0
+                    # Dummy milestone marker to mark the end
+                    # of the array.
+                    - "{{ to_wei('999999999999999', 'ether') }}"
+                    - 0
 
 
         #
@@ -107,8 +113,8 @@ kovan:
                 _token: "{{contracts.token.address}}"
                 _pricingStrategy: "{{contracts.pricing_strategy.address}}"
                 _multisigWallet: "{{contracts.team_multisig.address}}"
-                _start: "{{ timestamp(datetime(2017, 7, 12, 13, 00)) }}"
-                _end: "{{ timestamp(datetime(2017, 7, 26, 13, 00)) }}"
+                _start: "{{ timestamp(datetime(2099, 7, 12, 13, 00)) }}"
+                _end: "{{ timestamp(datetime(2099, 7, 26, 13, 00)) }}"
                 _minimumFundingGoal: "{{ to_wei(15000, 'ether') }}"
                 _beneficiary: "{{deploy_address}}"
         #
@@ -126,7 +132,7 @@ kovan:
     post_actions: |
 
         # Allow crowdsale contract to sell its token
-        token.transact({"from": deploy_address}).approve(crowdsale.address, 70000000000*10**8)
+        token.transact({"from": deploy_address}).approve(crowdsale.address, 70000000000*10**18)
 
         # Make sure crowdsale contract and these accounts
         # can transfer tokens despite transfer lock up

@@ -81,7 +81,7 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
     return contract
 
 
-def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_address) -> Tuple[dict, dict, dict]:
+def deploy_crowdsale(project: Project, chain, yaml_filename: str, source_definitions: dict, deploy_address) -> Tuple[dict, dict, dict]:
     """Deploy multiple contracts from crowdsale definitions.
 
     :param chain: Populus chain object
@@ -102,7 +102,7 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
     chain_name = runtime_data["chain"]
     verify_on_etherscan = asbool(runtime_data["verify_on_etherscan"])
     browser_driver = runtime_data.get("browser_driver", "chrome")
-    solc_version = runtime_data["solc_version"]
+    solc = runtime_data["solc"]
 
     need_unlock = runtime_data.get("unlock_deploy_address", True)
 
@@ -145,8 +145,10 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
                 constructor_args=runtime_data["contracts"][name]["constructor_args"],
                 libraries=runtime_data["contracts"][name]["libraries"],
                 browser_driver=browser_driver,
-                compiler=solc_version,
-                optimization=False)
+                compiler=solc["version"],
+                optimization=asbool(solc["optimizations"]["optimizer"]),
+                optimizer_runs=int(solc["optimizations"]["runs"])
+            )
             runtime_data["contracts"][name]["etherscan_link"] = get_etherscan_link(chain_name, runtime_data["contracts"][name]["address"])
 
             # Write out our expanded contract
@@ -154,15 +156,33 @@ def deploy_crowdsale(project: Project, chain, source_definitions: dict, deploy_a
             with open(expanded_path, "wt") as out:
                 out.write(src)
 
+        # Write the ongoing output, so we can use it e.g. to debug EtherScan verification
+        write_deployment_report(yaml_filename, runtime_data, partial=True)
+
     return runtime_data, statistics, contracts
 
 
-def write_deployment_report(yaml_filename: str, runtime_data: dict):
-    """Write run-time data to a result file, so that it can easily inspected and shared."""
+def write_deployment_report(yaml_filename: str, runtime_data: dict, partial=False):
+    """Write run-time data to a result file, so that it can easily inspected and shared.
 
-    report_filename = yaml_filename.replace(".yml", ".deployment-report.yml")
+    :param partial: Don't override existing successful deployment report by accident
+    """
+
+    partial_report_filename = yaml_filename.replace(".yml", ".partial-report.yml")
+
+    if partial:
+        report_filename = partial_report_filename
+        print("Writing partial report", report_filename)
+    else:
+        report_filename = yaml_filename.replace(".yml", ".deployment-report.yml")
+
     with open(report_filename, "wt") as out:
         out.write(ruamel.yaml.round_trip_dump(runtime_data))
+
+    if not partial:
+        # Delete the partial file name after successfully deploying everything
+        if os.path.exists(partial_report_filename):
+            os.unlink(partial_report_filename)
 
 
 def exec_lines(lines: str, context: dict, print_prefix=None):
@@ -249,7 +269,7 @@ def _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_ad
     start_balance = from_wei(web3.eth.getBalance(address), "ether")
     print("Owner balance is", start_balance, "ETH")
 
-    runtime_data, statistics, contracts = deploy_crowdsale(project, chain, chain_data, deploy_address)
+    runtime_data, statistics, contracts = deploy_crowdsale(project, chain, yaml_filename, chain_data, deploy_address)
     perform_post_actions(chain, runtime_data, contracts)
     perform_verify_actions(chain, runtime_data, contracts)
     write_deployment_report(yaml_filename, runtime_data)

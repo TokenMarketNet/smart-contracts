@@ -1,4 +1,4 @@
-"""etherscan.io utilities."""
+"""etherscan.io contract verification."""
 
 import time
 
@@ -21,12 +21,12 @@ def _fill_in_textarea_value(browser, splinter_elem, value):
 
 
 
-def verify_contract(project: Project, chain_name: str, address: str, contract_name, contract_filename: str, constructor_args: str, libraries: dict, optimization=True, compiler: str="v0.4.8+commit.60cc1668", browser_driver="chrome") -> str:
+def verify_contract(project: Project, chain_name: str, address: str, contract_name, contract_filename: str, constructor_args: str, libraries: dict, optimization=True, optimizer_runs=200, compiler: str="v0.4.8+commit.60cc1668", browser_driver="chrome") -> str:
     """Semi-automated contract verified on Etherscan.
 
     Uses a web browser + Selenium auto fill to verify contracts.
 
-    See the page in action: https://etherscan.io/verifyContract?a=0xcd111aa492a9c77a367c36e6d6af8e6f212e0c8e
+    See the page in action: https://etherscan.io/verifyContract2
 
     :return: Contract expanded source code
     """
@@ -39,13 +39,13 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
     src, imported_files = expand_contract_imports(project, contract_filename)
 
     if chain_name == "mainnet":
-        url = "https://etherscan.io/verifyContract"
+        url = "https://etherscan.io/verifyContract2"
     elif chain_name == "rinkeby":
-        url = "https://rinkeby.etherscan.io/verifyContract"
+        url = "https://rinkeby.etherscan.io/verifyContract2"
     elif chain_name == "ropsten":
-        url = "https://ropsten.etherscan.io/verifyContract"
+        url = "https://ropsten.etherscan.io/verifyContract2"
     elif chain_name == "kovan":
-        url = "https://kovan.etherscan.io/verifyContract"
+        url = "https://kovan.etherscan.io/verifyContract2"
     else:
         raise RuntimeError("Unknown chain: ".format(chain_name))
 
@@ -60,11 +60,9 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
         browser.fill("ctl00$ContentPlaceHolder1$txtContractName", contract_name)
         browser.select("ctl00$ContentPlaceHolder1$ddlCompilerVersions", compiler)
         browser.select("ctl00$ContentPlaceHolder1$ddlOptimization",  "1" if optimization else "0")
-        #browser.fill("ctl00$ContentPlaceHolder1$txtSourceCode", src)
-        #browser.find_by_name("ctl00$ContentPlaceHolder1$txtSourceCode").first.value = src
+        browser.fill("ctl00$ContentPlaceHolder1$txtRuns", optimizer_runs)
         _fill_in_textarea_value(browser, browser.find_by_name("ctl00$ContentPlaceHolder1$txtSourceCode"), src)
         _fill_in_textarea_value(browser, browser.find_by_name("ctl00$ContentPlaceHolder1$txtConstructorArguements"), constructor_args)
-        #browser.fill("ctl00$ContentPlaceHolder1$txtConstructorArguements", constructor_args)
 
         idx = 1
         for library_name, library_address in libraries.items():
