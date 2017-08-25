@@ -681,30 +681,40 @@ Example:
         print("OK")
 
 
-Approving tokens
-================
+Approving tokens for issuer
+===========================
+
+Usually you need to approve() tokens for a bounty distribution or similar distribution contract (Issuer.sol).
+Here is an example.
 
 Example:
 
 .. code-block:: python
 
-    from ico.utils import check_succesful_tx
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
 
-    p = populus.Project()
-    account = ""  # Our controller account on Kovan
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
-    with p.get_chain("kovan") as chain:
+    p = populus.Project()
+    account = "0x"  # Our controller account
+    issuer_contract = "0x"  # Issuer contract who needs tokens
+    normalized_amount = int("123000000000000")  # Amount of tokens, decimal points unrolled
+    token_address = "0x"  # The token contract whose tokens we are dealing with
+
+    with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Token = getattr(chain.contract_factories, "CentrallyIssuedToken")
-        token = Token(address="")
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address=token_address)
 
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = token.transact({"from": account}).approve("0x", token.call().totalSupply())
+        print("Approving ", normalized_amount, "raw tokens")
+
+        txid = token.transact({"from": account}).approve(issuer_contract, normalized_amount)
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
