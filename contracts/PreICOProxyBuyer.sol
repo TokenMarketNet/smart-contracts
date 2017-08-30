@@ -287,6 +287,11 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     }
   }
 
+  /** Interface marker. */
+  function isPresale() public constant returns (bool) {
+    return true;
+  }
+
   /** Explicitly call function from your wallet. */
   function() payable {
     throw;
