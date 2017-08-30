@@ -750,26 +750,30 @@ Example:
         print("OK")
 
 
+Reset token name and symbol
+===========================
+
 Set token name
 ==============
 
-Update info of a token.
+Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
 
 Example:
 
 .. code-block:: python
 
-    from ico.utils import check_succesful_tx
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     p = populus.Project()
     account = "0x"  # Our controller account
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Token = getattr(chain.contract_factories, "CrowdsaleToken")
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
         token = Token(address="0x")
 
         if is_account_locked(web3, account):
@@ -779,7 +783,6 @@ Example:
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
-
 
 Read crowdsale variables
 ========================
