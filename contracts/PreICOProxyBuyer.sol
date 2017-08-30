@@ -6,6 +6,8 @@
 
 pragma solidity ^0.4.6;
 
+import "zeppelin/contracts/lifecycle/Destructible.sol";
+
 import "./SafeMath.sol";
 import "./Crowdsale.sol";
 import "./StandardToken.sol";
@@ -24,7 +26,7 @@ import "./Haltable.sol";
  * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
+contract PreICOProxyBuyer is Ownable, Haltable, Destructible, SafeMath {
 
   /** How many investors we have now */
   uint public investorCount;
