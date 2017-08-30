@@ -113,7 +113,7 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).buy()
 
     # Everything funder
-    assert proxy_buyer.call().weiRaisedTotal() == to_wei(30000, "ether")
+    assert proxy_buyer.call().weiRaised() == to_wei(30000, "ether")
     assert web3.eth.getBalance(proxy_buyer.address) == to_wei(30000, "ether")
     assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
     assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")
@@ -237,7 +237,7 @@ def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_mult
     proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).buy()
 
     # Everything funder
-    assert proxy_buyer.call().weiRaisedTotal() == to_wei(30000, "ether")
+    assert proxy_buyer.call().weiRaised() == to_wei(30000, "ether")
     assert web3.eth.getBalance(proxy_buyer.address) == to_wei(30000, "ether")
     assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
     assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")

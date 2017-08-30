@@ -30,7 +30,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   uint public investorCount;
 
   /** How many wei we have raised totla. */
-  uint public weiRaisedTotal;
+  uint public weiRaised;
 
   /** Who are our investors (iterable) */
   address[] public investors;
@@ -144,8 +144,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       investorCount++;
     }
 
-    weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
-    if(weiRaisedTotal > weiCap) {
+    weiRaised = safeAdd(weiRaised, msg.value);
+    if(weiRaised > weiCap) {
       throw;
     }
 
@@ -179,7 +179,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(address(crowdsale) == 0) throw;
 
     // Buy tokens on the contract
-    crowdsale.invest.value(weiRaisedTotal)(address(this));
+    crowdsale.invest.value(weiRaised)(address(this));
 
     // Record how many tokens we got
     tokensBought = getToken().balanceOf(address(this));
@@ -201,7 +201,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(getState() != State.Distributing) {
       throw;
     }
-    return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
+    return safeMul(balances[investor], tokensBought) / weiRaised;
   }
 
   /**

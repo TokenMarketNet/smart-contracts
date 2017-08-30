@@ -143,10 +143,10 @@ def test_deploy_all(chain, web3, everything_deployed, proxy_buyers, presale_inve
     for proxy_buyer in proxy_buyers:
 
         assert proxy_buyer.call().getState() == 1
-        assert proxy_buyer.call().weiRaisedTotal() > 0
+        assert proxy_buyer.call().weiRaised() > 0
 
         # Calculate how much all presales raise total
-        wei = proxy_buyer.call().weiRaisedTotal()
+        wei = proxy_buyer.call().weiRaised()
         amount = pricing_strategy.call().calculatePrice(
             wei,
             0,
