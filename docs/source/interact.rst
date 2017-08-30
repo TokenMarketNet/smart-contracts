@@ -753,8 +753,8 @@ Example:
 Reset token name and symbol
 ===========================
 
-Set token name
-==============
+Reset token name and symbol
+===========================
 
 Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
 
