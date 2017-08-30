@@ -168,7 +168,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
    *
    *
    */
-  function buyForEverybody() stopInEmergency public {
+  function buyForEverybody() stopNonOwnersInEmergency public {
 
     if(getState() != State.Funding) {
       // Only allow buy once
