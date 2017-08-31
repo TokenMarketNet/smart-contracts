@@ -398,15 +398,3 @@ def test_proxy_buy_presale_pricing(chain, proxy_buyer, tranche_crowdsale, finali
     # Check that presale participant gets his token with a presale price
     proxy_buyer.transact({"from": customer}).claimAll()
     token.call().balanceOf(customer) == 20000 / 0.05
-
-
-def test_proxy_buy_destroy(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
-    """Our escape mechanism if something goes wrong."""
-
-    assert proxy_buyer.call().getState() == 1
-
-    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).buy()
-    customer_balance = web3.eth.getBalance(customer) # Simpler to do this after gas usage
-
-    proxy_buyer.transact({"from": team_multisig}).destroyAndSend(customer)
-    assert web3.eth.getBalance(customer) == (customer_balance + to_wei(10000, "ether"))
