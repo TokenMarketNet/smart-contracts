@@ -30,7 +30,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   uint public investorCount;
 
   /** How many wei we have raised totla. */
-  uint public weiRaisedTotal;
+  uint public weiRaised;
 
   /** Who are our investors (iterable) */
   address[] public investors;
@@ -61,6 +61,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
   uint public totalClaimed;
 
+  /** This is used to signal that we want the refund **/
+  bool public forcedRefund;
+
   /** Our ICO contract where we will move the funds */
   Crowdsale public crowdsale;
 
@@ -68,7 +71,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   enum State{Unknown, Funding, Distributing, Refunding}
 
   /** Somebody loaded their investment money */
-  event Invested(address investor, uint value, uint128 customerId);
+  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
 
   /** Refund claimed */
   event Refunded(address investor, uint value);
@@ -144,19 +147,21 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       investorCount++;
     }
 
-    weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
-    if(weiRaisedTotal > weiCap) {
+    weiRaised = safeAdd(weiRaised, msg.value);
+    if(weiRaised > weiCap) {
       throw;
     }
 
-    Invested(investor, msg.value, customerId);
+    // We will use the same event form the Crowdsale for compatibility reasons
+    // despite not having a token amount.
+    Invested(investor, msg.value, 0, customerId);
   }
 
-  function investWithId(uint128 customerId) public stopInEmergency payable {
+  function buyWithCustomerId(uint128 customerId) public stopInEmergency payable {
     invest(customerId);
   }
 
-  function investWithoutId() public stopInEmergency payable {
+  function buy() public stopInEmergency payable {
     invest(0x0);
   }
 
@@ -166,7 +171,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
    *
    *
    */
-  function buyForEverybody() stopInEmergency public {
+  function buyForEverybody() stopNonOwnersInEmergency public {
 
     if(getState() != State.Funding) {
       // Only allow buy once
@@ -177,7 +182,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(address(crowdsale) == 0) throw;
 
     // Buy tokens on the contract
-    crowdsale.invest.value(weiRaisedTotal)(address(this));
+    crowdsale.invest.value(weiRaised)(address(this));
 
     // Record how many tokens we got
     tokensBought = getToken().balanceOf(address(this));
@@ -199,7 +204,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(getState() != State.Distributing) {
       throw;
     }
-    return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
+    return safeMul(balances[investor], tokensBought) / weiRaised;
   }
 
   /**
@@ -270,10 +275,26 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(!crowdsale.isCrowdsale()) true;
   }
 
+  /// @dev This is used in the first case scenario, this will force the state
+  ///      to refunding. This can be also used when the ICO fails to meet the cap.
+  function forceRefund() public onlyOwner {
+    forcedRefund = true;
+  }
+
+  /// @dev This should be used if the Crowdsale fails, to receive the refuld money.
+  ///      we can't use Crowdsale's refund, since our default function does not
+  ///      accept money in.
+  function loadRefund() public payable {
+    if(getState() != State.Refunding) throw;
+  }
+
   /**
    * Resolve the contract umambigious state.
    */
   function getState() public returns(State) {
+    if (forcedRefund)
+      return State.Refunding;
+
     if(tokensBought == 0) {
       if(now >= freezeEndsAt) {
          return State.Refunding;
@@ -283,6 +304,11 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     } else {
       return State.Distributing;
     }
+  }
+
+  /** Interface marker. */
+  function isPresale() public constant returns (bool) {
+    return true;
   }
 
   /** Explicitly call function from your wallet. */
