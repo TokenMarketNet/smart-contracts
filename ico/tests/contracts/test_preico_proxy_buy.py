@@ -229,6 +229,47 @@ def test_proxy_buy_refund(chain, web3, proxy_buyer, crowdsale, customer, custome
     assert proxy_buyer.call().balances(customer) == 0
 
 
+def test_proxy_buy_force_refund(chain, web3, proxy_buyer, crowdsale, customer, customer_2, team_multisig):
+    """We force the contract into refund"""
+
+    value = to_wei(1, "ether")
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).buy()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).buy()
+
+    proxy_buyer.transact({"from": team_multisig}).forceRefund()
+    assert proxy_buyer.call().getState() == 3  # Refunding
+
+    before_refund = web3.eth.getBalance(customer)
+    proxy_buyer.transact({"from": customer}).refund()
+    after_refund = web3.eth.getBalance(customer)
+
+    assert from_wei(after_refund - before_refund, "ether") > 0.99  # gas cost epsilon
+    assert proxy_buyer.call().balances(customer) == 0
+
+
+def test_proxy_buy_load_refund(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
+    """Fail the crowdsale, refund the pre-investors"""
+
+    assert proxy_buyer.call().getState() == 1
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).buy()
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+
+    proxy_buyer.transact({"from": team_multisig}).forceRefund()
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).loadRefund()
+
+    before_refund = web3.eth.getBalance(customer)
+    proxy_buyer.transact({"from": customer}).refund()
+    after_refund = web3.eth.getBalance(customer)
+
+    assert from_wei(after_refund - before_refund, "ether") > 0.99  # gas cost epsilon
+
+
 def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token):
     """We move funds only once."""
 

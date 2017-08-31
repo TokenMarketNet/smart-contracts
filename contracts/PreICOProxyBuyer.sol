@@ -61,6 +61,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
   uint public totalClaimed;
 
+  /** This is used to signal that we want the refund **/
+  bool public forcedRefund;
+
   /** Our ICO contract where we will move the funds */
   Crowdsale public crowdsale;
 
@@ -272,10 +275,26 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(!crowdsale.isCrowdsale()) true;
   }
 
+  /// @dev This is used in the first case scenario, this will force the state
+  ///      to refunding. This can be also used when the ICO fails to meet the cap.
+  function forceRefund() public onlyOwner {
+    forcedRefund = true;
+  }
+
+  /// @dev This should be used if the Crowdsale fails, to receive the refuld money.
+  ///      we can't use Crowdsale's refund, since our default function does not
+  ///      accept money in.
+  function loadRefund() public payable {
+    if(getState() != State.Refunding) throw;
+  }
+
   /**
    * Resolve the contract umambigious state.
    */
   function getState() public returns(State) {
+    if (forcedRefund)
+      return State.Refunding;
+
     if(tokensBought == 0) {
       if(now >= freezeEndsAt) {
          return State.Refunding;
