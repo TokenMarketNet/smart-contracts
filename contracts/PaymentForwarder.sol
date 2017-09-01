@@ -41,13 +41,7 @@ contract PaymentForwarder is Haltable {
     owner = _owner;
   }
 
-  /**
-   * Pay on a behalf of an address.
-   *
-   * @param customerId Identifier in the central database, UUID v4
-   *
-   */
-  function pay(uint128 customerId, address benefactor) public stopInEmergency payable {
+  function payWithoutChecksum(uint128 customerId, address benefactor) public stopInEmergency payable {
 
     uint weiAmount = msg.value;
 
@@ -72,13 +66,25 @@ contract PaymentForwarder is Haltable {
   }
 
   /**
+   * Pay on a behalf of an address.
+   *
+   * @param customerId Identifier in the central database, UUID v4
+   *
+   */
+   function pay(uint128 customerId, address benefactor, bytes1 checksum) public stopInEmergency payable {
+     if (bytes1(sha3(customerId, benefactor)) != checksum) throw;
+     payWithoutChecksum(customerId, benefactor);
+   }
+
+  /**
    * Pay on a behalf of the sender.
    *
    * @param customerId Identifier in the central database, UUID v4
    *
    */
-  function payForMyself(uint128 customerId) public payable {
-    pay(customerId, msg.sender);
+  function payForMyself(uint128 customerId, bytes1 checksum) public payable {
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    payWithoutChecksum(customerId, msg.sender);
   }
 
 }

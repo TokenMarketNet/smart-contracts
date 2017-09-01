@@ -5,6 +5,8 @@ import uuid
 from eth_utils import to_wei
 from ethereum.tester import TransactionFailed
 
+from sha3 import keccak_256
+from rlp.utils import decode_hex
 
 @pytest.fixture
 def payment_forwarder(chain, team_multisig):
@@ -25,7 +27,7 @@ def test_pay_once(web3, payment_forwarder, team_multisig, customer):
     customer_id = int(uuid.uuid4().hex, 16) # Customer ids are 128-bit UUID v4
 
     team_multisig_begin = web3.eth.getBalance(team_multisig)
-    payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer)
+    payment_forwarder.transact({"value": value, "from": customer}).payWithoutChecksum(customer_id, customer)
     team_multisig_end = web3.eth.getBalance(team_multisig)
 
     assert team_multisig_end - team_multisig_begin > 0
@@ -51,8 +53,9 @@ def test_pay_twice(web3, payment_forwarder, team_multisig, customer, customer_2)
 
     team_multisig_begin = web3.eth.getBalance(team_multisig)
     # We pay from two distinct addresses on behalf of the same customer
-    payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer)
-    payment_forwarder.transact({"value": value, "from": customer_2}).pay(customer_id, customer)
+    checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32)) + decode_hex(format(customer[2:]).zfill(40))).digest()[:1]
+    payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer, checksumbyte)
+    payment_forwarder.transact({"value": value, "from": customer_2}).payWithoutChecksum(customer_id, customer)
     team_multisig_end = web3.eth.getBalance(team_multisig)
 
     assert team_multisig_end - team_multisig_begin > 0
@@ -78,7 +81,9 @@ def test_pay_for_myself(web3, payment_forwarder, team_multisig, customer):
     customer_id = int(uuid.uuid4().hex, 16) # Customer ids are 128-bit UUID v4
 
     team_multisig_begin = web3.eth.getBalance(team_multisig)
-    payment_forwarder.transact({"value": value, "from": customer}).payForMyself(customer_id)
+
+    checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32))).digest()[:1]
+    payment_forwarder.transact({"value": value, "from": customer}).payForMyself(customer_id, checksumbyte)
     team_multisig_end = web3.eth.getBalance(team_multisig)
 
     assert team_multisig_end - team_multisig_begin > 0
@@ -105,7 +110,7 @@ def test_halt(web3, payment_forwarder, team_multisig, customer):
     team_multisig_begin = web3.eth.getBalance(team_multisig)
     payment_forwarder.transact({"from": team_multisig}).halt()
     with pytest.raises(TransactionFailed):
-        payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer)
+        payment_forwarder.transact({"value": value, "from": customer}).payWithoutChecksum(customer_id, customer)
 
 
 def test_unhalt(web3, payment_forwarder, team_multisig, customer):
@@ -118,7 +123,5 @@ def test_unhalt(web3, payment_forwarder, team_multisig, customer):
     payment_forwarder.transact({"from": team_multisig}).unhalt()
 
     assert payment_forwarder.call().customerCount() == 0
-    payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer)
+    payment_forwarder.transact({"value": value, "from": customer}).payWithoutChecksum(customer_id, customer)
     assert payment_forwarder.call().customerCount() == 1
-
-
