@@ -753,9 +753,6 @@ Example:
 Reset token name and symbol
 ===========================
 
-Reset token name and symbol
-===========================
-
 Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
 
 Example:
@@ -806,6 +803,74 @@ Example:
         crowdsale = Crowdsale(address="0x")
 
         print(crowdsale.call().weiRaised() / (10**18))
+
+
+Reset token name and symbol
+===========================
+
+Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+    account = "0x"  # Our controller account
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setTokenInformation("Tokenizer", "TOKE")
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+Reset upgrade master
+====================
+
+``upgradeMaster`` is the address who is allowed to set the upgrade path for the token. Originally it may be the deployment account, but you must likely want to move it to be the team multisig wallet.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+
+    account = "0x"  # Our deployment account
+
+    team_multisig  = "0x"  # Gnosis wallet address
+
+    token_address = "0x"  # Token contract address
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address=token_address)
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setUpgradeMaster(team_multisig)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
 
 Participating presale
 =====================
