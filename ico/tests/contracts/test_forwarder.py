@@ -55,6 +55,16 @@ def test_pay_twice(web3, payment_forwarder, team_multisig, customer, customer_2)
     # We pay from two distinct addresses on behalf of the same customer
     checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32)) + decode_hex(format(customer[2:]).zfill(40))).digest()[:1]
     payment_forwarder.transact({"value": value, "from": customer}).pay(customer_id, customer, checksumbyte)
+
+    # Here we make sure the first checkummed investment was successful
+    events = payment_forwarder.pastEvents("PaymentForwarded").get()
+    assert len(events) == 1
+    e = events[-1]
+    assert e["args"]["source"] == customer
+    assert e["args"]["amount"] == value
+    assert e["args"]["customerId"] == customer_id
+    assert e["args"]["benefactor"] == customer
+
     payment_forwarder.transact({"value": value, "from": customer_2}).payWithoutChecksum(customer_id, customer)
     team_multisig_end = web3.eth.getBalance(team_multisig)
 
