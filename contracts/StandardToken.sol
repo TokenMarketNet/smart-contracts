@@ -8,7 +8,7 @@ pragma solidity ^0.4.8;
 
 
 import 'zeppelin/contracts/token/ERC20.sol';
-import './SafeMath.sol';
+import "zeppelin/contracts/math/SafeMath.sol";
 
 
 /**
@@ -17,7 +17,9 @@ import './SafeMath.sol';
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20, SafeMath {
+contract StandardToken is ERC20 {
+
+  using SafeMath for uint;
 
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
@@ -34,8 +36,8 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
@@ -43,9 +45,9 @@ contract StandardToken is ERC20, SafeMath {
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }

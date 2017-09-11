@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import "../SafeMathLib.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "../UpgradeableToken.sol";
 import "../MintableToken.sol";
 
@@ -11,7 +11,7 @@ import "../MintableToken.sol";
  */
 contract TestMigrationTarget is StandardToken, UpgradeAgent {
 
-  using SafeMathLib for uint;
+  using SafeMath for uint;
 
   UpgradeableToken public oldToken;
 
@@ -37,8 +37,8 @@ contract TestMigrationTarget is StandardToken, UpgradeAgent {
     if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
 
     // Mint new tokens to the migrator
-    totalSupply = totalSupply.plus(_value);
-    balances[_from] = balances[_from].plus(_value);
+    totalSupply = totalSupply.add(_value);
+    balances[_from] = balances[_from].add(_value);
     Transfer(0, _from, _value);
   }
 

@@ -17,7 +17,7 @@ import './StandardToken.sol';
  *
  * See TokenVault for multi user implementation.
  */
-contract TimeVault is SafeMath {
+contract TimeVault {
 
   /** Interface flag to determine if address is for a real contract or not */
   bool public isTimeVault = true;

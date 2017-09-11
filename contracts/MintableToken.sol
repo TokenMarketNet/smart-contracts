@@ -7,7 +7,6 @@
 import "zeppelin/contracts/token/ERC20.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 import './StandardToken.sol';
-import "./SafeMathLib.sol";
 
 pragma solidity ^0.4.6;
 
@@ -19,8 +18,6 @@ pragma solidity ^0.4.6;
  *
  */
 contract MintableToken is StandardToken, Ownable {
-
-  using SafeMathLib for uint;
 
   bool public mintingFinished = false;
 
@@ -35,8 +32,8 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
+    totalSupply = totalSupply.add(amount);
+    balances[receiver] = balances[receiver].add(amount);
 
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event

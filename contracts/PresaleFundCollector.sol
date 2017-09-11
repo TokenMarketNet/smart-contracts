@@ -8,7 +8,7 @@ pragma solidity ^0.4.6;
 
 
 import "./Crowdsale.sol";
-import "./SafeMathLib.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 
 /**
  * Collect funds from presale investors to be send to the crowdsale smart contract later.
@@ -21,7 +21,7 @@ import "./SafeMathLib.sol";
  */
 contract PresaleFundCollector is Ownable {
 
-  using SafeMathLib for uint;
+  using SafeMath for uint;
 
   /** How many investors when can carry per a single contract */
   uint public MAX_INVESTORS = 32;
@@ -83,7 +83,7 @@ contract PresaleFundCollector is Ownable {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = balances[investor].plus(msg.value);
+    balances[investor] = balances[investor].add(msg.value);
 
     // Need to fulfill minimum limit
     if(balances[investor] < weiMinimumLimit) {

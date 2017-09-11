@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.8;
 
-import "./SafeMathLib.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "./Haltable.sol";
 import "./PricingStrategy.sol";
 import "./FinalizeAgent.sol";
@@ -30,7 +30,7 @@ contract Crowdsale is Haltable {
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
 
-  using SafeMathLib for uint;
+  using SafeMath for uint;
 
   /* The token we are selling */
   FractionalERC20 public token;
@@ -195,7 +195,7 @@ contract Crowdsale is Haltable {
     uint weiAmount = msg.value;
 
     // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised.sub(presaleWeiRaised), tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -208,15 +208,15 @@ contract Crowdsale is Haltable {
     }
 
     // Update investor
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+    investedAmountOf[receiver] = investedAmountOf[receiver].add(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].add(tokenAmount);
 
     // Update totals
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    weiRaised = weiRaised.add(weiAmount);
+    tokensSold = tokensSold.add(tokenAmount);
 
     if(pricingStrategy.isPresalePurchase(receiver)) {
-        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+        presaleWeiRaised = presaleWeiRaised.add(weiAmount);
     }
 
     // Check that we did not bust the cap
@@ -250,14 +250,17 @@ contract Crowdsale is Haltable {
    */
   function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
 
-    uint tokenAmount = fullTokens * 10**token.decimals();
-    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+    require(receiver != address(0));
 
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    uint tokenAmount = fullTokens.mul(10**token.decimals());
+    require(tokenAmount != 0);
+    uint weiAmount = weiPrice.mul(fullTokens); // This can be also 0, we give out tokens for free
 
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+    weiRaised = weiRaised.add(weiAmount);
+    tokensSold = tokensSold.add(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].add(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].add(tokenAmount);
 
     assignTokens(receiver, tokenAmount);
 
@@ -441,7 +444,7 @@ contract Crowdsale is Haltable {
    */
   function loadRefund() public payable inState(State.Failure) {
     if(msg.value == 0) throw;
-    loadedRefund = loadedRefund.plus(msg.value);
+    loadedRefund = loadedRefund.add(msg.value);
   }
 
   /**
@@ -454,7 +457,7 @@ contract Crowdsale is Haltable {
     uint256 weiValue = investedAmountOf[msg.sender];
     if (weiValue == 0) throw;
     investedAmountOf[msg.sender] = 0;
-    weiRefunded = weiRefunded.plus(weiValue);
+    weiRefunded = weiRefunded.add(weiValue);
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
   }
