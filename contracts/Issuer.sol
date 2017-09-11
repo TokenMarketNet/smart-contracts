@@ -43,7 +43,7 @@ contract Issuer is Ownable {
   }
 
   function issue(address benefactor, uint amount) onlyOwner {
-    if(issued[benefactor]) throw;
+    require(!issued[benefactor]);
     token.transferFrom(allower, benefactor, amount);
     issued[benefactor] = true;
     issuedCount += amount;

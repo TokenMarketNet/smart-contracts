@@ -60,13 +60,10 @@ contract UpgradeableToken is StandardTokenExt {
   function upgrade(uint256 value) public {
 
       UpgradeState state = getUpgradeState();
-      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        // Called in a bad state
-        throw;
-      }
+      require(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading); // Called in a bad state
 
       // Validate input value.
-      if (value == 0) throw;
+      require(value != 0);
 
       balances[msg.sender] = balances[msg.sender].sub(value);
 
@@ -84,23 +81,21 @@ contract UpgradeableToken is StandardTokenExt {
    */
   function setUpgradeAgent(address agent) external {
 
-      if(!canUpgrade()) {
-        // The token is not yet in a state that we could think upgrading
-        throw;
-      }
+      // The token is not yet in a state that we could think upgrading
+      require(canUpgrade());
 
-      if (agent == 0x0) throw;
+      require(agent != 0x0);
       // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) throw;
+      require(msg.sender == upgradeMaster);
       // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+      require(getUpgradeState() != UpgradeState.Upgrading);
 
       upgradeAgent = UpgradeAgent(agent);
 
       // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) throw;
+      require(upgradeAgent.isUpgradeAgent());
       // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
+      require(upgradeAgent.originalSupply() == totalSupply);
 
       UpgradeAgentSet(upgradeAgent);
   }
@@ -121,8 +116,7 @@ contract UpgradeableToken is StandardTokenExt {
    * This allows us to set a new owner for the upgrade mechanism.
    */
   function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
+      require(master != 0x0 && msg.sender == upgradeMaster);
       upgradeMaster = master;
   }
 

@@ -68,7 +68,7 @@ contract PaymentForwarder is Haltable {
     paymentsByBenefactor[benefactor] += weiAmount;
 
     // May run out of gas
-    if(!teamMultisig.send(weiAmount)) throw;
+    require(teamMultisig.send(weiAmount));
   }
 
   /**

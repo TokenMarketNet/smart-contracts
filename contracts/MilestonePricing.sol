@@ -46,9 +46,7 @@ contract MilestonePricing is PricingStrategy, Ownable {
   /// @param _milestones uint[] milestones Pairs of (time, price)
   function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
-    if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
-      throw;
-    }
+    require((_milestones.length % 2 == 0) && (_milestones.length < MAX_MILESTONE*2));
 
     milestoneCount = _milestones.length / 2;
 
@@ -59,17 +57,13 @@ contract MilestonePricing is PricingStrategy, Ownable {
       milestones[i].price = _milestones[i*2+1];
 
       // No invalid steps
-      if((lastTimestamp != 0) && (milestones[i].time <= lastTimestamp)) {
-        throw;
-      }
+      require((lastTimestamp == 0) || (milestones[i].time > lastTimestamp));
 
       lastTimestamp = milestones[i].time;
     }
 
     // Last milestone price must be zero, terminating the crowdale
-    if(milestones[milestoneCount-1].price != 0) {
-      throw;
-    }
+    require(milestones[milestoneCount-1].price == 0);
   }
 
   /// @dev This is invoked once for every pre-ICO address, set pricePerToken
@@ -150,7 +144,7 @@ contract MilestonePricing is PricingStrategy, Ownable {
   }
 
   function() payable {
-    throw; // No money on this contract
+    require(false); // No money on this contract
   }
 
 }
