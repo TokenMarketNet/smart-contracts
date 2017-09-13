@@ -58,7 +58,7 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
 
             funds = from_wei(presale.call().balances(investor), "ether")
             print("Moving funds {} ETH for investor {} to presale {}".format(funds, investor, presale.address))
-            txid = presale.transact({"from": deploy_address}).parcipateCrowdsaleInvestor(investor)
+            txid = presale.transact({"from": deploy_address}).participateCrowdsaleInvestor(investor)
             print("Broadcasting transaction {}".format(txid))
             check_succesful_tx(web3, txid, timeout=timeout)
             updated += 1

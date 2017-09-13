@@ -92,7 +92,7 @@ def test_invest_presale_move_to_crowdsale(chain, presale_fund_collector, presale
     assert presale_crowdsale.call().finalizeAgent()
     assert presale_crowdsale.call().getState() == CrowdsaleState.Funding
 
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     # Presale balances zerod
     assert presale_fund_collector.call().balances(customer) == 0
@@ -113,8 +113,8 @@ def test_invest_presale_move_to_crowdsale_twice(chain, presale_fund_collector, p
     presale_fund_collector.transact({"from": customer_2, "value": value}).invest()
 
     time_travel(chain, preico_starts_at)
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     # Tokens received
     assert presale_crowdsale.call().investedAmountOf(customer) == to_wei(1, "ether")
@@ -130,7 +130,7 @@ def test_invest_presale_move_to_crowdsale_too_early(chain, presale_fund_collecto
     time_travel(chain, preico_starts_at - 1)
 
     with pytest.raises(TransactionFailed):
-        presale_fund_collector.transact().parcipateCrowdsaleAll()
+        presale_fund_collector.transact().participateCrowdsaleAll()
 
 
 def test_invest_presale_move_to_crowdsale_early_whitelisted(chain, web3, presale_fund_collector, presale_crowdsale_miletstoned, customer, customer_2, preico_starts_at, team_multisig, finalizer, uncapped_token):
@@ -176,7 +176,7 @@ def test_invest_presale_invest_too_late(chain, presale_fund_collector, presale_c
 
     time_travel(chain, preico_starts_at + 1)
 
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     # No more presales
     with pytest.raises(TransactionFailed):
