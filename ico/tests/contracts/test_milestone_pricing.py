@@ -240,7 +240,7 @@ def test_presale_move_to_milestone_based_crowdsale(chain, presale_fund_collector
     assert milestone_ico.call().getState() == CrowdsaleState.Funding
 
     # Load funds to ICO
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     # Tokens received, paid by preico price
     milestone_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
