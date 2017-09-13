@@ -44,6 +44,7 @@ Example:
     from populus.utils.cli import request_account_unlock
     from eth_utils import from_wei
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     # Which network we deployed our contract
     chain_name = "mainnet"
@@ -72,7 +73,7 @@ Example:
             request_account_unlock(chain, owner_address, None)
 
         transaction = {"from": owner_address}
-        FractionalERC20 = chain.contract_factories.FractionalERC20
+        FractionalERC20 = get_contract_by_name(chain, "FractionalERC20")
 
         token = FractionalERC20(address=contract_address)
         decimals = token.call().decimals()
@@ -103,6 +104,7 @@ Then copy and edit the following snippet with your address information:
     from populus.utils.cli import request_account_unlock
     from eth_utils import from_wei
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     # Which network we deployed our contract
     chain_name = "ropsten"
@@ -127,7 +129,7 @@ Then copy and edit the following snippet with your address information:
             request_account_unlock(chain, owner_address, None)
 
         transaction = {"from": owner_address}
-        Contract = chain.get_contract_factory("CrowdsaleToken")
+        Contract = get_contract_by_name(chain, "CrowdsaleToken")
 
         contract = Contract(address=contract_address)
         print("Attempting to release the token transfer")
@@ -154,6 +156,7 @@ We have deployed a crowdsale token and made it transferable as above. Now let's 
     from populus.utils.cli import request_account_unlock
     from eth_utils import from_wei
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     # Which network we deployed our contract
     chain_name = "ropsten"
@@ -174,7 +177,7 @@ We have deployed a crowdsale token and made it transferable as above. Now let's 
 
     with project.get_chain(chain_name) as chain:
 
-        Contract = chain.get_contract_factory("CrowdsaleToken")
+        Contract = get_contract_by_name(chain, "CrowdsaleToken")
         contract = Contract(address=contract_address)
 
         web3 = chain.web3
@@ -227,6 +230,7 @@ Example setting the ICO contract for a presale:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -236,7 +240,7 @@ Example setting the ICO contract for a presale:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "PresaleFundCollector")
+        Contract = get_contract_by_name(chain, "PresaleFundCollector")
         contract = Contract(address="0x858759541633d5142855b27f16f5f67ea78654bf")
 
         if is_account_locked(web3, account):
@@ -252,6 +256,7 @@ Example triggering the funds transfer to ICO:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -261,7 +266,7 @@ Example triggering the funds transfer to ICO:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "PresaleFundCollector")
+        Contract = get_contract_by_name(chain, "PresaleFundCollector")
         contract = Contract(address="0x858759541633d5142855b27f16f5f67ea78654bf")
 
         if is_account_locked(web3, account):
@@ -281,6 +286,7 @@ Here is an example how to whitelist ICO participants before the ICO beings:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -290,7 +296,7 @@ Here is an example how to whitelist ICO participants before the ICO beings:
 
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "Crowdsale")
+        Contract = get_contract_by_name(chain, "Crowdsale")
         contract = Contract(address="0x06829437859594e19276f87df601436ef55af4f2")
 
         if is_account_locked(web3, account):
@@ -310,6 +316,7 @@ To mix fat finger errors:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -319,7 +326,7 @@ To mix fat finger errors:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "Crowdsale")
+        Contract = get_contract_by_name(chain, "Crowdsale")
         contract = Contract(address="0x")
 
         if is_account_locked(web3, account):
@@ -339,6 +346,7 @@ Try to buy from a whitelisted address or on a testnet with a generated customer 
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -351,7 +359,7 @@ Try to buy from a whitelisted address or on a testnet with a generated customer 
 
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "Crowdsale")
+        Contract = get_contract_by_name(chain, "Crowdsale")
         contract = Contract(address="0x")
 
         if is_account_locked(web3, account):
@@ -373,6 +381,7 @@ After a token sale is ended, stop ETH payment forwarder.
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -385,7 +394,7 @@ After a token sale is ended, stop ETH payment forwarder.
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "PaymentForwarder")
+        Contract = get_contract_by_name(chain, "PaymentForwarder")
         contract = Contract(address="0x")
 
         if is_account_locked(web3, account):
@@ -406,6 +415,7 @@ You can get the function signature (data field payload for a tranaction) for any
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -418,7 +428,7 @@ You can get the function signature (data field payload for a tranaction) for any
 
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "PreICOProxyBuyer")
+        Contract = get_contract_by_name(chain, "PreICOProxyBuyer")
         # contract = Contract(address="0x")
 
         sig_data = Contract._prepare_transaction("claimAll")
@@ -433,6 +443,7 @@ Set pricing data for early investors using PresaleFundCollector + MilestonePrici
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -477,15 +488,15 @@ Set pricing data for early investors using PresaleFundCollector + MilestonePrici
         web3 = chain.web3
 
         # Safety check that Crodsale is using our pricing strategy
-        Crowdsale = chain.contract_factories.Crowdsale
+        Crowdsale = get_contract_by_name(chain, "Crowdsale")
         crowdsale = Crowdsale(address=crowdsale_address)
         assert crowdsale.call().pricingStrategy() == pricing_strategy_address
 
         # Get owner access to pricing
-        MilestonePricing = chain.contract_factories.MilestonePricing
+        MilestonePricing = get_contract_by_name(chain, "MilestonePricing")
         pricing_strategy = MilestonePricing(address=pricing_strategy_address)
 
-        PresaleFundCollector = chain.contract_factories.PresaleFundCollector
+        PresaleFundCollector = get_contract_by_name(chain, "PresaleFundCollector")
         for preico_address, price_wei_per_token in PREICO_TIERS:
 
             eth_price = from_wei(price_wei_per_token, "ether")
@@ -510,6 +521,7 @@ Example:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -535,7 +547,7 @@ Example:
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
 
-        Crowdsale = chain.contract_factories.Crowdsale
+        Crowdsale = get_contract_by_name(chain, "Crowdsale")
         crowdsale = Crowdsale(address=crowdsale_address)
 
         for presale_address in presale_addresses:
@@ -551,6 +563,7 @@ Move funds from the proxy buy contract to the actual crowdsale.
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -565,17 +578,17 @@ Move funds from the proxy buy contract to the actual crowdsale.
         web3 = chain.web3
 
         # Safety check that Crodsale is using our pricing strategy
-        Crowdsale = chain.contract_factories.Crowdsale
+        Crowdsale = get_contract_by_name(chain, "Crowdsale")
         crowdsale = Crowdsale(address=crowdsale_address)
 
         # Make sure we are getting special price
-        EthTranchePricing = chain.contract_factories.EthTranchePricing
+        EthTranchePricing = get_contract_by_name(chain, "EthTranchePricing")
         pricing_strategy = EthTranchePricing(address=crowdsale.call().pricingStrategy())
         assert crowdsale.call().earlyParticipantWhitelist(proxy_buy_address) == True
         assert pricing_strategy.call().preicoAddresses(proxy_buy_address) > 0
 
         # Get owner access to pricing
-        PreICOProxyBuyer = chain.contract_factories.PreICOProxyBuyer
+        PreICOProxyBuyer = get_contract_by_name(chain, "PreICOProxyBuyer")
         proxy_buy = PreICOProxyBuyer(address=proxy_buy_address)
         # txid = proxy_buy.transact({"from": deploy_address}).setCrowdsale(crowdsale.address)
         # print("TXID", txid)
@@ -596,6 +609,7 @@ The token sale owner might want to reset the end date. This can happen in the ca
     from populus.utils.accounts import is_account_locked
     from eth_utils import to_wei, from_wei
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     p = populus.Project()
     deploy_address = "0x"  # Our controller account on mainnet
@@ -611,7 +625,7 @@ The token sale owner might want to reset the end date. This can happen in the ca
         closing_time = int(timestamp + 15*60)
 
         # Safety check that Crodsale is using our pricing strategy
-        Crowdsale = chain.contract_factories.Crowdsale
+        Crowdsale = get_contract_by_name(chain, "Crowdsale")
         crowdsale = Crowdsale(address=crowdsale_address)
         txid = crowdsale.transact({"from": deploy_address}).setEndsAt(closing_time)
         print(crowdsale.call().getState())
@@ -628,6 +642,7 @@ Example:
         from populus.utils.accounts import is_account_locked
         from eth_utils import to_wei, from_wei
         from ico.utils import check_succesful_tx
+	from ico.utils import get_contract_by_name
 
         p = populus.Project()
         deploy_address = "0x"  # Our controller account on mainnet
@@ -637,10 +652,10 @@ Example:
         with p.get_chain("mainnet") as chain:
             web3 = chain.web3
 
-            Crowdsale = chain.contract_factories.Crowdsale
+            Crowdsale = get_contract_by_name(chain, "Crowdsale")
             crowdsale = Crowdsale(address=crowdsale_address)
 
-            BonusFinalizeAgent = chain.contract_factories.BonusFinalizeAgent
+            BonusFinalizeAgent = get_contract_by_name(chain, "BonusFinalizeAgent")
             finalize_agent = BonusFinalizeAgent(address=crowdsale.call().finalizeAgent())
             assert finalize_agent.call().teamMultisig() == team_multisig
             assert finalize_agent.call().bonusBasePoints() > 1000
@@ -660,6 +675,7 @@ Example:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -669,7 +685,7 @@ Example:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Contract = getattr(chain.contract_factories, "Crowdsale")
+        Contract = get_contract_by_name(chain, "Crowdsale")
         contract = Contract(address="0x0FB81a518dCa5495986C5c2ec29e989390e0E406")
 
         if is_account_locked(web3, account):
@@ -729,6 +745,7 @@ Example:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -738,7 +755,7 @@ Example:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Token = getattr(chain.contract_factories, "CrowdsaleToken")
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
         token = Token(address="0x")
 
         if is_account_locked(web3, account):
@@ -791,6 +808,7 @@ Example:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli  import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -799,7 +817,7 @@ Example:
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Crowdsale = getattr(chain.contract_factories, "Crowdsale")
+        Crowdsale = get_contract_by_name(chain, "Crowdsale")
         crowdsale = Crowdsale(address="0x")
 
         print(crowdsale.call().weiRaised() / (10**18))
@@ -882,6 +900,7 @@ Example:
 .. code-block:: python
 
     from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
     import populus
     from populus.utils.cli  import request_account_unlock
     from populus.utils.accounts import is_account_locked
@@ -892,7 +911,7 @@ Example:
     with p.get_chain("kovan") as chain:
         web3 = chain.web3
 
-        PreICOProxyBuyer = getattr(chain.contract_factories, "PreICOProxyBuyer")
+        PreICOProxyBuyer = get_contract_by_name(chain, "PreICOProxyBuyer")
         presale = PreICOProxyBuyer(address="0x4fe8b625118a212e56d301e0f748505504d41377")
 
         print("Presale owner is", presale.call().owner())
