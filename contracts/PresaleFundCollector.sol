@@ -97,7 +97,7 @@ contract PresaleFundCollector is Ownable {
   /**
    * Load funds to the crowdsale for a single investor.
    */
-  function parcipateCrowdsaleInvestor(address investor) public {
+  function participateCrowdsaleInvestor(address investor) public {
 
     // Crowdsale not yet set
     require(address(crowdsale) != 0);
@@ -115,12 +115,12 @@ contract PresaleFundCollector is Ownable {
    * Load funds to the crowdsale for all investor.
    *
    */
-  function parcipateCrowdsaleAll() public {
+  function participateCrowdsaleAll() public {
 
     // We might hit a max gas limit in this loop,
-    // and in this case you can simply call parcipateCrowdsaleInvestor() for all investors
+    // and in this case you can simply call participateCrowdsaleInvestor() for all investors
     for(uint i=0; i<investors.length; i++) {
-       parcipateCrowdsaleInvestor(investors[i]);
+       participateCrowdsaleInvestor(investors[i]);
     }
   }
 

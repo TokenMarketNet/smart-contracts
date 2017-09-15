@@ -256,7 +256,7 @@ def test_presale_move_to_wei_tranche_based_crowdsale(chain, presale_fund_collect
     assert wei_tranche_ico.call().getState() == CrowdsaleState.Funding
 
     # Load funds to ICO
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     # Tokens received, paid by preico price
     wei_tranche_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
@@ -333,7 +333,7 @@ def test_presale_update_counters(chain, presale_fund_collector, wei_tranche_ico,
     assert wei_tranche_ico.call().getState() == CrowdsaleState.Funding
 
     # Load funds to ICO
-    presale_fund_collector.transact().parcipateCrowdsaleAll()
+    presale_fund_collector.transact().participateCrowdsaleAll()
 
     assert wei_tranche_ico.call().weiRaised() == to_wei(20000, "ether")
     assert wei_tranche_ico.call().presaleWeiRaised() == to_wei(20000, "ether")

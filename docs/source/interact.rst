@@ -267,7 +267,7 @@ Example triggering the funds transfer to ICO:
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = contract.transact({"from": account}).parcipateCrowdsaleAll()
+        txid = contract.transact({"from": account}).participateCrowdsaleAll()
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")

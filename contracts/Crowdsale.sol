@@ -270,7 +270,7 @@ contract Crowdsale is Haltable {
    * Allow anonymous contributions to this crowdsale.
    */
   function invest(address addr) public payable {
-    require(!requireCustomerId); // Crowdsale needs to track partipants for thank you email
+    require(!requireCustomerId); // Crowdsale needs to track participants for thank you email
     require(!requiredSignedAddress); // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
   }
