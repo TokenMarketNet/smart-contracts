@@ -8,6 +8,8 @@ from eth_utils import to_wei
 from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 
+from sha3 import keccak_256
+from rlp.utils import decode_hex
 
 @pytest.fixture
 def crowdsale(uncapped_flatprice, uncapped_flatprice_finalizer, team_multisig):
@@ -42,7 +44,8 @@ def test_participate_with_customer_id(chain, crowdsale, customer, customer_id, t
     time_travel(chain, crowdsale.call().startsAt() + 1)
     wei_value = to_wei(1, "ether")
     assert crowdsale.call().getState() == CrowdsaleState.Funding
-    crowdsale.transact({"from": customer, "value": wei_value}).buyWithCustomerId(customer_id)
+    checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32))).digest()[:1]
+    crowdsale.transact({"from": customer, "value": wei_value}).buyWithCustomerId(customer_id, checksumbyte)
 
     # We got credited
     assert token.call().balanceOf(customer) > 0
