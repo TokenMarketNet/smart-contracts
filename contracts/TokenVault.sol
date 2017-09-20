@@ -6,6 +6,8 @@
 
 pragma solidity ^0.4.8;
 
+import "./Recoverable.sol";
+import "./SafeMathLib.sol";
 import "./StandardToken.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
@@ -25,7 +27,8 @@ import "zeppelin/contracts/ownership/Ownable.sol";
  * - After the freeze time is over investors can call claim() from their address to get their tokens
  *
  */
-contract TokenVault is Ownable {
+contract TokenVault is Ownable, Recoverable {
+  using SafeMathLib for uint;
 
   /** How many investors we have now */
   uint public investorCount;
@@ -205,6 +208,11 @@ contract TokenVault is Ownable {
     token.transfer(investor, amount);
 
     Distributed(investor, amount);
+  }
+
+  /// @dev This function is prototyped in Recoverable contract
+  function tokensToBeReturned(ERC20Basic token) public returns (uint) {
+    return getBalance().minus(tokensAllocatedTotal);
   }
 
   /// @dev Resolve the contract umambigious state
