@@ -140,6 +140,27 @@ def test_lock(loaded_token_vault, team_multisig, token, customer, customer_2):
 
     assert loaded_token_vault.call().getState() == TokenVaultState.Holding
 
+def test_recover(loaded_token_vault, team_multisig, token, customer, customer_2):
+    """Can we recover tokens which are sent after locking?"""
+    assert loaded_token_vault.call().getState() == TokenVaultState.Loading
+
+    # Move in tokens
+    token.transact({"from" : team_multisig}).transfer(loaded_token_vault.address, 3000)
+
+    # All balances are correct
+    assert token.call().balanceOf(loaded_token_vault.address) == 3000
+    assert loaded_token_vault.call().tokensAllocatedTotal() == 3000
+    assert loaded_token_vault.call().tokensToBeAllocated() == 3000
+
+    loaded_token_vault.transact({"from": team_multisig}).lock()
+
+    assert loaded_token_vault.call().getState() == TokenVaultState.Holding
+    assert loaded_token_vault.call().tokensToBeReturned(token.address) == 0
+
+    token.transact({"from" : team_multisig}).transfer(loaded_token_vault.address, 1000)
+    assert token.call().balanceOf(loaded_token_vault.address) == 4000
+    loaded_token_vault.transact({"from" : team_multisig}).recoverTokens(token.address)
+    assert token.call().balanceOf(loaded_token_vault.address) == 3000
 
 def test_lock_incorrectly(loaded_token_vault, team_multisig, token, customer, customer_2):
     """In the case of lock fails, we can redeem the tokens.."""
