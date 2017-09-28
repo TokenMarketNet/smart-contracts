@@ -4,7 +4,7 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.12;
 
 import "zeppelin/contracts/ownership/Ownable.sol";
 import "zeppelin/contracts/token/ERC20Basic.sol";
