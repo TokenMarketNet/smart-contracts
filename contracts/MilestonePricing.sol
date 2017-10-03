@@ -142,6 +142,13 @@ contract MilestonePricing is PricingStrategy, Ownable {
     return value.times(multiplier) / price;
   }
 
+  function isPresalePurchase(address purchaser) public constant returns (bool) {
+    if(preicoAddresses[purchaser] > 0)
+      return true;
+    else
+      return false;
+  }
+
   function() payable {
     throw; // No money on this contract
   }
