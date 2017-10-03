@@ -8,7 +8,7 @@ pragma solidity ^0.4.6;
 
 import "./PricingStrategy.sol";
 import "./Crowdsale.sol";
-import "./SafeMathLib.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 /// @dev Tranche based pricing with special support for pre-ico deals.
@@ -17,7 +17,7 @@ import "zeppelin/contracts/ownership/Ownable.sol";
 ///      to the whole order.
 contract TokenTranchePricing is PricingStrategy, Ownable {
 
-  using SafeMathLib for uint;
+  using SafeMath for uint;
 
   uint public constant MAX_TRANCHES = 10;
 
@@ -142,11 +142,11 @@ contract TokenTranchePricing is PricingStrategy, Ownable {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return value.times(multiplier) / preicoAddresses[msgSender];
+      return value.mul(multiplier).div(preicoAddresses[msgSender]);
     }
 
     uint price = getCurrentPrice(tokensSold);
-    return value.times(multiplier) / price;
+    return value.mul(multiplier).div(price);
   }
 
   function() payable {

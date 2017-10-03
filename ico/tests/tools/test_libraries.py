@@ -9,5 +9,5 @@ def test_extract_libraries(chain: TestRPCChain, uncapped_flatprice: Contract):
     """We get library information of deployed contract."""
 
     libraries = get_libraries(chain, "UncappedCrowdsale", uncapped_flatprice)
-    assert libraries["SafeMathLib"].startswith("0x")
+    assert not "SafeMath" in libraries
 

@@ -8,14 +8,14 @@ pragma solidity ^0.4.6;
 
 import "./PricingStrategy.sol";
 import "./Crowdsale.sol";
-import "./SafeMathLib.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 
 /// @dev Time milestone based pricing with special support for pre-ico deals.
 contract MilestonePricing is PricingStrategy, Ownable {
 
-  using SafeMathLib for uint;
+  using SafeMath for uint;
 
   uint public constant MAX_MILESTONE = 10;
 
@@ -135,11 +135,11 @@ contract MilestonePricing is PricingStrategy, Ownable {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return value.times(multiplier) / preicoAddresses[msgSender];
+      return value.mul(multiplier).div(preicoAddresses[msgSender]);
     }
 
     uint price = getCurrentPrice();
-    return value.times(multiplier) / price;
+    return value.mul(multiplier).div(price);
   }
 
   function isPresalePurchase(address purchaser) public constant returns (bool) {

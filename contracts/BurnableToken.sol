@@ -22,8 +22,8 @@ contract BurnableToken is StandardToken {
    */
   function burn(uint burnAmount) {
     address burner = msg.sender;
-    balances[burner] = safeSub(balances[burner], burnAmount);
-    totalSupply = safeSub(totalSupply, burnAmount);
+    balances[burner] = balances[burner].sub(burnAmount);
+    totalSupply = totalSupply.sub(burnAmount);
     Burned(burner, burnAmount);
   }
 }
