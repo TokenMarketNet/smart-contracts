@@ -305,7 +305,8 @@ contract Crowdsale is Haltable {
    * Invest to tokens, recognize the payer.
    *
    */
-  function buyWithCustomerId(uint128 customerId) public payable {
+  function buyWithCustomerId(uint128 customerId, bytes1 checksum) public payable {
+    if (bytes1(sha3(customerId)) != checksum) throw;
     investWithCustomerId(msg.sender, customerId);
   }
 
