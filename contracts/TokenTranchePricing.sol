@@ -12,7 +12,7 @@ import "./SafeMathLib.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 /// @dev Tranche based pricing with special support for pre-ico deals.
-///      Implementing "first price" tranches, meaning, that if byers order is
+///      Implementing "first price" tranches, meaning, that if buyers order is
 ///      covering more than one tranche, the price of the lowest tranche will apply
 ///      to the whole order.
 contract TokenTranchePricing is PricingStrategy, Ownable {

@@ -10,6 +10,32 @@ testnet:
     # This is a semi automatic process using a Firefox browser.
     verify_on_etherscan: yes
 
+    solc:
+
+        # This is the Solidity version tag we verify on EtherScan.
+        # For available versions see
+        # https://kovan.etherscan.io/verifyContract2
+        #
+        # See values in Compiler drop down.
+        # You can also get the local compiler version with:
+        #
+        #     solc --version
+        #
+        # Note that for EtherScan you need to add letter "v" at the front of the version
+        #
+        # Note: You need to have correct optmization settings for the compiler
+        # in populus.json that matches what EtherScan is expecting.
+        #
+        version: v0.4.14+commit.c2215d46
+
+        #
+        # We supply these to EtherScan as the solc settings we used to compile the contract.
+        # They must match values in populus.json compilication / backends section.
+        #
+        optimizations:
+            optimizer: true
+            runs: 500
+
     #
     # Contracts section defines different smart contracts that
     # are required to run the ICO.
@@ -18,23 +44,22 @@ testnet:
 
         # Team multisignature wallet.
         #
-        # This contract deploys the team multisignature wallet.
-        # One we use here is based one by Gavin Wood.
+        # Replace with your predeployed multisignature wallet contract address.
         #
-        # Multiple escrow key holders are required to take action to move
-        # funds around.
+        # We assume this wallet has been deployed beforehand
+        # using wallet.gnosis.pm service and your team members
+        # have been set as the owners of this wallet.
         #
-        # All crowdsale collected funds are deposited to the this multisig wallet in real time.
+        # For testing purposes, e.g. on Kovan network,
+        # you can use any account on your geth / Parity here.
+        #
+        # Note: As the writing of this wallet.gnosis.pm service
+        # works only with mainnet.
         #
         team_multisig:
-            contract_name: Wallet
-            contract_file: Wallet.sol
-            arguments:
-                _owners:
-                    - "0x4fa6fb927f525265233cd5da32baa11dff7fcdc1"
-                    - "0xaa7b03923ad7dc65c8a4bbcd8c51e5956c7d3252"
-                _required: 2
-                _daylimit: 0
+            contract_name: MultiSigWallet
+            contract_file: GnosisWallet.sol
+            address: "0x40a05d4ce308bf600cb275d7a3e9113518f59c54"
         #
         # Pre-ICO fund collector
         #
@@ -76,6 +101,8 @@ testnet:
                 _name: Example-testnet
                 _symbol: EXA
                 _initialSupply: 0
+                _decimals: 18  # Ethereum tokens are standardizing around 18 decimals
+                _mintable: true  # Tokens will be dynamically created over the token sale
         #
         # Pricing strategy
         #
@@ -152,8 +179,7 @@ testnet:
         crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address)
         token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address)
 
-        # Move ownership of all owned contracts to the team multisig address
-        crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
+        # Set the team multisig address as the upgraade master for the token
         token.transact({"from": deploy_address}).transferOwnership(team_multisig.address)
 
     # Make sure that everything we have deployed all contracts in good state

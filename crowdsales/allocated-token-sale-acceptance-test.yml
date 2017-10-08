@@ -1,0 +1,181 @@
+# Used in test_deploy_acceptance.py, corresponding to allocated-token-sale-example.yml
+#
+# Please note that some numbers are slightly changed.
+#
+
+testrpc:
+
+    chain: testrpc
+
+    # Use automated Chrome to verify all contracts on etherscan.io
+    verify_on_etherscan: no
+    browser_driver: chrome
+
+    solc:
+
+        # This is the Solidity version tag we verify on EtherScan.
+        # For available versions see
+        # https://kovan.etherscan.io/verifyContract2
+        #
+        # See values in Compiler drop down.
+        # You can also get the local compiler version with:
+        #
+        #     solc --version
+        #
+        # Note that for EtherScan you need to add letter "v" at the front of the version
+        #
+        # Note: You need to have correct optmization settings for the compiler
+        # in populus.json that matches what EtherScan is expecting.
+        #
+        version: v0.4.14+commit.c2215d46
+
+        #
+        # We supply these to EtherScan as the solc settings we used to compile the contract.
+        # They must match values in populus.json compilication / backends section.
+        #
+        optimizations:
+            optimizer: true
+            runs: 500
+
+    contracts:
+        # This is the address of the multisig wallet where the paymnts eventually land
+        team_multisig:
+            contract_name: MultiSigWallet
+            contract_file: GnosisWallet.sol
+            address: "0x40a05d4ce308bf600cb275d7a3e9113518f59c54"
+        #
+        # Token contract
+        #
+        # This contract represents ERC-20 token.
+        # It has transfer lock up functionality to prevent the token to be transferable
+        # until the ICO is over.
+        #
+        # We create the whole token supply upfront and no more token minting
+        # happens ever.
+        #
+        # Token has 18 decimals and supply of 1B tokens.
+        #
+        # Token supply is one billion tokens.
+        #
+        # Name and symbol are not set yet. They are set later. In
+        # the case of the deployment fails and we need redeploy
+        # we do not create unnecessary entries in token explorers.
+        #
+        token:
+            contract_name: BurnableCrowdsaleToken
+            contract_file: BurnableCrowdsaleToken.sol
+            arguments:
+                _name: ""
+                _symbol: ""
+                _initialSupply: "{{ 200000000*10**18 }}"
+                _decimals: 18
+                _mintable: false
+        #
+        # Pricing strategy.
+        #
+        # We use ETH tranches. People who buy in in the first
+        # tranches get 20% and 10% bonus tokens.
+        #
+        pricing_strategy:
+            contract_name: EthTranchePricing
+            contract_file: EthTranchePricing.sol
+            arguments:
+                _tranches:
+                    # 400 tokens per ETH
+                    - 0
+                    - 2500000000000000
+
+                    # 366 tokens per ETH
+                    - "{{ to_wei('18750', 'ether') }}"
+                    - 2727272727272730
+
+                    # 333 tokens per ETH
+                    - "{{ to_wei('39204.54545', 'ether') }}"
+                    - 3000000000000000
+
+                    # 333 tokens per ETH
+                    - "{{ to_wei('62454.54545', 'ether') }}"
+                    - 3000000000000000
+
+                    - "{{ to_wei('9999999999', 'ether') }}"
+                    - 0
+
+        #
+        # Crowdsale.
+        #
+        # We use allocated crowdsale as the whole token supply has been created beforehand.
+        # No minting. Later we use approve() to give tokens for this contract to be sold.
+        #
+        crowdsale:
+            contract_name: AllocatedCrowdsale
+            contract_file: AllocatedCrowdsale.sol
+            arguments:
+                _token: "{{contracts.token.address}}"
+                _pricingStrategy: "{{contracts.pricing_strategy.address}}"
+                _multisigWallet: "{{contracts.team_multisig.address}}"
+                _start: "{{ timestamp(datetime(2099, 7, 12, 13, 00)) }}"
+                _end: "{{ timestamp(datetime(2099, 7, 26, 13, 00)) }}"
+                _minimumFundingGoal: "{{ to_wei(1, 'ether') }}"
+                _beneficiary: "{{deploy_address}}"
+        #
+        # Because deploy_address controls whole supply,
+        # we do not create any supply dynamically,
+        # we do not need a finalizer.
+        #
+        finalize_agent:
+            contract_name: NullFinalizeAgent
+            contract_file: NullFinalizeAgent.sol
+            arguments:
+                _crowdsale: "{{contracts.crowdsale.address}}"
+
+    # Post-deployment actions connect contracts together.
+    post_actions: |
+
+        # Allow crowdsale contract to sell its token
+        token.transact({"from": deploy_address}).approve(crowdsale.address, 70000000*(10**18))
+
+        # Make sure crowdsale contract and these accounts
+        # can transfer tokens despite transfer lock up
+        token.transact({"from": deploy_address}).setTransferAgent(team_multisig.address, True)
+        token.transact({"from": deploy_address}).setTransferAgent(crowdsale.address, True)
+        token.transact({"from": deploy_address}).setTransferAgent(finalize_agent.address, True)
+        token.transact({"from": deploy_address}).setTransferAgent(deploy_address, True)
+
+        # Do not do nothing at the end of the crowdsale
+        confirm_tx(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
+
+        # Owner can release the token transfer when they fel its the time
+        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(deploy_address))
+
+        # Set token upgrade master to team multisig to give the new token path
+        confirm_tx(token.transact({"from": deploy_address}).setUpgradeMaster(team_multisig.address))
+
+        # Allow test buys from these accounts before token sale begins.
+        # The latter one is a presale contract address.
+        # Presale contract (PreICOProxyBuyer) can move in funds
+        # and get tokens before the actual start time.
+        confirm_multiple_txs( \
+          crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(deploy_address, True), \
+          crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist("0x6d997eDcA04282950416FA380d834f360fC36eBb", True) \
+        )
+
+        # We set a special price, outside ETH tranches, for a presale contract
+        confirm_tx(pricing_strategy.transact({"from": deploy_address}).setPreicoAddress("0x6d997eDcA04282950416FA380d834f360fC36eBb", 2083333333333))
+
+    # Sanity check
+    verify_actions: |
+        assert token.call().owner().lower() == deploy_address.lower()
+        assert token.call().released() == False
+        assert crowdsale.call().owner().lower() == deploy_address.lower()
+        assert crowdsale.call().multisigWallet().lower() == team_multisig.address.lower()
+        assert finalize_agent.call().isSane()
+        assert crowdsale.call().getState() == CrowdsaleState.PreFunding   # PreFunding for the final, as it is deployed pre-opening
+
+        # Do a test buy using a test address.
+        # This ensures are variables are set and the
+        # funds flow in the multisig wallet.
+        confirm_tx(crowdsale.transact({"from": deploy_address, "value": to_wei("0.01", "ether")}).buy())
+
+        # As the last action, after successful deployment, set the right token symbol and name so that it shows in a blockchain explorer
+        confirm_tx(token.transact({"from": deploy_address}).setTokenInformation("MooToken", "MOO"))
+

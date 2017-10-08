@@ -4,7 +4,7 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.12;
 
 import "./PricingStrategy.sol";
 import "./SafeMathLib.sol";
@@ -20,6 +20,7 @@ contract FlatPricing is PricingStrategy {
   uint public oneTokenInWei;
 
   function FlatPricing(uint _oneTokenInWei) {
+    require(_oneTokenInWei > 0);
     oneTokenInWei = _oneTokenInWei;
   }
 

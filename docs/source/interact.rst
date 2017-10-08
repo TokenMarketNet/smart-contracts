@@ -132,6 +132,7 @@ Then copy and edit the following snippet with your address information:
         contract = Contract(address=contract_address)
         print("Attempting to release the token transfer")
         txid = contract.transact(transaction).releaseTokenTransfer()
+        print("TXID", txid)
         check_succesful_tx(web3, txid)
         print("Token released")
 
@@ -266,7 +267,7 @@ Example triggering the funds transfer to ICO:
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = contract.transact({"from": account}).parcipateCrowdsaleAll()
+        txid = contract.transact({"from": account}).participateCrowdsaleAll()
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
@@ -680,30 +681,40 @@ Example:
         print("OK")
 
 
-Approving tokens
-================
+Approving tokens for issuer
+===========================
+
+Usually you need to approve() tokens for a bounty distribution or similar distribution contract (Issuer.sol).
+Here is an example.
 
 Example:
 
 .. code-block:: python
 
-    from ico.utils import check_succesful_tx
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
 
-    p = populus.Project()
-    account = ""  # Our controller account on Kovan
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
-    with p.get_chain("kovan") as chain:
+    p = populus.Project()
+    account = "0x"  # Our controller account
+    issuer_contract = "0x"  # Issuer contract who needs tokens
+    normalized_amount = int("123000000000000")  # Amount of tokens, decimal points unrolled
+    token_address = "0x"  # The token contract whose tokens we are dealing with
+
+    with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Token = getattr(chain.contract_factories, "CentrallyIssuedToken")
-        token = Token(address="")
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address=token_address)
 
         if is_account_locked(web3, account):
             request_account_unlock(chain, account, None)
 
-        txid = token.transact({"from": account}).approve("0x", token.call().totalSupply())
+        print("Approving ", normalized_amount, "raw tokens")
+
+        txid = token.transact({"from": account}).approve(issuer_contract, normalized_amount)
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
@@ -739,26 +750,27 @@ Example:
         print("OK")
 
 
-Set token name
-==============
+Reset token name and symbol
+===========================
 
-Update info of a token.
+Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
 
 Example:
 
 .. code-block:: python
 
-    from ico.utils import check_succesful_tx
     import populus
     from populus.utils.cli import request_account_unlock
     from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
 
     p = populus.Project()
     account = "0x"  # Our controller account
 
     with p.get_chain("mainnet") as chain:
         web3 = chain.web3
-        Token = getattr(chain.contract_factories, "CrowdsaleToken")
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
         token = Token(address="0x")
 
         if is_account_locked(web3, account):
@@ -768,7 +780,6 @@ Example:
         print("TXID is", txid)
         check_succesful_tx(web3, txid)
         print("OK")
-
 
 Read crowdsale variables
 ========================
@@ -792,6 +803,74 @@ Example:
         crowdsale = Crowdsale(address="0x")
 
         print(crowdsale.call().weiRaised() / (10**18))
+
+
+Reset token name and symbol
+===========================
+
+Update name and symbol info of a token. There are several reasons why this information might not be immutable, like trademark rules.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+    account = "0x"  # Our controller account
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address="0x")
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setTokenInformation("Tokenizer", "TOKE")
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
+
+Reset upgrade master
+====================
+
+``upgradeMaster`` is the address who is allowed to set the upgrade path for the token. Originally it may be the deployment account, but you must likely want to move it to be the team multisig wallet.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from populus.utils.cli import request_account_unlock
+    from populus.utils.accounts import is_account_locked
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+
+    account = "0x"  # Our deployment account
+
+    team_multisig  = "0x"  # Gnosis wallet address
+
+    token_address = "0x"  # Token contract address
+
+    with p.get_chain("mainnet") as chain:
+        web3 = chain.web3
+        Token = get_contract_by_name(chain, "CrowdsaleToken")
+        token = Token(address=token_address)
+
+        if is_account_locked(web3, account):
+            request_account_unlock(chain, account, None)
+
+        txid = token.transact({"from": account}).setUpgradeMaster(team_multisig)
+        print("TXID is", txid)
+        check_succesful_tx(web3, txid)
+        print("OK")
 
 Participating presale
 =====================
@@ -854,7 +933,7 @@ Deploy issuer contract
 
 Example:
 
-..code-block:: console
+.. code-block:: console
 
     distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a
 
@@ -868,7 +947,7 @@ Run the issuance
 
 Example:
 
-..code-block:: console
+.. code-block:: console
 
     distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined-bqx.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a --issuer-address=0x78d30c42a5f9fb19df60768e4c867b697e24b615
 

@@ -2,7 +2,7 @@
   "chains": {
     "mainnet": {
       "chain": {
-        "class": "populus.chain.geth.MainnetChain"
+        "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
@@ -21,12 +21,21 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8545",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
       }
     },
-    "ropsten": {
+
+    "kovan": {
       "chain": {
-        "class": "populus.chain.geth.TestnetChain"
+        "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
@@ -45,7 +54,48 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8547",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
+      }
+    },
+
+    "ropsten": {
+      "chain": {
+        "class": "populus.chain.external.ExternalChain"
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8546",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
       }
     },
     "temp": {
@@ -125,15 +175,9 @@
               "enabled": true,
               "runs": 500
             },
-            "remappings": ["zeppelin=./zeppelin"],
             "outputSelection": {
               "*": {
-                "*": [
-                  "abi",
-                  "metadata",
-                  "evm.bytecode",
-                  "evm.deployedBytecode"
-                ]
+                "*": ["abi", "metadata"]
               }
             }
           },
@@ -158,7 +202,7 @@
         "class": "populus.compilation.backends.SolcStandardJSONBackend",
         "settings": {
           "optimizer": {
-            "enabled": true,
+            "enabled": false,
             "runs": 500
           },
           "outputSelection": {
@@ -166,11 +210,13 @@
               "*": ["abi", "metadata"]
             }
           },
-          "allow_paths": ["./zeppelin"]
+          "allow_paths": ["/"]
         }
       }
     },
-    "contracts_source_dir": "./contracts",
+    "contracts_source_dirs": [
+      "./contracts"
+    ],
     "import_remappings": []
   },
   "contracts": {
@@ -196,7 +242,7 @@
       }
     }
   },
-  "version": "5",
+  "version": "6",
   "web3": {
     "GethIPC": {
       "provider": {

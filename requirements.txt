@@ -17,7 +17,7 @@ jsonschema==2.6.0
 MarkupSafe==1.0
 pathtools==0.1.2
 pbkdf2==1.3
--e git+https://github.com/pipermerriam/populus.git#egg=populus
+populus==1.9.0
 py==1.4.34
 py-geth==1.9.0
 py-solc==1.2.2
@@ -39,5 +39,5 @@ toolz==0.8.2
 toposort==1.5
 urllib3==1.22
 watchdog==0.8.3
--e git+https://github.com/miohtama/web3.py.git@c17b87d3be977592f85b1001f52ff1cdbb6f99f4#egg=web3
+web3==3.11.1
 Werkzeug==0.12.2
