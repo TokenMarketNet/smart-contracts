@@ -398,6 +398,10 @@ contract Crowdsale is Haltable {
     if(now > time) {
       throw; // Don't change past
     }
+    
+    if(startsAt > time) {
+      throw; // Prevent human mistakes
+    }
 
     endsAt = time;
     EndsAtChanged(endsAt);
