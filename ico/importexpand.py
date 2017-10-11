@@ -3,6 +3,7 @@
 Mainly need for EtherScan verification service.
 """
 import os
+from ico.git import git_current_commit
 from typing import Tuple
 
 from populus import Project
@@ -83,4 +84,6 @@ def expand_contract_imports(project: Project, contract_filename: str) -> Tuple[s
     :return: Tuple[final expanded source, set of processed filenames]
     """
     exp = Expander(project)
-    return exp.expand_file(contract_filename), exp.processed_imports
+    commitline = "// (C) 2017 TokenMarket Ltd. (https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt) Commit: " + str(git_current_commit()) + "\n"
+
+    return commitline + exp.expand_file(contract_filename), exp.processed_imports

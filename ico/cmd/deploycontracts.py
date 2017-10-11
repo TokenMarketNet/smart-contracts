@@ -4,7 +4,7 @@ import click
 from populus import Project
 
 from ico.deploy import deploy_crowdsale_from_file
-
+from ico.git import git_sanitycheck
 
 @click.command()
 @click.option('--deployment-name', nargs=1, default="mainnet", help='YAML section name we are deploying. Usual options include "mainnet" or "kovan"', required=True)
@@ -26,6 +26,8 @@ def main(deployment_file, deployment_name, address):
 
     * https://github.com/TokenMarketNet/ico/blob/master/crowdsales/example.yml
     """
+
+    git_sanitycheck()
 
     project = Project()
     deploy_crowdsale_from_file(project, deployment_file, deployment_name, address)
