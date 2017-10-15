@@ -59,16 +59,12 @@ contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
   function setInvestorDataAndIssueNewToken(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash) onlyOwner public {
 
     // This transaction has already been rebuild
-    if(reissuedTransactions[_originalTxHash]) {
-      throw;
-    }
+    require(!reissuedTransactions[_originalTxHash]);
 
     setInvestorData(_addr, _weiAmount, _tokenAmount, _originalTxHash);
 
     // Check that we did not bust the cap in the restoration process
-    if(isBreakingCap(_weiAmount, _tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(_weiAmount, _tokenAmount, weiRaised, tokensSold));
 
     // Mark transaction processed
     reissuedTransactions[_originalTxHash] = true;

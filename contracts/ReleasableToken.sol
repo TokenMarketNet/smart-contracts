@@ -29,13 +29,7 @@ contract ReleasableToken is ERC20, Ownable {
    *
    */
   modifier canTransfer(address _sender) {
-
-    if(!released) {
-        if(!transferAgents[_sender]) {
-            throw;
-        }
-    }
-
+    require(released || transferAgents[_sender]);
     _;
   }
 
@@ -68,17 +62,13 @@ contract ReleasableToken is ERC20, Ownable {
 
   /** The function can be called only before or after the tokens have been releasesd */
   modifier inReleaseState(bool releaseState) {
-    if(releaseState != released) {
-        throw;
-    }
+    require(releaseState == released);
     _;
   }
 
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyReleaseAgent() {
-    if(msg.sender != releaseAgent) {
-        throw;
-    }
+    require(msg.sender == releaseAgent);
     _;
   }
 

@@ -22,19 +22,15 @@ contract TestMigrationTarget is StandardToken, UpgradeAgent {
     oldToken = _oldToken;
 
     // Let's not set bad old token
-    if(address(oldToken) == 0) {
-      throw;
-    }
+    require(address(oldToken) != 0);
 
     // Let's make sure we have something to migrate
     originalSupply = _oldToken.totalSupply();
-    if(originalSupply == 0) {
-      throw;
-    }
+    require(originalSupply != 0);
   }
 
   function upgradeFrom(address _from, uint256 _value) public {
-    if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
+    require(msg.sender == address(oldToken)); // only upgrade from oldToken
 
     // Mint new tokens to the migrator
     totalSupply = totalSupply.plus(_value);
@@ -42,8 +38,7 @@ contract TestMigrationTarget is StandardToken, UpgradeAgent {
     Transfer(0, _from, _value);
   }
 
-  function() public payable {
-    throw;
+  function() public {
   }
 
 }

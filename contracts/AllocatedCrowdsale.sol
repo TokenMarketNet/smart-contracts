@@ -57,6 +57,6 @@ contract AllocatedCrowdsale is Crowdsale {
    * Use approve() given to this crowdsale to distribute the tokens.
    */
   function assignTokens(address receiver, uint tokenAmount) private {
-    if(!token.transferFrom(beneficiary, receiver, tokenAmount)) throw;
+    require(token.transferFrom(beneficiary, receiver, tokenAmount));
   }
 }
