@@ -35,7 +35,8 @@ contract TimeVault is SafeMath {
 
   function TimeVault(address _teamMultisig, StandardToken _token, uint _unlockedAt) {
     // Sanity check
-    require(_teamMultisig != 0x0 && address(_token) != 0x0);
+    require(_teamMultisig != 0x0);
+    require(address(_token) != 0x0);
 
     teamMultisig = _teamMultisig;
     token = _token;
@@ -57,6 +58,7 @@ contract TimeVault is SafeMath {
   }
 
   // disallow ETH payment for this vault
-  function () { require(false); }
+  function () {
+  }
 
 }

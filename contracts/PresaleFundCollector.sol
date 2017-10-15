@@ -56,7 +56,8 @@ contract PresaleFundCollector is Ownable {
   function PresaleFundCollector(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit) {
 
     // Give argument
-    require(_freezeEndsAt != 0 && _weiMinimumLimit != 0);
+    require(_freezeEndsAt != 0);
+    require(_weiMinimumLimit != 0);
 
     owner = _owner;
 
@@ -139,7 +140,7 @@ contract PresaleFundCollector is Ownable {
     require(balances[investor] != 0);
     uint amount = balances[investor];
     delete balances[investor];
-    require(investor.send(amount));
+    investor.transfer(amount);
     Refunded(investor, amount);
   }
 
@@ -151,7 +152,6 @@ contract PresaleFundCollector is Ownable {
   }
 
   /** Explicitly call function from your wallet. */
-  function() payable {
-    require(false);
+  function() {
   }
 }

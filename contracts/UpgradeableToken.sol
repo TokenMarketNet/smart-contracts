@@ -116,7 +116,8 @@ contract UpgradeableToken is StandardToken {
    * This allows us to set a new owner for the upgrade mechanism.
    */
   function setUpgradeMaster(address master) public {
-      require(master != 0x0 && msg.sender == upgradeMaster);
+      require(master != 0x0);
+      require(msg.sender == upgradeMaster);
       upgradeMaster = master;
   }
 

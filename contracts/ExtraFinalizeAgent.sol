@@ -38,7 +38,8 @@ contract ExtraFinalizeAgent is FinalizeAgent {
   uint public accountedTokenSales;
 
   function ExtraFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint _bonusBasePoints, address _teamMultisig, uint _accountedTokenSales) {
-    require(address(_crowdsale) != 0 && address(_teamMultisig) != 0);
+    require(address(_crowdsale) != 0);
+    require(address(_teamMultisig) != 0);
 
     token = _token;
     crowdsale = _crowdsale;
