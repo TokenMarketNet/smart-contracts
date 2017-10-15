@@ -38,8 +38,7 @@ contract TestMigrationTarget is StandardTokenExt, UpgradeAgent {
     Transfer(0, _from, _value);
   }
 
-  function() public payable {
-    require(false);
+  function() public {
   }
 
 }

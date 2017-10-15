@@ -88,7 +88,9 @@ contract PreICOProxyBuyer is Ownable, Haltable {
   function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiMaximumLimit, uint _weiCap) {
 
     // Give argument
-    require(_freezeEndsAt != 0 && _weiMinimumLimit != 0 && _weiMaximumLimit != 0);
+    require(_freezeEndsAt != 0);
+    require(_weiMinimumLimit != 0);
+    require(_weiMaximumLimit != 0);
 
     owner = _owner;
 
@@ -157,7 +159,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
   function buyForEverybody() stopNonOwnersInEmergency public {
 
     // Only allow buy once
-    require(getState() == State.Funding) ;
+    require(getState() == State.Funding);
 
     // Crowdsale not yet set
     require(address(crowdsale) != 0);
@@ -234,7 +236,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
     require(balances[investor] != 0);
     uint amount = balances[investor];
     delete balances[investor];
-    require(investor.call.value(amount)());
+    investor.transfer(amount);
     Refunded(investor, amount);
   }
 
@@ -285,7 +287,6 @@ contract PreICOProxyBuyer is Ownable, Haltable {
   }
 
   /** Explicitly call function from your wallet. */
-  function() payable {
-    require(false);
+  function() {
   }
 }

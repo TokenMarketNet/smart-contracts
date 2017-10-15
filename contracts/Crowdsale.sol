@@ -151,8 +151,7 @@ contract Crowdsale is Haltable {
   /**
    * Don't expect to just send in money and get tokens.
    */
-  function() payable {
-    require(false);
+  function() {
   }
 
   /**
@@ -176,7 +175,7 @@ contract Crowdsale is Haltable {
       // pass
     } else {
       // Unwanted state
-      assert(false);
+      revert();
     }
 
     uint weiAmount = msg.value;
@@ -209,7 +208,7 @@ contract Crowdsale is Haltable {
     assignTokens(receiver, tokenAmount);
 
     // Pocket the money
-    require(multisigWallet.send(weiAmount));
+    multisigWallet.transfer(weiAmount);
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
@@ -429,7 +428,7 @@ contract Crowdsale is Haltable {
     investedAmountOf[msg.sender] = 0;
     weiRefunded = weiRefunded.plus(weiValue);
     Refund(msg.sender, weiValue);
-    require(msg.sender.send(weiValue));
+    msg.sender.transfer(weiValue);
   }
 
   /**

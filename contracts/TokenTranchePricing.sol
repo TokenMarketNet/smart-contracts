@@ -48,7 +48,7 @@ contract TokenTranchePricing is PricingStrategy, Ownable {
   /// @param _tranches uint[] tranches Pairs of (start amount, price)
   function TokenTranchePricing(uint[] _tranches) {
     // Need to have tuples, length check
-    require((_tranches.length % 2 == 0) && (_tranches.length < MAX_TRANCHES*2));
+    require((_tranches.length % 2 == 0) && (_tranches.length <= MAX_TRANCHES*2));
 
     trancheCount = _tranches.length / 2;
 
@@ -143,8 +143,8 @@ contract TokenTranchePricing is PricingStrategy, Ownable {
     return value.times(multiplier) / price;
   }
 
-  function() payable {
-    require(false); // No money on this contract
+  function() {
+    // No money on this contract
   }
 
 }

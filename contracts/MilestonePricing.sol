@@ -46,7 +46,7 @@ contract MilestonePricing is PricingStrategy, Ownable {
   /// @param _milestones uint[] milestones Pairs of (time, price)
   function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
-    require((_milestones.length % 2 == 0) && (_milestones.length < MAX_MILESTONE*2));
+    require((_milestones.length % 2 == 0) && (_milestones.length <= MAX_MILESTONE*2));
 
     milestoneCount = _milestones.length / 2;
 
@@ -143,8 +143,8 @@ contract MilestonePricing is PricingStrategy, Ownable {
       return false;
   }
 
-  function() payable {
-    require(false); // No money on this contract
+  function() {
+    // No money on this contract
   }
 
 }
