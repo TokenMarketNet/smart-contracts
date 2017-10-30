@@ -22,6 +22,7 @@ def nice_list_pytest_itemcollected(item):
         item._nodeid.rstrip(".")
 
 
+from ico.tests.fixtures.amltoken import *  # noqa
 from ico.tests.fixtures.general import *  # noqa
 from ico.tests.fixtures.flatprice import *  # noqa
 from ico.tests.fixtures.releasable import *  # noqa
