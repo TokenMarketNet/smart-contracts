@@ -7,7 +7,7 @@
 pragma solidity ^0.4.8;
 
 import "zeppelin/contracts/token/ERC20.sol";
-import './StandardToken.sol';
+import "./StandardTokenExt.sol";
 import "./UpgradeAgent.sol";
 
 /**
@@ -15,7 +15,7 @@ import "./UpgradeAgent.sol";
  *
  * First envisioned by Golem and Lunyr projects.
  */
-contract UpgradeableToken is StandardToken {
+contract UpgradeableToken is StandardTokenExt {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -68,11 +68,11 @@ contract UpgradeableToken is StandardToken {
       // Validate input value.
       if (value == 0) throw;
 
-      balances[msg.sender] = safeSub(balances[msg.sender], value);
+      balances[msg.sender] = balances[msg.sender].sub(value);
 
       // Take tokens out from circulation
-      totalSupply = safeSub(totalSupply, value);
-      totalUpgraded = safeAdd(totalUpgraded, value);
+      totalSupply = totalSupply.sub(value);
+      totalUpgraded = totalUpgraded.add(value);
 
       // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);

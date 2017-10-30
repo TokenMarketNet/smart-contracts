@@ -6,7 +6,7 @@
 
 import "zeppelin/contracts/token/ERC20.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
-import './StandardToken.sol';
+import "./StandardTokenExt.sol";
 import "./SafeMathLib.sol";
 
 pragma solidity ^0.4.6;
@@ -18,7 +18,7 @@ pragma solidity ^0.4.6;
  * Only mint agents, contracts whitelisted by owner, can mint new tokens.
  *
  */
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is StandardTokenExt, Ownable {
 
   using SafeMathLib for uint;
 
@@ -27,7 +27,8 @@ contract MintableToken is StandardToken, Ownable {
   /** List of agents that are allowed to create new tokens */
   mapping (address => bool) public mintAgents;
 
-  event MintingAgentChanged(address addr, bool state  );
+  event MintingAgentChanged(address addr, bool state);
+  event Minted(address receiver, uint amount);
 
   /**
    * Create new tokens and allocate them to an address..

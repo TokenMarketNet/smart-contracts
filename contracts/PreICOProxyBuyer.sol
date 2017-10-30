@@ -6,9 +6,8 @@
 
 pragma solidity ^0.4.6;
 
-import "./SafeMath.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "./Crowdsale.sol";
-import "./StandardToken.sol";
 import "./Haltable.sol";
 
 /**
@@ -24,7 +23,8 @@ import "./Haltable.sol";
  * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
+contract PreICOProxyBuyer is Ownable, Haltable {
+  using SafeMath for uint;
 
   /** How many investors we have now */
   uint public investorCount;
@@ -134,7 +134,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = safeAdd(balances[investor], msg.value);
+    balances[investor] = balances[investor].add(msg.value);
 
     // Need to satisfy minimum and maximum limits
     if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
@@ -147,7 +147,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       investorCount++;
     }
 
-    weiRaised = safeAdd(weiRaised, msg.value);
+    weiRaised = weiRaised.add(msg.value);
     if(weiRaised > weiCap) {
       throw;
     }
@@ -204,14 +204,14 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(getState() != State.Distributing) {
       throw;
     }
-    return safeMul(balances[investor], tokensBought) / weiRaised;
+    return balances[investor].mul(tokensBought) / weiRaised;
   }
 
   /**
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    return safeSub(getClaimAmount(investor), claimed[investor]);
+    return getClaimAmount(investor).sub(claimed[investor]);
   }
 
   /**
@@ -242,8 +242,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       claimCount++;
     }
 
-    claimed[investor] = safeAdd(claimed[investor], amount);
-    totalClaimed = safeAdd(totalClaimed, amount);
+    claimed[investor] = claimed[investor].add(amount);
+    totalClaimed = totalClaimed.add(amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);

@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.8;
 
-import './StandardToken.sol';
+import "./StandardTokenExt.sol";
 
 /**
  *
@@ -17,13 +17,13 @@ import './StandardToken.sol';
  *
  * See TokenVault for multi user implementation.
  */
-contract TimeVault is SafeMath {
+contract TimeVault {
 
   /** Interface flag to determine if address is for a real contract or not */
   bool public isTimeVault = true;
 
   /** Token we are holding */
-  StandardToken public token;
+  StandardTokenExt public token;
 
   /** Address that can claim tokens */
   address public teamMultisig;
@@ -33,7 +33,7 @@ contract TimeVault is SafeMath {
 
   event Unlocked();
 
-  function TimeVault(address _teamMultisig, StandardToken _token, uint _unlockedAt) {
+  function TimeVault(address _teamMultisig, StandardTokenExt _token, uint _unlockedAt) {
 
     teamMultisig = _teamMultisig;
     token = _token;

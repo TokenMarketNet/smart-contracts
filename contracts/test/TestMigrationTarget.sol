@@ -9,7 +9,7 @@ import "../MintableToken.sol";
  *
  * This is not an actual token, but just a stub used in testing.
  */
-contract TestMigrationTarget is StandardToken, UpgradeAgent {
+contract TestMigrationTarget is StandardTokenExt, UpgradeAgent {
 
   using SafeMathLib for uint;
 

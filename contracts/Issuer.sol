@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.8;
 
-import './StandardToken.sol';
+import "./StandardTokenExt.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 /**
@@ -28,7 +28,7 @@ contract Issuer is Ownable {
   mapping(address => bool) public issued;
 
   /** Centrally issued token we are distributing to our contributors */
-  StandardToken public token;
+  StandardTokenExt public token;
 
   /** Party (team multisig) who is in the control of the token pool. Note that this will be different from the owner address (scripted) that calls this contract. */
   address public allower;
@@ -36,7 +36,7 @@ contract Issuer is Ownable {
   /** How many addresses have received their tokens. */
   uint public issuedCount;
 
-  function Issuer(address _owner, address _allower, StandardToken _token) {
+  function Issuer(address _owner, address _allower, StandardTokenExt _token) {
     owner = _owner;
     allower = _allower;
     token = _token;
