@@ -173,7 +173,7 @@ contract Crowdsale is Haltable {
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
-   * @param customerId (optional) UUID v4 to track the successful payments on the server side
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
    *
    */
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
