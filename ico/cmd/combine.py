@@ -47,6 +47,10 @@ def read_file(combined: dict, all_errors: List[tuple], book_keeping: collections
             amount = amount.strip()
 
             # Check for any Ethereum address
+            if len(address) < 42:
+                errors.append((csv_file, line, "Not an Ethereum address: {}".format(address)))
+                continue
+
             try:
                 if not is_hex_address(address):
                     errors.append((csv_file, line, "Not an Ethereum address: {}".format(address)))
@@ -169,4 +173,3 @@ def main(input_file: list, output_file: str, decimals: int, address_column: str,
 
 if __name__ == "__main__":
     main()
-
