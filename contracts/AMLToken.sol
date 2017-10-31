@@ -14,9 +14,13 @@ import "./BurnableCrowdsaleToken.sol";
  *
  * This subset of BurnableCrowdsaleToken gives the Owner a possibility to
  * reclaim tokens from a participant before the token is released
- * (after participant has failed the AML).
+ * after a participant has failed a prolonged AML process.
  */
 contract AMLToken is BurnableCrowdsaleToken {
+
+  // An event when the owner has reclaimed non-released tokens
+  event OwnerReclaim(address fromWhom, uint amount);
+
   function AMLToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable) BurnableCrowdsaleToken(_name, _symbol, _initialSupply, _decimals, _mintable) {
 
   }
@@ -31,5 +35,6 @@ contract AMLToken is BurnableCrowdsaleToken {
     balances[fromWhom] = balances[fromWhom].sub(amount);
     balances[owner] = balances[owner].add(amount);
     Transfer(fromWhom, owner, amount);
+    OwnerReclaim(fromWhom, amount);
   }
 }
