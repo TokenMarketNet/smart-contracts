@@ -20,6 +20,7 @@ contract AMLCrowdsale is Crowdsale {
     // especially set in the server side per customer manual override.
     // Otherwise the customer can reuse old data payload with different min or max value
     // to work around the per customer cap.
-
   }
+
+
 }

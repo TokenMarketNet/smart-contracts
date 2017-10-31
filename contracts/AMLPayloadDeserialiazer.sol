@@ -57,25 +57,4 @@ contract AMLPayloadDeserialiazer {
     return (payload.whitelistedAddress, payload.customerId, payload.minETH, payload.maxETH);
   }
 
-  /**
-   * @param customerMin (optional, can be zero) How much this customer needs to invest.
-   *                    A signed server side set parameter by the current AML policy.
-   * @param customerMax (optional, can be zero) How much this customer can invest.
-   *                    A signed server side set parameter by the current AML policy.
-   */
-  function checkAMLLimits(uint128 customerId, uint weiAmount, uint customerMin, uint customerMax) private {
-
-    /*
-    investedCustomerAmountOf[customerId] = investedCustomerAmountOf[customerId].plus(weiAmount);
-
-    // Check AML boundaries (if given)
-    if(customerMin != 0) {
-      require(investedCustomerAmountOf[customerId] >= customerMin);
-    }
-
-    if(customerMax != 0) {
-      require(investedCustomerAmountOf[customerId] <= customerMax);
-    }*/
-  }
-
 }
