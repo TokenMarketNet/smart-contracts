@@ -4,10 +4,10 @@ from uuid import UUID
 from eth_utils import is_checksum_address
 
 
-def pack_aml_dataframe(whitelisted_address: str, customer_id: UUID, min_eth_10k: int, max_eth_10k: int) -> bytes:
-    """Pack AML information to the smart contract.
+def pack_kyc_dataframe(whitelisted_address: str, customer_id: UUID, min_eth_10k: int, max_eth_10k: int) -> bytes:
+    """Pack KYC information to the smart contract.
 
-    See AMLPayloadDeserializer for the matching Solidity code.
+    See KYCPayloadDeserializer for the matching Solidity code.
 
     :param whitelisted_address: Must be whitelisted address in a Ethereum checksummed format
     :param customer_id: Customer id as UUIDv8

@@ -15,6 +15,13 @@ import "./BurnableCrowdsaleToken.sol";
  * This subset of BurnableCrowdsaleToken gives the Owner a possibility to
  * reclaim tokens from a participant before the token is released
  * after a participant has failed a prolonged AML process.
+ *
+ * It is assumed that the anti-money laundering process depends on blockchain data.
+ * The data is not available before the transaction and not for the smart contract.
+ * Thus, we need to implement logic to handle AML failure cases post payment.
+ * We give a time window before the token release for the token sale owners to
+ * complete the AML and claw back all token transactions that were
+ * caused by rejected purchases.
  */
 contract AMLToken is BurnableCrowdsaleToken {
 
