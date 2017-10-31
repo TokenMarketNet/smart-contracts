@@ -10,21 +10,20 @@ import "./BurnableCrowdsaleToken.sol";
 
 
 /**
- * A crowdsaled token.
+ * The AML Token
  *
- * An ERC-20 token designed specifically for crowdsales with investor protection and further development path.
- *
- * - The token transfer() is disabled until the crowdsale is over
- * - The token contract gives an opt-in upgrade path to a new contract
- * - The same token can be part of several crowdsales through approve() mechanism
- * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
- *
+ * This subset of BurnableCrowdsaleToken gives the Owner a possibility to
+ * reclaim tokens from a participant before the token is released
+ * (after participant has failed the AML).
  */
 contract AMLToken is BurnableCrowdsaleToken {
   function AMLToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable) BurnableCrowdsaleToken(_name, _symbol, _initialSupply, _decimals, _mintable) {
 
   }
 
+  /// @dev Here the owner can reclaim the tokens from a participant if
+  ///      the token is not released yet
+  /// @param fromWhom address of the participant whose tokens we want to claim
   function transferToOwner(address fromWhom) onlyOwner {
     if (released) revert();
 
