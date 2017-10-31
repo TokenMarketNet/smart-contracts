@@ -12,14 +12,14 @@ import "./BytesDeserializer.sol";
  *
  * @notice This should be a library, but for the complexity and toolchain fragility risks involving of linking library inside library, we put this as a mix-in.
  */
-contract AMLPayloadDeserialiazer {
+contract KYCPayloadDeserializer {
 
   using BytesDeserializer for bytes;
 
   // The bytes payload set on the server side
   // total 56 bytes
 
-  struct AMLPayload {
+  struct KYCPayload {
 
     /** Customer whitelisted address where the deposit can come from */
     address whitelistedAddress; // 20 bytes
@@ -40,8 +40,8 @@ contract AMLPayloadDeserialiazer {
   /**
    * Deconstruct server-side byte data to structured data.
    */
-  function deserializeAMLPayload(bytes dataframe) private constant returns(AMLPayload decodedPayload) {
-    AMLPayload payload;
+  function deserializeKYCPayload(bytes dataframe) private constant returns(KYCPayload decodedPayload) {
+    KYCPayload payload;
     payload.whitelistedAddress = dataframe.sliceAddress(0);
     payload.customerId = uint128(dataframe.slice16(20));
     payload.minETH = uint32(dataframe.slice4(36));
@@ -52,8 +52,8 @@ contract AMLPayloadDeserialiazer {
   /**
    * Helper function to allow us to return the decoded payload to an external caller for testing.
    */
-  function getAMLPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth) {
-    AMLPayload memory payload = deserializeAMLPayload(dataframe);
+  function getKYCPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth) {
+    KYCPayload memory payload = deserializeKYCPayload(dataframe);
     return (payload.whitelistedAddress, payload.customerId, payload.minETH, payload.maxETH);
   }
 
