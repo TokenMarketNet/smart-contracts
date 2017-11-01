@@ -159,8 +159,9 @@ contract CrowdsaleBase is Haltable {
    * @param receiver The Ethereum address who receives the tokens
    * @param customerId (optional) UUID v4 to track the successful payments on the server side'
    *
+   * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -215,6 +216,8 @@ contract CrowdsaleBase is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
+
+    return tokenAmount;
   }
 
   /**
