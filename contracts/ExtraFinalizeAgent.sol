@@ -38,17 +38,13 @@ contract ExtraFinalizeAgent is FinalizeAgent {
   uint public accountedTokenSales;
 
   function ExtraFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint _bonusBasePoints, address _teamMultisig, uint _accountedTokenSales) {
+    require(address(_crowdsale) != 0);
+    require(address(_teamMultisig) != 0);
+
     token = _token;
     crowdsale = _crowdsale;
 
-    if(address(crowdsale) == 0) {
-      throw;
-    }
-
     teamMultisig = _teamMultisig;
-    if(address(teamMultisig) == 0) {
-      throw;
-    }
 
     accountedTokenSales = _accountedTokenSales;
   }
@@ -60,9 +56,7 @@ contract ExtraFinalizeAgent is FinalizeAgent {
 
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale() {
-    if(msg.sender != address(crowdsale)) {
-      throw;
-    }
+    require(msg.sender == address(crowdsale));
 
     // How many % of tokens the founders and others get
     uint tokensSold = crowdsale.tokensSold().minus(accountedTokenSales);
