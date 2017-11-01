@@ -6,6 +6,10 @@
 
 pragma solidity ^0.4.8;
 
+import "./SafeMathLib.sol";
+import "./PricingStrategy.sol";
+import "./FinalizeAgent.sol";
+import "./FractionalERC20.sol";
 import "./CrowdsaleBase.sol";
 
 
@@ -42,7 +46,6 @@ contract Crowdsale is CrowdsaleBase {
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) CrowdsaleBase(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
   }
-
 
   /**
    * Preallocate tokens for the early investors.
@@ -129,7 +132,6 @@ contract Crowdsale is CrowdsaleBase {
     invest(msg.sender);
   }
 
-
   /**
    * Set policy do we need to have server-side customer ids for the investments.
    *
@@ -150,4 +152,5 @@ contract Crowdsale is CrowdsaleBase {
     signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
+
 }

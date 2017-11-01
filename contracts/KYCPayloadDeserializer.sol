@@ -40,7 +40,7 @@ contract KYCPayloadDeserializer {
   /**
    * Deconstruct server-side byte data to structured data.
    */
-  function deserializeKYCPayload(bytes dataframe) private constant returns(KYCPayload decodedPayload) {
+  function deserializeKYCPayload(bytes dataframe) internal constant returns(KYCPayload decodedPayload) {
     KYCPayload payload;
     payload.whitelistedAddress = dataframe.sliceAddress(0);
     payload.customerId = uint128(dataframe.slice16(20));
