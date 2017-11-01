@@ -4,7 +4,7 @@ dist: trusty
 sudo: true
 
 env:
-  - TOXENV=py35 SOLC_VERSION=0.4.12
+  - TOXENV=py35 SOLC_VERSION=0.4.18
 
 cache:
   - pip: true
