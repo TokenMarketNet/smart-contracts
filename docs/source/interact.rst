@@ -951,3 +951,31 @@ Example:
 
     distribute-tokens --chain=mainnet --address=0x1e10231145c0b670e9ee5a7f5b47172afa3b6186 --token=0x5af2be193a6abca9c8817001f45744777db30756 --csv-file=combined-bqx.csv --address-column="Ethereum address" --amount-column="Total reward" --master-address=0x9a60ad6de185c4ea95058601beaf16f63742782a --issuer-address=0x78d30c42a5f9fb19df60768e4c867b697e24b615
 
+
+Extracting Ethereum transaction data payload from a function signature
+======================================================================
+
+This allows you to see what goes into an Ethereum transaction data field payload, when you call a smart contract function in a transaction.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+
+    with p.get_chain("kovan") as chain:
+
+        contract = get_contract_by_name(chain, "PreICOProxyBuyer")
+
+        # With arguments
+        # contract._prepare_transaction("refund", fn_kwargs={"customerId": raw_id})
+
+
+        function = "refund"
+        # Without arguments
+        # Get a Dayta payload for calling a contract function refund()
+        sig_data = contract._prepare_transaction(function)
+        print("Data payload for {}() is {}".format(function, sig_data["data"]))
