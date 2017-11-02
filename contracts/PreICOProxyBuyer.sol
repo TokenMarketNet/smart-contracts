@@ -281,6 +281,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
   }
 
   /// @dev Setting timelock (delay) for claiming
+  /// @param _timeLock Time after which claiming is possible
   function setTimeLock(uint _timeLock) public onlyOwner {
     timeLock = _timeLock;
   }

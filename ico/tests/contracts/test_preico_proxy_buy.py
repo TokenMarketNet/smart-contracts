@@ -447,7 +447,7 @@ def test_proxy_buy_presale_pricing(chain, proxy_buyer, tranche_crowdsale, finali
     token.call().balanceOf(customer) == 20000 / 0.05
 
 def test_proxy_timelock(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token, unlock_time):
-    """Buy proxy as customer."""
+    """Try to claim after timeLock has passed."""
 
     assert proxy_buyer.call().getState() == 1
     assert proxy_buyer.call().isPresale() == True
@@ -504,7 +504,7 @@ def test_proxy_timelock(chain, web3, customer, customer_2, team_multisig, proxy_
     assert token.call().balanceOf(customer_2) == 36000000/3*2
 
 def test_proxy_timelock_early(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token, unlock_time):
-    """Buy proxy as customer."""
+    """Try to claim before timeLock has passed."""
 
     assert proxy_buyer.call().getState() == 1
     assert proxy_buyer.call().isPresale() == True
