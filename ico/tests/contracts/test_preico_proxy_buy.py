@@ -10,6 +10,12 @@ from web3.contract import Contract
 from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 
+import datetime
+
+@pytest.fixture
+def unlock_time() -> int:
+    """Start Apr 15th"""
+    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
 
 @pytest.fixture()
 def finalizer(chain, presale_crowdsale, uncapped_token, team_multisig) -> Contract:
@@ -439,3 +445,108 @@ def test_proxy_buy_presale_pricing(chain, proxy_buyer, tranche_crowdsale, finali
     # Check that presale participant gets his token with a presale price
     proxy_buyer.transact({"from": customer}).claimAll()
     token.call().balanceOf(customer) == 20000 / 0.05
+
+def test_proxy_timelock(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token, unlock_time):
+    """Try to claim after timeLock has passed."""
+
+    assert proxy_buyer.call().getState() == 1
+    assert proxy_buyer.call().isPresale() == True
+
+    #Change owner to customer_2, and back to team_multisig
+    proxy_buyer.transact({"from": team_multisig}).setTimeLock(unlock_time)
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+    proxy_buyer.transact({"from": customer_2}).transferOwnership(team_multisig)
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).buy()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).buy()
+
+    # Everything funder
+    assert proxy_buyer.call().weiRaised() == to_wei(30000, "ether")
+    assert web3.eth.getBalance(proxy_buyer.address) == to_wei(30000, "ether")
+    assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
+    assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")
+
+    # Change the owner again, in the middle, and run rest of the test as customer_2
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+    assert web3.eth.getBalance(proxy_buyer.address) == 0
+
+    # We got our tokens
+    assert proxy_buyer.call().getState() == 2
+    assert proxy_buyer.call().tokensBought() == 36000000
+    assert proxy_buyer.call().getClaimAmount(customer) == 36000000/3*1
+    assert proxy_buyer.call().getClaimLeft(customer) == 36000000/3*1
+    assert proxy_buyer.call().getClaimAmount(customer_2) == 36000000/3*2
+    assert proxy_buyer.call().getClaimLeft(customer_2) == 36000000/3*2
+
+    # Tokens cannot be claimed before they are released
+    time_travel(chain, crowdsale.call().endsAt()+1)
+    crowdsale.transact({"from": team_multisig}).finalize()
+    assert token.call().released()
+
+    time_travel(chain, unlock_time+1)
+
+    # Claim tokens
+    proxy_buyer.transact({"from": customer}).claimAll()
+    proxy_buyer.transact({"from": customer_2}).claimAll()
+
+    # Check investors got their tokens
+    assert proxy_buyer.call().totalClaimed() == 36000000
+    assert proxy_buyer.call().claimCount() == 2
+    assert proxy_buyer.call().claimed(customer) == 36000000 / 3 * 1
+    assert proxy_buyer.call().claimed(customer_2) == 36000000 / 3 * 2
+    assert token.call().balanceOf(customer) == 36000000/3*1
+    assert token.call().balanceOf(customer_2) == 36000000/3*2
+
+def test_proxy_timelock_early(chain, web3, customer, customer_2, team_multisig, proxy_buyer, crowdsale, token, unlock_time):
+    """Try to claim before timeLock has passed."""
+
+    assert proxy_buyer.call().getState() == 1
+    assert proxy_buyer.call().isPresale() == True
+
+    #Change owner to customer_2, and back to team_multisig
+    proxy_buyer.transact({"from": team_multisig}).setTimeLock(unlock_time)
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+    proxy_buyer.transact({"from": customer_2}).transferOwnership(team_multisig)
+
+    proxy_buyer.transact({"value": to_wei(10000, "ether"), "from": customer}).buy()
+    proxy_buyer.transact({"value": to_wei(20000, "ether"), "from": customer_2}).buy()
+
+    # Everything funder
+    assert proxy_buyer.call().weiRaised() == to_wei(30000, "ether")
+    assert web3.eth.getBalance(proxy_buyer.address) == to_wei(30000, "ether")
+    assert proxy_buyer.call().balances(customer) == to_wei(10000, "ether")
+    assert proxy_buyer.call().balances(customer_2) == to_wei(20000, "ether")
+
+    # Change the owner again, in the middle, and run rest of the test as customer_2
+    proxy_buyer.transact({"from": team_multisig}).transferOwnership(customer_2)
+
+    # Move over
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
+    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    proxy_buyer.transact({"from": customer}).buyForEverybody()
+    assert web3.eth.getBalance(proxy_buyer.address) == 0
+
+    # We got our tokens
+    assert proxy_buyer.call().getState() == 2
+    assert proxy_buyer.call().tokensBought() == 36000000
+    assert proxy_buyer.call().getClaimAmount(customer) == 36000000/3*1
+    assert proxy_buyer.call().getClaimLeft(customer) == 36000000/3*1
+    assert proxy_buyer.call().getClaimAmount(customer_2) == 36000000/3*2
+    assert proxy_buyer.call().getClaimLeft(customer_2) == 36000000/3*2
+
+    # Tokens cannot be claimed before they are released
+    time_travel(chain, crowdsale.call().endsAt()+1)
+    crowdsale.transact({"from": team_multisig}).finalize()
+    assert token.call().released()
+
+    # Claim tokens
+    with pytest.raises(TransactionFailed):
+        proxy_buyer.transact({"from": customer}).claimAll()
+        proxy_buyer.transact({"from": customer_2}).claimAll()

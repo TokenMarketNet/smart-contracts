@@ -61,6 +61,9 @@ contract PreICOProxyBuyer is Ownable, Haltable {
 
   uint public totalClaimed;
 
+  /** If timeLock > 0, claiming is possible only after the time has passed **/
+  uint public timeLock;
+
   /** This is used to signal that we want the refund **/
   bool public forcedRefund;
 
@@ -226,6 +229,8 @@ contract PreICOProxyBuyer is Ownable, Haltable {
    *
    */
   function claim(uint amount) stopInEmergency {
+    require (now > timeLock);
+
     address investor = msg.sender;
 
     if(amount == 0) {
@@ -273,6 +278,12 @@ contract PreICOProxyBuyer is Ownable, Haltable {
 
     // Check interface
     if(!crowdsale.isCrowdsale()) true;
+  }
+
+  /// @dev Setting timelock (delay) for claiming
+  /// @param _timeLock Time after which claiming is possible
+  function setTimeLock(uint _timeLock) public onlyOwner {
+    timeLock = _timeLock;
   }
 
   /// @dev This is used in the first case scenario, this will force the state
