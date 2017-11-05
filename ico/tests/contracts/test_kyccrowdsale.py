@@ -45,7 +45,7 @@ def kyc_token(token):
     return token
 
 @pytest.fixture
-def kyc_crowdsale(chain, team_multisig, preico_starts_at, preico_ends_at, flat_pricing, preico_cap, preico_funding_goal, preico_token_allocation, kyc_token, signer_address, default_finalize_agent) -> Contract:
+def kyc_crowdsale(chain, team_multisig, preico_starts_at, preico_ends_at, flat_pricing, preico_cap, preico_funding_goal, preico_token_allocation, kyc_token, signer_address, default_finalize_agent, initial_supply) -> Contract:
     """Create a Pre-ICO crowdsale contract."""
 
     token = kyc_token
@@ -77,6 +77,7 @@ def kyc_crowdsale(chain, team_multisig, preico_starts_at, preico_ends_at, flat_p
 
     # Allow pre-ico contract to do mint()
     token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
+    token.transact({"from": team_multisig}).approve(contract.address, initial_supply)
     token.transact({"from": team_multisig}).setReleaseAgent(finalizer_contract.address)
 
     assert token.call().mintAgents(contract.address) == True
@@ -108,7 +109,7 @@ def test_kyc_participate_with_signed_address(chain, kyc_crowdsale, customer, cus
     time_travel(chain, kyc_crowdsale.call().startsAt() + 1)
     wei_value = to_wei(1, "ether")
     assert kyc_crowdsale.call().getState() == CrowdsaleState.Funding
-    kyc_crowdsale.transact({"from": customer, "value": wei_value}).buyWithKYCData(customer_id, sign_data["v"], sign_data["r_bytes"], sign_data["s_bytes"])
+    kyc_crowdsale.transact({"from": customer, "value": wei_value}).buyWithKYCData(bytes(str(customer_id)), sign_data["v"], sign_data["r_bytes"], sign_data["s_bytes"])
 
     # We got credited
     assert kyc_token.call().balanceOf(customer) > 0
