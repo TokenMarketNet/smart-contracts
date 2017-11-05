@@ -1,4 +1,4 @@
-This package contains Ethereum smart contracts and commnd line toolchain for launching and managing token sales.
+This package contains Ethereum smart contracts and command line toolchain for launching and managing token sales.
 
 .. image:: https://badges.gitter.im/TokenMarketNet/ico.svg
    :alt: Join the chat at https://gitter.im/TokenMarketNet/ico
