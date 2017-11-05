@@ -46,4 +46,12 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     return tokensBought;
   }
 
+  /// @dev This function can set the server side address
+  /// @param value Do we require signing? This is ignored for now, because we do require it for KYCCrowdsale
+  /// @param _signerAddress The address derived from server's private key
+  function setRequireSignedAddress(bool value, address _signerAddress) {
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(true, true, _signerAddress);
+  }
+
 }
