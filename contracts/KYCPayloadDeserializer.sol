@@ -56,7 +56,7 @@ contract KYCPayloadDeserializer {
    * TODO: Some sort of compiler issue (?) with memory keyword. Tested with solc 0.4.16 and solc 0.4.18.
    * If used, makes KYCCrowdsale to set itself to a bad state getState() returns 5 (Failure). Overrides some memory?
    */
-
+  /*
   function broken_getKYCPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth) {
     KYCPayload memory payload = deserializeKYCPayload(dataframe);
     payload.whitelistedAddress = dataframe.sliceAddress(0);
@@ -64,7 +64,7 @@ contract KYCPayloadDeserializer {
     payload.minETH = uint32(dataframe.slice4(36));
     payload.maxETH = uint32(dataframe.slice4(40));
     return (payload.whitelistedAddress, payload.customerId, payload.minETH, payload.maxETH);
-  }
+  }*/
 
   /**
    * Same as above, does not seem to cause any issue.
@@ -76,6 +76,5 @@ contract KYCPayloadDeserializer {
     uint32 _maxETH = uint32(dataframe.slice4(40));
     return (_whitelistedAddress, _customerId, _minETH, _maxETH);
   }
-
 
 }

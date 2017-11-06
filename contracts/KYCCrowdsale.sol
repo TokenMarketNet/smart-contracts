@@ -31,26 +31,39 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
    */
   function buyWithKYCData(bytes dataframe, uint8 v, bytes32 r, bytes32 s) public payable returns(uint tokenAmount) {
 
-    bytes32 hash = sha256(dataframe);
-
-    // Check that the KYC data is signed by our server
-    require(ecrecover(hash, v, r, s) == signerAddress);
-
-    var (whitelistedAddress, customerId, minETH, maxETH) = getKYCPayload(dataframe);
-
-    // Only whitelisted address can participate the transaction
-    require(whitelistedAddress == msg.sender);
-
-    uint _tokenAmount = investInternal(msg.sender, customerId);
-
+    uint _tokenAmount;
     uint multiplier = 10 ** 18;
 
-    // We assume there is no serious min and max fluctuations for the customer, unless
-    // especially set in the server side per customer manual override.
-    // Otherwise the customer can reuse old data payload with different min or max value
-    // to work around the per customer cap.
-    require(investedAmountOf[whitelistedAddress] >= minETH * multiplier / 10000);
-    require(investedAmountOf[whitelistedAddress] <= maxETH * multiplier / 10000);
+    // Perform signature check for normal addresses
+    // (not deployment accounts, etc.)
+    if(earlyParticipantWhitelist[msg.sender]) {
+      // For test purchases use this faux customer id
+      _tokenAmount = investInternal(msg.sender, 0x1000);
+
+    } else {
+
+      bytes32 hash = sha256(dataframe);
+
+      var (whitelistedAddress, customerId, minETH, maxETH) = getKYCPayload(dataframe);
+
+      // Check that the KYC data is signed by our server
+      require(ecrecover(hash, v, r, s) == signerAddress);
+
+      // Only whitelisted address can participate the transaction
+      require(whitelistedAddress == msg.sender);
+
+      _tokenAmount = investInternal(msg.sender, customerId);
+
+    }
+
+    if(!earlyParticipantWhitelist[msg.sender]) {
+      // We assume there is no serious min and max fluctuations for the customer, unless
+      // especially set in the server side per customer manual override.
+      // Otherwise the customer can reuse old data payload with different min or max value
+      // to work around the per customer cap.
+      require(investedAmountOf[msg.sender] >= minETH * multiplier / 10000);
+      require(investedAmountOf[msg.sender] <= maxETH * multiplier / 10000);
+    }
 
     return _tokenAmount;
   }
