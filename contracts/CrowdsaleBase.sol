@@ -109,6 +109,8 @@ contract CrowdsaleBase is Haltable {
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
+  State public testState;
+
   function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
@@ -182,10 +184,8 @@ contract CrowdsaleBase is Haltable {
     // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    // Dust transaction
+    require(tokenAmount != 0);
 
     if(investedAmountOf[receiver] == 0) {
        // A new investor
@@ -205,14 +205,12 @@ contract CrowdsaleBase is Haltable {
     }
 
     // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
 
-    // Pocket the money
-    if(!multisigWallet.send(weiAmount)) throw;
+    // Pocket the money, or fail the crowdsale if we for some reason cannot send the money to our multisig
+    require(multisigWallet.send(weiAmount) == true);
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
