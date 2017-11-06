@@ -139,7 +139,6 @@ def test_kyc_participate_with_signed_address(chain, kyc_crowdsale, customer, cus
     assert kyc_crowdsale.call().isPricingSane()
     assert kyc_crowdsale.call().beneficiary() == team_multisig
     assert kyc_token.call().transferAgents(team_multisig) == True
-    assert kyc_crowdsale.call().getState() == CrowdsaleState.Funding
 
     # Do a test buy for 1 ETH and check it is good token wise
     wei_value = to_wei(1, "ether")

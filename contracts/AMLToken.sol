@@ -33,7 +33,7 @@ contract AMLToken is BurnableCrowdsaleToken {
   }
 
   /// @dev Here the owner can reclaim the tokens from a participant if
-  ///      the token is not released yet
+  ///      the token is not released yet. Refund will be handled offband.
   /// @param fromWhom address of the participant whose tokens we want to claim
   function transferToOwner(address fromWhom) onlyOwner {
     if (released) revert();
