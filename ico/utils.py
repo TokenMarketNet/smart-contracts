@@ -37,7 +37,7 @@ def asbool(s):
     return s.lower() in truthy
 
 
-def check_succesful_tx(web3: Web3, txid: str, timeout=180) -> dict:
+def check_succesful_tx(web3: Web3, txid: str, timeout=600) -> dict:
     """See if transaction went through (Solidity code did not throw).
 
     :return: Transaction receipt
