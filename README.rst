@@ -100,4 +100,11 @@ TokenMarket can be a launch and hosting partner for your token sale. We offer ad
 
 Community support is available on the best effort basis - your mileage may vary. To get the most of the community support we expect you to be on a senior level of Solidity, Python and open source development. `Meet us at the Gitter support chat <https://gitter.im/TokenMarketNet/ico>`_.
 
+Audit reports
+=============
+
+* `Data <https://www.iosiro.com/dala-token-sale-audit>`_ 
+
+* `Civic <https://medium.com/@ZeppelinOrg/a91754ab6e4b>`_ 
+
 
