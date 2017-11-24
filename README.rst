@@ -103,7 +103,7 @@ Community support is available on the best effort basis - your mileage may vary.
 Audit reports
 =============
 
-* `Data <https://www.iosiro.com/dala-token-sale-audit>`_ 
+* `Dala <https://www.iosiro.com/dala-token-sale-audit>`_ 
 
 * `Civic <https://medium.com/@ZeppelinOrg/a91754ab6e4b>`_ 
 
