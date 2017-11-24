@@ -61,6 +61,10 @@ These contracts have been tested, audited and used by several projects. Below ar
 
 * ... and many more!
 
+We also have third party token sales using these smart contracts
+
+* `Dala <https://github.com/GetDala/dala-smart-contracts>`_
+
 Quick token sale walkthrough
 ============================
 
