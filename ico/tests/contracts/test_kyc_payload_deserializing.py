@@ -29,8 +29,13 @@ def test_roundtrip_kyc_data(kyc_deserializer, whitelisted_address):
     dataframe = pack_kyc_dataframe(whitelisted_address, customer_id, int(0.1 * 10000), int(9999 * 10000))
     tuple_value = kyc_deserializer.call().getKYCPayload(dataframe)
 
+    #
+    # Check that the output looks like what we did expect
+    #
+
     assert tuple_value[0].lower() == whitelisted_address.lower()
-    assert hex(tuple_value[1]) == "0x" + customer_id.hex
+    # Do a raw integer comparison, because web3.py and UUID disagree about left padding zeroes
+    assert tuple_value[1] == customer_id.int
     assert tuple_value[2] == 1000
     assert tuple_value[3] == 99990000
 
