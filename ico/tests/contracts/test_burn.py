@@ -1,5 +1,6 @@
 """Burn functionality."""
 
+import datetime
 import pytest
 from ethereum.tester import TransactionFailed
 from web3.contract import Contract
@@ -12,10 +13,13 @@ def token(chain, team_multisig):
         "Token",
         "TKN",
         1000000,
-        0
+        0,
+        int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds())
     ]
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
     assert contract.call().balanceOf(team_multisig) == 1000000
+
+    contract.transact({"from": team_multisig}).releaseTokenTransfer()
     return contract
 
 

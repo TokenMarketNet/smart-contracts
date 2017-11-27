@@ -1,5 +1,6 @@
 """Payment forwarder."""
 import pytest
+import datetime
 
 from ethereum.tester import TransactionFailed
 from web3.contract import Contract
@@ -9,13 +10,15 @@ from web3.contract import Contract
 def token(chain, team_multisig) -> Contract:
     """Create the token contract."""
 
-    args = [team_multisig, "Foobar", "FOOB", 1000000, 0]
+    args = [team_multisig, "Foobar", "FOOB", 1000000, 0, int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds())]
 
     tx = {
         "from": team_multisig
     }
 
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args, deploy_transaction=tx)
+
+    contract.transact({"from": team_multisig}).releaseTokenTransfer()
     return contract
 
 
