@@ -8,6 +8,7 @@ from ethereum.tester import TransactionFailed
 from sha3 import keccak_256
 from rlp.utils import decode_hex
 
+
 @pytest.fixture
 def payment_forwarder(chain, team_multisig):
     args = [team_multisig, team_multisig]
@@ -93,7 +94,7 @@ def test_pay_for_myself(web3, payment_forwarder, team_multisig, customer):
     team_multisig_begin = web3.eth.getBalance(team_multisig)
 
     checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32))).digest()[:1]
-    payment_forwarder.transact({"value": value, "from": customer}).payForMyself(customer_id, checksumbyte)
+    payment_forwarder.transact({"value": value, "from": customer}).payForMyselfWithChecksum(customer_id, checksumbyte)
     team_multisig_end = web3.eth.getBalance(team_multisig)
 
     assert team_multisig_end - team_multisig_begin > 0

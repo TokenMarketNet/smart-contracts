@@ -72,6 +72,7 @@ contract PaymentForwarder is Haltable {
    *
    */
    function pay(uint128 customerId, address benefactor, bytes1 checksum) public stopInEmergency payable {
+    // see customerid.py
      if (bytes1(sha3(customerId, benefactor)) != checksum) throw;
      payWithoutChecksum(customerId, benefactor);
    }
@@ -82,8 +83,16 @@ contract PaymentForwarder is Haltable {
    * @param customerId Identifier in the central database, UUID v4
    *
    */
-  function payForMyself(uint128 customerId, bytes1 checksum) public payable {
+  function payForMyselfWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
     if (bytes1(sha3(customerId)) != checksum) throw;
+    payWithoutChecksum(customerId, msg.sender);
+  }
+
+  /**
+   * Legacy API signature.
+   */
+  function payForMyself(uint128 customerId) public payable {
     payWithoutChecksum(customerId, msg.sender);
   }
 

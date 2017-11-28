@@ -45,7 +45,7 @@ def test_participate_with_customer_id(chain, crowdsale, customer, customer_id, t
     wei_value = to_wei(1, "ether")
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     checksumbyte = keccak_256(decode_hex(format(customer_id, 'x').zfill(32))).digest()[:1]
-    crowdsale.transact({"from": customer, "value": wei_value}).buyWithCustomerId(customer_id, checksumbyte)
+    crowdsale.transact({"from": customer, "value": wei_value}).buyWithCustomerIdWithChecksum(customer_id, checksumbyte)
 
     # We got credited
     assert token.call().balanceOf(customer) > 0
