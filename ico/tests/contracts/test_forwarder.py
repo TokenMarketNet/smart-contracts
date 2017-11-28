@@ -8,6 +8,7 @@ from ethereum.tester import TransactionFailed
 from sha3 import keccak_256
 from rlp.utils import decode_hex
 
+
 @pytest.fixture
 def payment_forwarder(chain, team_multisig):
     args = [team_multisig, team_multisig]
