@@ -2,6 +2,7 @@
 import binascii
 
 import bitcoin
+from eth_utils import pad_left
 from ethereum import utils
 from ethereum.utils import big_endian_to_int, sha3
 from secp256k1 import PrivateKey
@@ -45,10 +46,15 @@ def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha
     signature = pk.ecdsa_recoverable_serialize(pk.ecdsa_sign_recoverable(msghash, raw=True))
     signature = signature[0] + utils.bytearray_to_bytestr([signature[1]])
 
+    # Enforce non-tightly-packed arguments for signing
+    # (0x00 left pad)
+    # https://github.com/ethereum/web3.py/issues/466
     v = utils.safe_ord(signature[64]) + 27
     r_bytes = signature[0:32]
+    r_bytes = pad_left(r_bytes, 32, b"\0")
     r = big_endian_to_int(r_bytes)
     s_bytes = signature[32:64]
+    s_bytes = pad_left(s_bytes, 32, b"\0")
     s = big_endian_to_int(s_bytes)
 
     # Make sure we use bytes data and zero padding stays
