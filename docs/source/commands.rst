@@ -25,6 +25,16 @@ deploy-contracts
 
 Scripted deployment of multiple related Ethereum smart contracts.
 
+* Deploy contracts
+
+* Automatically verify contracts on EtherScan
+
+* Link contracts together
+
+* Set common parameters
+
+* Verify contracts have been deployed correctly through assert mechanism
+
 See also :ref:`contract-verification`.
 
 Example YAML deployment scripts
