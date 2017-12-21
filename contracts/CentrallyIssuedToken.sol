@@ -58,12 +58,6 @@ contract CentrallyIssuedToken is BurnableToken, UpgradeableToken {
       throw;
     }
 
-    if(bytes(name).length > 0 || bytes(symbol).length > 0) {
-      // Information already set
-      // Allow owner to set this information only once
-      throw;
-    }
-
     name = _name;
     symbol = _symbol;
     UpdatedTokenInformation(name, symbol);
