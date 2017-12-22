@@ -30,7 +30,8 @@ from ico.utils import get_constructor_arguments
 @click.option('--issuer-address', nargs=1, help='The address of the issuer contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
 @click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
-def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address):
+@click.option('--gas-price', nargs=1, help='Gas price for a transaction in Gweis', default=30)
+def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address, gas_price):
     """Distribute tokens to centrally issued crowdsale participant or bounty program participants.
 
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
@@ -77,7 +78,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         decimal_multiplier = 10**decimals
 
-        transaction = {"from": address}
+        transaction = {"from": address, "gasPrice": gas_price * 1000000000}
 
         Issuer = c.provider.get_base_contract_factory('Issuer')
         if not issuer_address:
@@ -170,7 +171,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
             transaction = {
                 "from": address,
-                "gasPrice": int(web3.eth.gasPrice * 1.5)
+                "gasPrice": gas_price * 1000000000
             }
 
             tokens = int(tokens)

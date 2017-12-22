@@ -10,6 +10,7 @@ eth-testrpc==1.3.0
 ethereum==1.6.1
 ethereum-abi-utils==0.4.0
 ethereum-utils==0.3.2
+gitpython==2.1.7
 idna==2.5
 Jinja2==2.9.6
 json-rpc==1.10.3
