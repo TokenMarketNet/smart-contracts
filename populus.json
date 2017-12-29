@@ -177,7 +177,14 @@
             },
             "outputSelection": {
               "*": {
-                "*": ["abi", "metadata"]
+                "*": [
+                  "abi",
+                  "metadata",
+                  "evm.bytecode",
+                  "evm.bytecode.linkReferences",
+                  "evm.deployedBytecode",
+                  "evm.deployedBytecode.linkReferences"
+                ]
               }
             }
           },
@@ -207,7 +214,14 @@
           },
           "outputSelection": {
             "*": {
-              "*": ["abi", "metadata"]
+              "*": [
+                "abi",
+                "metadata",
+                "evm.bytecode",
+                "evm.bytecode.linkReferences",
+                "evm.deployedBytecode",
+                "evm.deployedBytecode.linkReferences"
+              ]
             }
           },
           "allow_paths": ["/"]
