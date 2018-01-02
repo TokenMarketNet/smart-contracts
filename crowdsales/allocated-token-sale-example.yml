@@ -1,7 +1,35 @@
+# This is an example for an allocated token sale example.
+#
+# Token supply is fixed and is created prior to sale. Then tokens are
+# transfefred to sale participants by the token sale contract using
+# EIP-20 approve() mechanism.
+#
+#
 # To deploy this file
 #
+# deploy-contracts \
+#   --address=[my deploy account address account on geth having some Kovan ETH] \¨
+#   --deployment-file=crowdsales/allocated-token-sale-example.yml \
+#   --deployment-name=kovan
+#
+
+
+
+# This is the deployment-name parameter.
+# We can have multiple deployments in a single YAML file.
 kovan:
 
+    # This is the chain name in populus.json
+    # In the default configuration this Ethereum JSON-RPC in port 8547.
+    # Edit populus.json to change the port.
+    # You can run Parity as:
+    # parity \
+    #   --chain=kovan \
+    #   --unlock [My deploy account on Parity] \
+    #   --jsonrpc-port 8547 \
+    #   --password=password.txt
+    #
+    # password.txt must contain your Parity Kovan account unlock password
     chain: kovan
 
     # Use automated Chrome to verify all contracts on etherscan.io
