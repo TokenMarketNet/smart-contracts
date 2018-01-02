@@ -107,6 +107,7 @@ def get_post_actions_context(section_data: str, runtime_data: dict, contracts: D
     context["confirm_tx"] = _confirm_tx
     context["confirm_multiple_txs"] = _confirm_multiple_txs
     context["load_investor_data"] = load_investor_data
+    context["web3"] = web3
     return context
 
 

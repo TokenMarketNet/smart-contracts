@@ -33,6 +33,8 @@ from ico.etherscan import get_etherscan_link
 def main(chain, address, contract_name, name, symbol, supply, decimals, minting_agent, release_agent, verify, verify_filename, master_address):
     """Deploy a single crowdsale token contract.
 
+    THIS COMMAND IS DEPRECATED. PLEASE USE deploy-contracts instead.
+
     Examples:
 
     deploy-token --chain=ropsten --address=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6 --name="MikkoToken 2.0" --symbol=MOO --release-agent=0x3c2d4e5eae8c4a31ccc56075b5fd81307b1627c6  --supply=100000

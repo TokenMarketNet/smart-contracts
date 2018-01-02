@@ -102,7 +102,7 @@ def deploy_crowdsale(project: Project, chain, yaml_filename: str, source_definit
     chain_name = runtime_data["chain"]
     verify_on_etherscan = asbool(runtime_data["verify_on_etherscan"])
     browser_driver = runtime_data.get("browser_driver", "chrome")
-    solc = runtime_data["solc"]
+    solc = runtime_data.get("solc")
 
     need_unlock = runtime_data.get("unlock_deploy_address", True)
 
@@ -255,13 +255,11 @@ def perform_verify_actions(chain, runtime_data: dict, contracts: dict):
 
 
 def _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_address):
-    """
-    :param project:
-    :param chain:
-    :param chain_data:
-    :param deploy_address:
-    :return:
-    """
+    """Kernel for deploing contracts."""
+
+    # Coinbase aliasing
+    if deploy_address == "coinbase":
+        deploy_address = web3.eth.accounts[0]
 
     address = deploy_address
     print("Web3 provider is", web3.currentProvider)

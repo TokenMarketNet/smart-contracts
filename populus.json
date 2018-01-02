@@ -66,6 +66,42 @@
       }
     },
 
+    "local": {
+      "chain": {
+        "class": "populus.chain.geth.LocalGethChain",
+        "settings": {
+          "rpc_port": "8548"
+        }
+      },
+      "contracts": {
+        "backends": {
+          "JSONFile": {
+            "$ref": "contracts.backends.JSONFile"
+          },
+          "Memory": {
+            "$ref": "contracts.backends.Memory"
+          },
+          "ProjectContracts": {
+            "$ref": "contracts.backends.ProjectContracts"
+          },
+          "TestContracts": {
+            "$ref": "contracts.backends.TestContracts"
+          }
+        }
+      },
+      "web3": {
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8548",
+            "request_kwargs": {
+                "timeout": 180
+            }
+          }
+        }
+      }
+    },
+
     "ropsten": {
       "chain": {
         "class": "populus.chain.external.ExternalChain"
@@ -100,7 +136,10 @@
     },
     "temp": {
       "chain": {
-        "class": "populus.chain.geth.TemporaryGethChain"
+        "class": "populus.chain.geth.TemporaryGethChain",
+        "settings": {
+          "rpc_port": "8548"
+        }
       },
       "contracts": {
         "backends": {
@@ -116,7 +155,12 @@
         }
       },
       "web3": {
-        "$ref": "web3.GethIPC"
+        "provider": {
+          "class": "web3.providers.rpc.HTTPProvider",
+          "settings": {
+            "endpoint_uri": "http://127.0.0.1:8547"
+          }
+        }
       }
     },
     "tester": {
