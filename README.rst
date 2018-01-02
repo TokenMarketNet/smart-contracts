@@ -18,6 +18,14 @@ This package contains Ethereum smart contracts and command line toolchain for la
     :alt: Documentation Status
     :target: https://ico.readthedocs.io/en/latest/?badge=latest
 
+We are hiring
+=============    
+
+TokenMarket is hiring smart contract developers. Advanced Solidity and basic Python experience needed. 
+Prior contributions and track record on working with open source projects required.
+Remote work, but occassional travel to Europe and UK is required.
+Please email  your CV and your Github profile link to jobs@tokenmarket.net
+
 Links
 =====
 
