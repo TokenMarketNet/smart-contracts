@@ -21,7 +21,7 @@ This package contains Ethereum smart contracts and command line toolchain for la
 We are hiring
 =============    
 
-TokenMarket is hiring smart contract developers. Advanced Solidity and basic Python experience needed. 
+TokenMarket is hiring smart contract developers. Advanced Python (3-5 years) and basic Solidity (< 1 years) experience needed. 
 Prior contributions and track record on working with open source projects required.
 Remote work, but occassional travel to Europe and UK is required.
 Please email  your CV and your Github profile link to jobs@tokenmarket.net
