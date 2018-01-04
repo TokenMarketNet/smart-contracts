@@ -80,6 +80,11 @@ deploy-token
 
 Deploy a single token contract.
 
+.. warning::
+
+    This command is depracated. Instead, use deploy-contracts command.
+    `See example here <https://github.com/TokenMarketNet/ico/blob/master/crowdsales/crowdsale-token-example.yml>`_.
+
 Example usage::
 
     deploy-token --help
