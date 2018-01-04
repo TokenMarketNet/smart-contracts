@@ -52,13 +52,10 @@ Help::
       Reads the chain configuration information from populus.json. The resulting
       deployed contracts can be automatically verified on etherscan.io.
 
-      Example:
-
-          deploy-contracts --deployment-file=crowdsales/example.yml
-          --deployment-name=kovan--
-          address=0x001fc7d7e506866aeab82c11da515e9dd6d02c25
-
       Example files:
+
+      * https://github.com/TokenMarketNet/ico/blob/master/crowdsales/crowdsale-
+      token-example.yml
 
       * https://github.com/TokenMarketNet/ico/blob/master/crowdsales/allocated-
       token-sale-example.yml
@@ -66,13 +63,18 @@ Help::
       * https://github.com/TokenMarketNet/ico/blob/master/crowdsales/example.yml
 
     Options:
-      --deployment-name TEXT  YAML section name we are deploying. Usual options
-                              include "mainnet" or "kovan"  [required]
-      --deployment-file TEXT  YAML file definiting the crowdsale  [required]
-      --address TEXT          Deployment address that pays the gas for the
-                              deployment cost. This account must exist on Ethereum
-                              node you are connected to.  [required]
+      --deployment-name TEXT  Project section id inside the YAML file. The topmost
+                              YAML key. Example YAML files use "mainnet" or
+                              "kovan".  [required]
+      --deployment-file TEXT  Deployment script YAML .yml file to process
+                              [required]
+      --address TEXT          Your Ethereum account that is the owner of
+                              deployment and pays the gas cost. This account must
+                              exist on Ethereum node we connect to. Connection
+                              parameteres, port and IP, are defined in
+                              populus.json.  [required]
       --help                  Show this message and exit.
+
 
 
 deploy-token
