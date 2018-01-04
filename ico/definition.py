@@ -61,6 +61,11 @@ def extract_deployment_details(yaml_filename: str, chain: str) -> dict:
     """Read yaml definition file and interpolate all variables."""
     with open(yaml_filename, "rt") as inp:
         data = ruamel.yaml.load(inp, ruamel.yaml.RoundTripLoader)
+
+        if chain not in data:
+            keys = list(data.keys())
+            raise RuntimeError("No top level project section '{}' in YAML file. Available sections: {}".format(chain, keys))
+
         return data[chain]
 
 
