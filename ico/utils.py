@@ -47,6 +47,12 @@ def check_succesful_tx(web3: Web3, txid: str, timeout=600) -> dict:
     receipt = wait_for_transaction_receipt(web3, txid, timeout=timeout)
     txinfo = web3.eth.getTransaction(txid)
 
+    if receipt is None:
+        raise RuntimeError("Did not get receipt for {}".format(txid))
+
+    if txinfo is None:
+        raise RuntimeError("Did not get txinfo for {}".format(txid))
+
     # EVM has only one error mode and it's consume all gas
     if txinfo["gas"] == receipt["gasUsed"]:
         raise TransactionFailure("Transaction failed: {}".format(txid))
