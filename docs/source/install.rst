@@ -76,8 +76,8 @@ Then install ``ico`` Python package and its dependencies:
 
 .. code-block:: console
 
-    git clone # ...
-    cd Smart-Contracts
+    git clone --recursive git@github.com:TokenMarketNet/ico.git
+    cd ico
     python3.5 -m venv venv
     source venv/bin/activate
     pip install wheel
