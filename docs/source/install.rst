@@ -90,11 +90,20 @@ Sometimes it's useful to use some certain version of the Solidity compiler,
 this can be done using py-solc package, like this:
 
 .. code-block:: console
+
     python -m solc.install v0.4.16
 
-If you are lucky, you can now run binary ~/.py-solc/solc-v0.4.16/bin/solc.
+If you are lucky, you can now run binary:
+
+.. code-block:: console
+
+    ~/.py-solc/solc-v0.4.16/bin/solc --version
+
 The binary is not available every platform.
 Remember to update your PATH accordingly:
 
 .. code-block:: console
-    export PATH=/home/YOURNAME/.py-solc/solc-v0.4.16/bin:$PATH
+
+    export PATH=$HOME/.py-solc/solc-v0.4.16/bin:$PATH
+    # Then you can try if contracts compile correctly
+    populus compile
