@@ -21,7 +21,7 @@ def _fill_in_textarea_value(browser, splinter_elem, value):
 
 
 
-def verify_contract(project: Project, chain_name: str, address: str, contract_name, contract_filename: str, constructor_args: str, libraries: dict, optimization=True, optimizer_runs=200, compiler: str="v0.4.8+commit.60cc1668", browser_driver="chrome") -> str:
+def verify_contract(project: Project, chain_name: str, address: str, contract_name, contract_filename: str, constructor_args: str, libraries: dict, optimization=True, optimizer_runs=500, compiler: str="v0.4.8+commit.60cc1668", browser_driver="chrome") -> str:
     """Semi-automated contract verified on Etherscan.
 
     Uses a web browser + Selenium auto fill to verify contracts.
@@ -70,10 +70,7 @@ def verify_contract(project: Project, chain_name: str, address: str, contract_na
             browser.fill("ctl00$ContentPlaceHolder1$txtLibraryName{}".format(idx), library_name)
             idx += 1
 
-        # Give the contract deployment some time to propagate so that Etherscan will find it
-        time.sleep(30)
-
-
+        input("Please verify EtherScan CAPTCHA in robot Chrome and press Enter")
         browser.find_by_name("ctl00$ContentPlaceHolder1$btnSubmit").click()
 
         deadline = time.time() + 60
