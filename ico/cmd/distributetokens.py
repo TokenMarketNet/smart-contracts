@@ -6,7 +6,7 @@ import click
 from decimal import Decimal
 
 import sys
-from eth_utils import from_wei
+from eth_utils import from_wei, to_wei
 from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
@@ -28,9 +28,11 @@ from ico.utils import get_constructor_arguments
 @click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
 @click.option('--issuer-address', nargs=1, help='The address of the issuer contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
+@click.option('--gas-price', nargs=1, help='Override gas price. If not set use the default * 2.0. Specify in Gwei e.g. 50.', required=False, default=None)
 @click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
+@click.option('--solc-version', nargs=1, help='Menu item for the solc compiler verification on EtherScan', required=False, default="v0.4.16+commit.d7661dd9")
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
-def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address):
+def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address, gas_price, solc_version):
     """Distribute tokens to centrally issued crowdsale participant or bounty program participants.
 
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
@@ -55,8 +57,8 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         web3 = c.web3
         print("Web3 provider is", web3.currentProvider)
-        print("Owner address is", address)
-        print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
+        print("Deployer account address is", address)
+        print("Deployer account balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
 
         # Goes through geth account unlock process if needed
         if is_account_locked(web3, address):
@@ -69,7 +71,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         print("Token is", token.address)
         print("Total supply is", token.call().totalSupply())
         print("Upgrade master is", token.call().upgradeMaster())
-        print("Owner token balance master is", token.call().balanceOf(address))
+        print("Deployer account token balance is", token.call().balanceOf(address))
 
         decimals = token.call().decimals()
         print("Token decimal places is", decimals)
@@ -77,7 +79,17 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         decimal_multiplier = 10**decimals
 
-        transaction = {"from": address}
+        if gas_price:
+            gas_price = int(gas_price) * 10**9
+        else:
+            gas_price = web3.eth.gasPrice * 2
+
+        transaction = {
+            "from": address,
+            "gasPrice": gas_price
+        }
+
+        print("Using gas price of", gas_price / 10**9, "GWei")
 
         Issuer = c.provider.get_base_contract_factory('Issuer')
         if not issuer_address:
@@ -89,11 +101,15 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             # Create issuer contract
             assert master_address, "You need to give master-address"
             args = [address, master_address, token.address]
-            print("Deploying new issuer contract", args)
+            print("Deploying new issuer contract", args, "transaction parameters", transaction)
             issuer, txhash = c.provider.deploy_contract("Issuer", deploy_transaction=transaction, deploy_args=args)
+
+            print("Deployment transaction is", txhash)
+            print("Waiting contract to be deployed")
             check_succesful_tx(web3, txhash)
 
             const_args = get_constructor_arguments(issuer, args)
+            print("Contract constructor arguments are", const_args)
             chain_name = chain
             fname = "Issuer.sol"
             browser_driver = "chrome"
@@ -106,7 +122,8 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
                 contract_filename=fname,
                 constructor_args=const_args,
                 # libraries=runtime_data["contracts"][name]["libraries"],
-                browser_driver=browser_driver)
+                browser_driver=browser_driver,
+                compiler=solc_version)
             link = get_etherscan_link(chain_name, issuer.address)
 
             print("Issuer verified contract is", link)
@@ -170,7 +187,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
             transaction = {
                 "from": address,
-                "gasPrice": int(web3.eth.gasPrice * 1.5)
+                "gasPrice": gas_price
             }
 
             tokens = int(tokens)
