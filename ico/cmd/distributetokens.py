@@ -187,12 +187,13 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
             transaction = {
                 "from": address,
-                "gasPrice": gas_price
+                "gasPrice": gas_price,
+                "gas": 100000,  # Use 100k limit
             }
 
             tokens = int(tokens)
 
-            print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent)
+            print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent, "gas price", transaction["gasPrice"] / (10**9))
 
             if issuer.call().issued(addr):
                 print("Already issued, skipping")

@@ -2,6 +2,7 @@ from typing import Optional
 
 from decimal import Decimal
 
+import time
 import web3
 from eth_utils import add_0x_prefix
 from ethereum.chain import Chain
@@ -46,6 +47,11 @@ def check_succesful_tx(web3: Web3, txid: str, timeout=600) -> dict:
     # http://ethereum.stackexchange.com/q/6007/620
     receipt = wait_for_transaction_receipt(web3, txid, timeout=timeout)
     txinfo = web3.eth.getTransaction(txid)
+    if not txinfo:
+        # This is some sort of geth flakiness issue, not sure what
+        # Try to mitigate it with timeout
+        time.sleep(1.0)
+        txinfo = web3.eth.getTransaction(txid)
 
     if receipt is None:
         raise RuntimeError("Did not get receipt for {}".format(txid))
