@@ -14,7 +14,9 @@ from populus import Project
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
 @click.option('--address', nargs=1, help='CrowdsaleContract address to scan', required=True)
 @click.option('--csv-file', nargs=1, help='CSV file to write', default=None, required=True)
-def main(chain, address, csv_file):
+@click.option('--discount', nargs=1, help='Temporary discount percent', default=None, required=True)
+@click.option('--contractname', nargs=1, help='Temporary contract name', default=None, required=True)
+def main(chain, address, csv_file, discount, contractname):
     """Extract crowdsale invested events.
 
     This is useful for RelaunchCrowdsale to rebuild the data.
@@ -30,13 +32,10 @@ def main(chain, address, csv_file):
         # Sanity check
         print("Block number is", web3.eth.blockNumber)
 
-        Crowdsale = c.provider.get_base_contract_factory('MintedTokenCappedCrowdsale')
+        Crowdsale = c.provider.get_base_contract_factory('PreICOProxyBuyer')
         crowdsale = Crowdsale(address=address)
 
-        Token = c.provider.get_base_contract_factory('CrowdsaleToken')
-        token = Token(address=crowdsale.call().token())
-
-        decimals = token.call().decimals()
+        decimals = 18
         decimal_multiplier = 10**decimals
 
         print("We have", decimals, "decimals, multiplier is", decimal_multiplier)
@@ -59,7 +58,7 @@ def main(chain, address, csv_file):
         with open(csv_file, 'w', newline='') as out:
             writer = csv.writer(out)
 
-            writer.writerow(["Address", "Payment at", "Tx hash", "Tx index", "Invested ETH", "Received tokens"])
+            writer.writerow(["Contract address", "Contract name", "Address", "Payment at", "Tx hash", "Tx index", "Invested ETH", "Original tokens", "Discount percent"])
 
             for idx, e in enumerate(events):
 
@@ -73,7 +72,7 @@ def main(chain, address, csv_file):
                 if block_number not in timestamps:
                     timestamps[block_number] = web3.eth.getBlock(block_number)["timestamp"]
 
-                amount = Decimal(e["args"]["tokenAmount"]) / Decimal(decimal_multiplier)
+                amount = 0
 
                 tokens = amount * decimal_multiplier
 
@@ -84,12 +83,15 @@ def main(chain, address, csv_file):
                 timestamp = timestamps[block_number]
                 dt = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
                 writer.writerow([
+                    address,
+                    contractname,
                     e["args"]["investor"],
                     dt.isoformat(),
                     e["transactionHash"],
                     e["transactionIndex"],
                     from_wei(e["args"]["weiAmount"], "ether"),
                     amount,
+                    discount
                 ])
 
         print("Total", len(events), "invest events")

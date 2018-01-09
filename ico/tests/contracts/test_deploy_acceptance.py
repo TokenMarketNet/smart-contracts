@@ -105,7 +105,7 @@ def proxy_buyers(project, chain, web3, customer, everything_deployed, deploy_add
 
         # Load presale contract with money
         assert proxy_buyer.call().getState() == 1
-        proxy_buyer.transact({"value": to_wei(amount, "ether"), "from": investor}).buy()
+        proxy_buyer.transact({"value": to_wei(amount, "ether"), "from": investor}).investWithoutId()
 
         # Set ICO
         proxy_buyer.transact({"from": deploy_address}).setCrowdsale(crowdsale.address)
