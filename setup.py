@@ -66,6 +66,7 @@ setup(
     extract-raw-investment-data=ico.cmd.rawinvestments:main
     rebuild-crowdsale=ico.cmd.rebuildcrowdsale:main
     distribute-tokens=ico.cmd.distributetokens:main
+    distribute-tokens-ext-id=ico.cmd.distributetokensextit:main
     token-vault=ico.cmd.tokenvault:main
     refund=ico.cmd.refund:main
     combine-csvs=ico.cmd.combine:main
