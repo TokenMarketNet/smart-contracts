@@ -116,7 +116,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
         print("Using gas price of", gas_price / 10**9, "GWei")
 
-        Issuer = c.provider.get_base_contract_factory('Issuer')
+        IssuerWithId = c.provider.get_base_contract_factory('IssuerWithId')
         if not issuer_address:
 
             # TODO: Fix Populus support this via an deploy argument
@@ -127,7 +127,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             assert master_address, "You need to give master-address"
             args = [address, master_address, token.address]
             print("Deploying new issuer contract", args, "transaction parameters", transaction)
-            issuer, txhash = c.provider.deploy_contract("Issuer", deploy_transaction=transaction, deploy_args=args)
+            issuer, txhash = c.provider.deploy_contract("IssuerWithId", deploy_transaction=transaction, deploy_args=args)
 
             print("Deployment transaction is", txhash)
             print("Waiting contract to be deployed")
@@ -136,14 +136,14 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             const_args = get_constructor_arguments(issuer, args)
             print("Contract constructor arguments are", const_args)
             chain_name = chain
-            fname = "Issuer.sol"
+            fname = "IssuerWithId.sol"
             browser_driver = "chrome"
             verify_contract(
                 project=project,
                 libraries={},  # TODO: Figure out how to pass around
                 chain_name=chain_name,
                 address=issuer.address,
-                contract_name="Issuer",
+                contract_name="IssuerWithId",
                 contract_filename=fname,
                 constructor_args=const_args,
                 browser_driver=browser_driver,
@@ -152,7 +152,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             print("Issuer verified contract is", link)
         else:
             print("Using existing issuer contract")
-            issuer = Issuer(address=issuer_address)
+            issuer = IssuerWithId(address=issuer_address)
 
         print("Issuer contract is", issuer.address)
         print("Currently issued", issuer.call().issuedCount())
