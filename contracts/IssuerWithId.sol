@@ -33,7 +33,7 @@ contract IssuerWithId is Ownable {
   /** Party (team multisig) who is in the control of the token pool. Note that this will be different from the owner address (scripted) that calls this contract. */
   address public allower;
 
-  /** How many addresses have received their tokens. */
+  /** How many tokens have been issued. */
   uint public issuedCount;
 
   /** Issue event **/
