@@ -11,7 +11,7 @@ from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
 
-from ico.utils import check_succesful_tx
+from ico.utils import check_succesful_tx, validate_ethereum_address
 from ico.utils import check_multiple_succesful_txs
 from ico.etherscan import verify_contract
 from ico.etherscan import get_etherscan_link
@@ -170,6 +170,19 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         with open(csv_file, "rt") as inp:
             reader = csv.DictReader(inp)
             rows = [row for row in reader]
+
+        # Prevalidate addresses
+        # For distributetokens.py this is done by combine-csv
+        # Here we do it inline and make skip addresses that are not valid.
+        for idx, row in enumerate(rows):
+            addr = row[address_column].strip()
+            try:
+                if addr:
+                    validate_ethereum_address(addr)
+            except ValueError as e:
+                print("Invalid Ethereum address on row", idx+1, "address:", addr, "reason:", str(e))
+                # Proceed regardless of invalid data
+                rows[address_column] = ""
 
         # Start distribution
         start_time = time.time()

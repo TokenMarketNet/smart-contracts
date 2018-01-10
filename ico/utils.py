@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import time
 import web3
-from eth_utils import add_0x_prefix
+from eth_utils import add_0x_prefix, is_hex_address, is_checksum_address
 from ethereum.chain import Chain
 from populus.utils.contracts import CONTRACT_FACTORY_FIELDS
 from web3 import Web3
@@ -158,3 +158,19 @@ def get_contract_by_name(chain: BaseChain, name: str) -> web3.contract.Contract:
     return Contract
 
 
+def validate_ethereum_address(address: str):
+    """Clever Ethereum address validator."""
+
+    if len(address) < 42:
+        raise ValueError("Not an Ethereum address: {}".format(address))
+
+    try:
+        if not is_hex_address(address):
+            raise ValueError("Not an Ethereum address: {}".format(address))
+    except UnicodeEncodeError:
+        raise ValueError("Could not decode: {}".format(address))
+
+    # Check if checksummed address if any of the letters is upper case
+    if any([c.isupper() for c in address]):
+        if not is_checksum_address(address):
+            raise ValueError("Not a checksummed Ethereum address: {}".format(address))
