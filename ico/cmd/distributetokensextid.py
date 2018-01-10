@@ -213,6 +213,9 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             tokens = int(tokens)
             external_id = int(external_id)
 
+            if not external_id > 0:
+                raise RuntimeError("External id must be a positive integer on row #{}".format(i+1))
+
             print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent, "gas price", transaction["gasPrice"] / (10**9))
 
             if issuer.call().issued(external_id):
