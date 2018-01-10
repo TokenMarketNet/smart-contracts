@@ -55,7 +55,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
           --csv-file=data.csv \
           --address-column="Ethereum address" \
           --amount-column="Token amount" \
-          --external-id-column="External id amount" \
+          --external-id-column="External ID number" \
           --solc-version="v0.4.16+commit.d7661dd9" \
           --gas-price=100
 
@@ -211,6 +211,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             }
 
             tokens = int(tokens)
+            external_id = int(external_id)
 
             print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent, "gas price", transaction["gasPrice"] / (10**9))
 
