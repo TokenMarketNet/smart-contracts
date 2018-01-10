@@ -180,7 +180,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
                 if addr:
                     validate_ethereum_address(addr)
             except ValueError as e:
-                print("Invalid Ethereum address on row", idx+1, "address:", addr, "reason:", str(e))
+                print("Invalid Ethereum address on row:", idx+1, "address:", addr, "reason:", str(e), "external_id:", row[external_id_column])
                 # Proceed regardless of invalid data
                 rows[address_column] = ""
 
