@@ -23,6 +23,7 @@ import "./Haltable.sol";
  * - All functions can be halted by owner if something goes wrong
  *
  */
+
 contract PreICOProxyBuyer is Ownable, Haltable {
   using SafeMath for uint;
 
@@ -74,7 +75,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
   enum State{Unknown, Funding, Distributing, Refunding}
 
   /** Somebody loaded their investment money */
-  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+  event Invested(address investor, uint weiAmount, uint128 customerId);
 
   /** Refund claimed */
   event Refunded(address investor, uint value);
@@ -157,7 +158,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
 
     // We will use the same event form the Crowdsale for compatibility reasons
     // despite not having a token amount.
-    Invested(investor, msg.value, 0, customerId);
+    Invested(investor, msg.value, customerId);
   }
 
   function buyWithCustomerId(uint128 customerId) public stopInEmergency payable {
