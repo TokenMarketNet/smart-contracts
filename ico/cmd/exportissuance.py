@@ -16,7 +16,7 @@ from populus import Project
 def main(chain, address, csv_file):
     """Export issued events.
 
-    Build a CSV file of run centralized token distribution.
+    Build a CSV file of run centralized token distribution. This can be later used to tell users what TXID gave them their tokens if we know the external id of the user.
     """
 
     project = Project()
@@ -32,13 +32,13 @@ def main(chain, address, csv_file):
         IssuerWithId = c.provider.get_base_contract_factory('IssuerWithId')
         contract = IssuerWithId(address=address)
 
-        FractionalERC20 = c.provider.get_base_contract_factory('FractionalERC20')
-        token = FractionalERC20(address=contract.call().token())
+        CentrallyIssuedToken = c.provider.get_base_contract_factory('CentrallyIssuedToken')
+        token = CentrallyIssuedToken(address=contract.call().token())
 
         decimals = token.call().decimals()
         decimal_multiplier = 10**decimals
 
-        print("We have", decimals, "decimals, multiplier is", decimal_multiplier)
+        print("Token", token.call().symbol(), "has", decimals, "decimals, multiplier is", decimal_multiplier)
 
         print("Getting events")
         events = contract.pastEvents("Issued").get(only_changes=False)
@@ -70,10 +70,11 @@ def main(chain, address, csv_file):
                 if block_number not in timestamps:
                     timestamps[block_number] = web3.eth.getBlock(block_number)["timestamp"]
 
-                amount = Decimal(e["args"]["amount"]) / Decimal(decimal_multiplier)
+                amount = Decimal(e["args"]["amount"])
                 external_id = e["args"]["id"]
 
-                tokens = amount * decimal_multiplier
+                tokens = amount / decimal_multiplier
+                tokens = tokens.quantize(Decimal(10 ** -decimals))
 
                 timestamp = timestamps[block_number]
                 dt = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
@@ -81,7 +82,7 @@ def main(chain, address, csv_file):
                     external_id,
                     dt.isoformat(),
                     e["transactionHash"],
-                    tokens,
+                    str(tokens),
                 ])
 
         print("Total", len(events), "issued events")
