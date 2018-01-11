@@ -17,6 +17,14 @@ def main(chain, address, csv_file):
     """Export issued events.
 
     Build a CSV file of run centralized token distribution. This can be later used to tell users what TXID gave them their tokens if we know the external id of the user.
+
+    Example:
+
+        export-issuance \
+            --address=0x0.... \
+            --csv-file=issued-test-drop.csv \
+            --chain=mainnet
+
     """
 
     project = Project()
