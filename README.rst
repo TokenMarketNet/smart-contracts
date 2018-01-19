@@ -55,6 +55,8 @@ Token sales
 
 These contracts have been tested, audited and used by several projects. Below are some notable token sales that we have used these contracts
 
+* `AppCoins <https://appcoins.io/>`_
+
 * `Civic <https://www.civic.com/>`_
 
 * `Storj <https://storj.io/>`_
@@ -63,9 +65,9 @@ These contracts have been tested, audited and used by several projects. Below ar
 
 * `DENT <https://dentcoin.com/>`_
 
-* `Bitquence <https://www.bitquence.com/>`_
+* `Ethos <https://www.ethos.io/>`_
 
-* `InsureX <http://insurex.co/>`_
+* `ixLedger <https://medium.com/ixledger>`_
 
 * ... and many more!
 
