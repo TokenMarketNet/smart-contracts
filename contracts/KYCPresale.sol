@@ -19,7 +19,7 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
 
 
   /* Prebuy made */
-  event PreBuy(address investor, uint weiAmount, uint tokenAmount, uint128 customerId, bytes32 pricingTierId);
+  event PreBuy(address investor, uint weiAmount, uint tokenAmount, uint128 customerId, uint256 pricingInfo);
 
   /**
    * Constructor.
@@ -34,10 +34,13 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
    * ©return tokenAmount How many tokens where bought
    */
   function buyWithKYCData(bytes dataframe, uint8 v, bytes32 r, bytes32 s) public payable returns(uint tokenAmount) {
-    var (whitelistedAddress, customerId, minETH, maxETH, pricingTierId) = getKYCPresalePayload(dataframe);
+    bytes32 hash = sha256(dataframe);
+    var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPresalePayload(dataframe);
     uint multiplier = 10 ** 18;
     address receiver = msg.sender;
     uint weiAmount = msg.value;
+
+    require(ecrecover(hash, v, r, s) == signerAddress);
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -64,10 +67,6 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     // Update totals
     weiRaised = weiRaised.plus(weiAmount);
 
-    if(pricingStrategy.isPresalePurchase(receiver)) {
-        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
-    }
-
     // Check that we did not bust the cap
     require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
@@ -78,9 +77,9 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
-    PreBuy(receiver, weiAmount, tokenAmount, customerId, pricingTierId);
+    PreBuy(receiver, weiAmount, tokenAmount, customerId, pricingInfo);
 
-    return tokenAmount;
+    return tokenAmount; // Is always 0, so we can verify this is the presale
   }
 
   /// @dev This function can set the server side address
