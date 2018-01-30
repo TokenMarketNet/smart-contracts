@@ -33,6 +33,23 @@ def token(chain, team_multisig):
 
 
 @pytest.fixture
+def other_token(chain, team_multisig):
+    args = [
+        team_multisig,
+        "OtherToken",
+        "OTH",
+        1000000,
+        0,
+        int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds())
+    ]
+    contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
+    assert contract.call().balanceOf(team_multisig) == 1000000
+
+    contract.transact({"from": team_multisig}).releaseTokenTransfer()
+    return contract
+
+
+@pytest.fixture
 def freeze_ends_at(chain) -> int:
     return 1970 + 60*365*24*3600
 
@@ -244,3 +261,29 @@ def test_claim_early(chain, loaded_token_vault, team_multisig, token, customer, 
 
     with pytest.raises(TransactionFailed):
         loaded_token_vault.transact({"from": customer}).claim()
+
+def test_emergency_claim_our_token(chain, loaded_token_vault, team_multisig, token, customer, customer_2):
+    """Trying to claim extra tokens we have sent."""
+
+    token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 3000)
+    loaded_token_vault.transact({"from": team_multisig}).lock()
+
+    amount_after_locking = token.call().balanceOf(team_multisig)
+    token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 1)
+    assert token.call().balanceOf(team_multisig) != amount_after_locking
+
+    loaded_token_vault.transact({"from": team_multisig}).recoverTokens(token.address)
+    assert token.call().balanceOf(team_multisig) == amount_after_locking
+
+def test_emergency_claim_other_token(chain, loaded_token_vault, team_multisig, token, other_token, customer, customer_2):
+    """Trying to claim extra tokens (other than the vault's own) we have sent."""
+
+    token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 3000)
+    loaded_token_vault.transact({"from": team_multisig}).lock()
+
+    amount_after_locking = other_token.call().balanceOf(team_multisig)
+    other_token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 1)
+    assert other_token.call().balanceOf(team_multisig) != amount_after_locking
+
+    loaded_token_vault.transact({"from": team_multisig}).recoverTokens(other_token.address)
+    assert other_token.call().balanceOf(team_multisig) == amount_after_locking
