@@ -109,14 +109,11 @@ contract CrowdsaleBase is Haltable {
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
-  State public testState;
-
   function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
     token = FractionalERC20(_token);
-
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;

@@ -31,6 +31,7 @@ def signer_address(private_key):
     """Server side signer address."""
     return get_ethereum_address_from_private_key(private_key)
 
+
 @pytest.fixture()
 def kyc_finalize_agent(chain, uncapped_token, uncapped_flatprice) -> Contract:
 
@@ -44,44 +45,15 @@ def kyc_finalize_agent(chain, uncapped_token, uncapped_flatprice) -> Contract:
 
 
 @pytest.fixture
-def kyc_token(chain, team_multisig, initial_supply):
-    """Create the token contract."""
-
-    args = ["KYC token", "KYC", initial_supply, 18, True]  # Owner set
-
-    tx = {
-        "from": team_multisig
-    }
-
-    contract, hash = chain.provider.deploy_contract('CrowdsaleToken', deploy_args=args, deploy_transaction=tx)
-    return contract
-
-
-@pytest.fixture
-def pricing(chain, preico_token_price) -> Contract:
-    """1 ETH = 1 token, we don't receive the token yet, though """
-    args = [
-        1*10**18,
-    ]
-    pricing_strategy, hash = chain.provider.deploy_contract('FlatPricing', deploy_args=args)
-    return pricing_strategy
-
-
-@pytest.fixture
-def kyc_presale(chain, team_multisig, preico_starts_at, preico_ends_at, pricing, preico_cap, preico_funding_goal, preico_token_allocation, kyc_token, signer_address, default_finalize_agent, initial_supply) -> Contract:
+def kyc_presale(chain, team_multisig, preico_starts_at, preico_ends_at, preico_cap, preico_funding_goal, preico_token_allocation, signer_address, default_finalize_agent, initial_supply) -> Contract:
     """Create a Pre-ICO crowdsale contract."""
-
-    token = kyc_token
 
     # We provide a bogus token and pricing strategy for compatilibity reasons
     args = [
-        token.address,
-        pricing.address,
         team_multisig,
         preico_starts_at,
         preico_ends_at,
-        preico_funding_goal,
-        team_multisig
+        99999 * 10**18
     ]
 
     tx = {
@@ -90,21 +62,9 @@ def kyc_presale(chain, team_multisig, preico_starts_at, preico_ends_at, pricing,
 
     contract, hash = chain.provider.deploy_contract('KYCPresale', deploy_args=args, deploy_transaction=tx)
 
-    args = [
-        contract.address
-    ]
-    finalizer_contract, hash = chain.provider.deploy_contract('NullFinalizeAgent', deploy_args=args)
-    contract.transact({"from": team_multisig}).setFinalizeAgent(finalizer_contract.address)
+    contract.transact({"from": team_multisig}).setSignerAddress(signer_address)
 
     assert contract.call().owner() == team_multisig
-    assert not token.call().released()
-
-    # Allow the token sale contract to distribute unreleased tokens
-    # token.transact({"from": team_multisig}).setTransferAgent(contract.address, True)
-    token.transact({"from": team_multisig}).setTransferAgent(team_multisig, True)
-    token.transact({"from": team_multisig}).approve(contract.address, initial_supply)
-    token.transact({"from": team_multisig}).setReleaseAgent(team_multisig)
-    contract.transact({"from": team_multisig}).setSignerAddress(signer_address)
     return contract
 
 
@@ -113,10 +73,12 @@ def customer(accounts) -> str:
     """Get a customer address."""
     return to_checksum_address(accounts[1])
 
+
 @pytest.fixture
 def pricing_info() -> int:
     """Use this same pricingInfo, which is a tier indentifier in this case."""
     return 123
+
 
 @pytest.fixture
 def customer_id(uncapped_flatprice, uncapped_flatprice_finalizer, team_multisig) -> int:
@@ -132,7 +94,7 @@ def pad_contract(chain):
     return contract
 
 
-def test_kyc_participate_with_signed_address(chain, web3, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+def test_kyc_participate_with_signed_address(chain, web3, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info, signer_address):
     """Buy tokens with a proper KYC payload."""
 
     # Check KYC crowdsale is good to go
@@ -143,18 +105,10 @@ def test_kyc_participate_with_signed_address(chain, web3, kyc_presale, customer,
 
     # Check the setup looks good
     assert kyc_presale.call().getState() == CrowdsaleState.Funding
-    assert kyc_presale.call().isFinalizerSane()
-    assert kyc_presale.call().isPricingSane()
-    assert kyc_presale.call().beneficiary() == team_multisig
-    assert kyc_token.call().transferAgents(team_multisig) == True
+    assert kyc_presale.call().signerAddress().lower() == signer_address.lower()
 
-    # Do a test buy for 1 ETH and check it is good token wise
-    wei_value = to_wei(1, "ether")
-    tokens_per_eth = pricing.call().calculatePrice(wei_value, wei_value, 0, customer, 18)
-    assert tokens_per_eth == 10**18
-    assert kyc_presale.call().getTokensLeft() >= tokens_per_eth
-    assert kyc_token.call().balanceOf(team_multisig) >= tokens_per_eth
-    assert not kyc_presale.call().isBreakingCap(wei_value, tokens_per_eth, wei_value, tokens_per_eth)
+    # Do a test buy for 0.5 ETH and check it is good token wise
+    wei_value = to_wei(1.0, "ether")
 
     # KYC limits for this participant: 0...1 ETH
     kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1 * 10000, pricing_info)
@@ -162,11 +116,8 @@ def test_kyc_participate_with_signed_address(chain, web3, kyc_presale, customer,
 
     kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
 
-    # We should not have tokens:
-    assert kyc_token.call().balanceOf(customer) == 0
-    assert kyc_presale.call().investedAmountOf(customer) == 1 * 10**18
-
     # Money lands in the multisig wallet
+    assert kyc_presale.call().investedAmountOf(customer) == 1 * 10**18
     assert web3.eth.getBalance(team_multisig) > original_multisig_balance
 
     # We have tracked the investor id
@@ -179,7 +130,7 @@ def test_kyc_participate_with_signed_address(chain, web3, kyc_presale, customer,
     assert e["args"]["pricingInfo"] == pricing_info
 
 
-def test_kyc_participate_bad_signature(chain, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+def test_kyc_participate_bad_signature(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
     """Investment does not happen with a bad signature.."""
 
     # Check KYC crowdsale is good to go
@@ -196,7 +147,7 @@ def test_kyc_participate_bad_signature(chain, kyc_presale, customer, customer_id
         kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
 
 
-def test_kyc_participate_under_payment(chain, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+def test_kyc_participate_under_payment(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
     """KYC'ed participant does not fulfill his minimum limit."""
 
     # Check KYC crowdsale is good to go
@@ -213,7 +164,7 @@ def test_kyc_participate_under_payment(chain, kyc_presale, customer, customer_id
         kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
 
 
-def test_kyc_participate_over_payment(chain, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+def test_kyc_participate_over_payment(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
     """KYC'ed participant does not fulfill his minimum limit."""
 
     # Check KYC crowdsale is good to go
@@ -239,7 +190,7 @@ def test_kyc_participate_set_signer_only_owner(chain, kyc_presale, malicious_add
         kyc_presale.transact({"from": malicious_address}).setSignerAddress(signer_address)
 
 
-def test_kyc_participate_whitelist(chain, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+def test_kyc_participate_whitelist(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
     """Early whitelist buyer gets through despite time checks."""
 
     # Check KYC crowdsale is closed, too early
@@ -261,3 +212,43 @@ def test_kyc_participate_whitelist(chain, kyc_presale, customer, customer_id, ky
 
     # Now we can buy despite the time limti
     kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+
+
+def test_new_cap(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
+    """We can set a new cap correctly."""
+
+    assert kyc_presale.call().saleWeiCap() == 99999 * 10**18
+    kyc_presale.transact({"from": team_multisig}).setWeiCap(200 * 10**18)
+    assert kyc_presale.call().saleWeiCap() == 200 * 10**18
+
+
+def test_new_cap_only_owner(chain, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info):
+    """Only owner can set the new cap.."""
+
+    assert kyc_presale.call().saleWeiCap() == 99999 * 10**18
+    with pytest.raises(TransactionFailed):
+        kyc_presale.transact({"from": customer}).setWeiCap(200 * 10**18)
+
+
+def test_halted(chain, web3, kyc_presale, customer, customer_id, private_key, preico_starts_at, team_multisig, pricing_info, signer_address):
+    """We cannot buy after a halt."""
+
+    # Check KYC crowdsale is good to go
+    time_travel(chain, kyc_presale.call().startsAt() + 1)
+
+    # Check the setup looks good
+    assert kyc_presale.call().getState() == CrowdsaleState.Funding
+    assert kyc_presale.call().signerAddress().lower() == signer_address.lower()
+
+    # Do a test buy for 0.5 ETH and check it is good token wise
+    wei_value = to_wei(1.0, "ether")
+
+    # KYC limits for this participant: 0...1 ETH
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1 * 10000, pricing_info)
+    signed_data = sign(kyc_payload, private_key)
+
+    kyc_presale.transact({"from": team_multisig}).halt()
+
+    with pytest.raises(TransactionFailed):
+        kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+
