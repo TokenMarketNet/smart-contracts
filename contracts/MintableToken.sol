@@ -5,7 +5,6 @@
  */
 
 import "zeppelin/contracts/token/ERC20.sol";
-import "zeppelin/contracts/ownership/Ownable.sol";
 import "./StandardTokenExt.sol";
 import "./SafeMathLib.sol";
 
@@ -18,7 +17,7 @@ pragma solidity ^0.4.6;
  * Only mint agents, contracts whitelisted by owner, can mint new tokens.
  *
  */
-contract MintableToken is StandardTokenExt, Ownable {
+contract MintableToken is StandardTokenExt {
 
   using SafeMathLib for uint;
 
