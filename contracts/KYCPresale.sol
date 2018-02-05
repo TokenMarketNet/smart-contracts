@@ -31,7 +31,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
    *
    * Presale does not know about token or pricing strategy, as they will be only available during the future airdrop.
    *
-   * @notice The parent contract has some unnecessary variables for our use case. For this round of development, we chose to use null value for token and pricing strategy. In the future versions have a parent sale contract that does not assume an existing token.
+   * @dev The parent contract has some unnecessary variables for our use case. For this round of development, we chose to use null value for token and pricing strategy. In the future versions have a parent sale contract that does not assume an existing token.
    */
   function KYCPresale(address _multisigWallet, uint _start, uint _end, uint _saleWeiCap) CrowdsaleBase(FractionalERC20(address(1)), PricingStrategy(address(0)), _multisigWallet, _start, _end, 0) {
     saleWeiCap = _saleWeiCap;
@@ -132,7 +132,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
   /**
    * Because this is a presale, we do not issue any tokens yet.
    *
-   * @notice Have this taken away from the parent contract?
+   * @dev Have this taken away from the parent contract?
    */
   function assignTokens(address receiver, uint tokenAmount) internal {
     revert;
@@ -141,7 +141,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
   /**
    * Allow to (re)set pricing strategy.
    *
-   * @notice Because we do not have token price set in presale, we do nothing. This will be removed in the future versions.
+   * @dev Because we do not have token price set in presale, we do nothing. This will be removed in the future versions.
    */
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
   }
