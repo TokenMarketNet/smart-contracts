@@ -237,3 +237,27 @@ def test_kyc_participate_set_signer_only_owner(chain, kyc_presale, malicious_add
 
     with pytest.raises(TransactionFailed):
         kyc_presale.transact({"from": malicious_address}).setSignerAddress(signer_address)
+
+
+def test_kyc_participate_whitelist(chain, kyc_presale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig, pricing_info):
+    """Early whitelist buyer gets through despite time checks."""
+
+    # Check KYC crowdsale is closed, too early
+    time_travel(chain, kyc_presale.call().startsAt() - 1)
+    assert kyc_presale.call().getState() == CrowdsaleState.PreFunding
+
+    # Do a test buy for 1 ETH and check it is good token wise
+    wei_value = to_wei(1, "ether")
+
+    # KYC limits for this participant: 0...1 ETH
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1 * 10000, pricing_info)
+    signed_data = sign(kyc_payload, private_key)
+
+    with pytest.raises(TransactionFailed):
+        kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+
+    # Whitelist this participant
+    kyc_presale.transact({"from": team_multisig}).setEarlyParicipantWhitelist(customer, True)
+
+    # Now we can buy despite the time limti
+    kyc_presale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])

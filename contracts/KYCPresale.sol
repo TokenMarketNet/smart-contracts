@@ -3,7 +3,7 @@ import "./AllocatedCrowdsaleMixin.sol";
 import "./KYCPayloadDeserializer.sol";
 
 /**
- * A presale that collects money for SAFT/SAFTE agreements.
+ * A presale smart contract that collects money from SAFT/SAFTE agreed buyers.
  *
  * Presale contract where we collect money for the token that does not exist yet.
  * The same KYC rules apply as in KYCCrowdsale. No tokens are issued in this point,
@@ -46,15 +46,13 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      if(!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
     } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
     } else {
       // Unwanted state
-      throw;
+      revert;
     }
 
     if(investedAmountOf[receiver] == 0) {
@@ -62,7 +60,7 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
        investorCount++;
     }
 
-    // Update investor
+    // Update per investor amount
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
 
     // Update totals
@@ -75,7 +73,7 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     require(investedAmountOf[msg.sender] <= maxETH * multiplier / 10000);
 
     // Pocket the money, or fail the crowdsale if we for some reason cannot send the money to our multisig
-    if(!multisigWallet.send(weiAmount)) throw;
+    require(multisigWallet.send(weiAmount));
 
     // Tell us invest was success
     Prepurchased(receiver, weiAmount, tokenAmount, customerId, pricingInfo);
