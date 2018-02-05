@@ -3,23 +3,23 @@ import "./AllocatedCrowdsaleMixin.sol";
 import "./KYCPayloadDeserializer.sol";
 
 /**
- * A crowdsale that allows only signed payload with server-side specified buy in limits.
+ * A presale that collects money for SAFT/SAFTE agreements.
  *
- *
- * The token distribution happens as in the allocated crowdsale.
+ * Presale contract where we collect money for the token that does not exist yet.
+ * The same KYC rules apply as in KYCCrowdsale. No tokens are issued in this point,
+ * but they are delivered to the buyers after the token sale is over.
  *
  */
 contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
 
-  /* Server holds the private key to this address to decide if the AML payload is valid or not. */
+  /** Server holds the private key to this address to decide if the AML payload is valid or not. */
   address public signerAddress;
 
-  /* A new server-side signer key was set to be effective */
+  /** A new server-side signer key was set to be effective */
   event SignerChanged(address signer);
 
-
-  /* Prebuy made */
-  event PreBuy(address investor, uint weiAmount, uint tokenAmount, uint128 customerId, uint256 pricingInfo);
+  /** An user made a prepurchase through KYC'ed interface. The money has been moved to the token sale multisig wallet. The buyer will receive their tokens in an airdrop after the token sale is over. */
+  event Prepurchased(address investor, uint weiAmount, uint tokenAmount, uint128 customerId, uint256 pricingInfo);
 
   /**
    * Constructor.
@@ -40,6 +40,7 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     address receiver = msg.sender;
     uint weiAmount = msg.value;
 
+    // The payload was created by token sale server
     require(ecrecover(hash, v, r, s) == signerAddress);
 
     // Determine if it's a good time to accept investment from this participant
@@ -77,9 +78,9 @@ contract KYCPresale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
-    PreBuy(receiver, weiAmount, tokenAmount, customerId, pricingInfo);
+    Prepurchased(receiver, weiAmount, tokenAmount, customerId, pricingInfo);
 
-    return tokenAmount; // Is always 0, so we can verify this is the presale
+    return 0; // In presale we do not issue actual tokens tyet
   }
 
   /// @dev This function can set the server side address
