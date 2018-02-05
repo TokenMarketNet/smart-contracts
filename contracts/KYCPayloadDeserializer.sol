@@ -8,17 +8,17 @@
 import "./BytesDeserializer.sol";
 
 /**
- * A mix-in contract to decode different AML payloads.
+ * A mix-in contract to decode different signed KYC payloads.
  *
- * @notice This should be a library, but for the complexity and toolchain fragility risks involving of linking library inside library, we put this as a mix-in.
+ * @notice This should be a library, but for the complexity and toolchain fragility risks involving of linking library inside library, we currently use this as a helper method mix-in.
  */
 contract KYCPayloadDeserializer {
 
   using BytesDeserializer for bytes;
 
+  // @notice this struct describes what kind of data we include in the payload, we do not use this directly
   // The bytes payload set on the server side
   // total 56 bytes
-
   struct KYCPayload {
 
     /** Customer whitelisted address where the deposit can come from */
@@ -35,36 +35,13 @@ contract KYCPayloadDeserializer {
 
     /** Max amount this customer can to invest in ETH. Set zero if no maximum. Expressed as parts of 10000. 1 ETH = 10000. */
     uint32 maxETH; // 4 bytes
+
+    /**
+     * Information about the price promised for this participant. It can be pricing tier id or directly one token price in weis.
+     * @notice This is a later addition and not supported in all scenarios yet.
+     */
+    uint256 pricingInfo;
   }
-
-  /**
-   * Deconstruct server-side byte data to structured data.
-   */
-
-  function deserializeKYCPayload(bytes dataframe) internal constant returns(KYCPayload decodedPayload) {
-    KYCPayload payload;
-    payload.whitelistedAddress = dataframe.sliceAddress(0);
-    payload.customerId = uint128(dataframe.slice16(20));
-    payload.minETH = uint32(dataframe.slice4(36));
-    payload.maxETH = uint32(dataframe.slice4(40));
-    return payload;
-  }
-
-  /**
-   * Helper function to allow us to return the decoded payload to an external caller for testing.
-   *
-   * TODO: Some sort of compiler issue (?) with memory keyword. Tested with solc 0.4.16 and solc 0.4.18.
-   * If used, makes KYCCrowdsale to set itself to a bad state getState() returns 5 (Failure). Overrides some memory?
-   */
-  /*
-  function broken_getKYCPayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth) {
-    KYCPayload memory payload = deserializeKYCPayload(dataframe);
-    payload.whitelistedAddress = dataframe.sliceAddress(0);
-    payload.customerId = uint128(dataframe.slice16(20));
-    payload.minETH = uint32(dataframe.slice4(36));
-    payload.maxETH = uint32(dataframe.slice4(40));
-    return (payload.whitelistedAddress, payload.customerId, payload.minETH, payload.maxETH);
-  }*/
 
   /**
    * Same as above, does not seem to cause any issue.
@@ -75,6 +52,20 @@ contract KYCPayloadDeserializer {
     uint32 _minETH = uint32(dataframe.slice4(36));
     uint32 _maxETH = uint32(dataframe.slice4(40));
     return (_whitelistedAddress, _customerId, _minETH, _maxETH);
+  }
+
+  /**
+   * Same as above, but with pricing information included in the payload as the last integer.
+   *
+   * @notice In a long run, deprecate the legacy methods above and only use this payload.
+   */
+  function getKYCPresalePayload(bytes dataframe) public constant returns(address whitelistedAddress, uint128 customerId, uint32 minEth, uint32 maxEth, uint256 pricingInfo) {
+    address _whitelistedAddress = dataframe.sliceAddress(0);
+    uint128 _customerId = uint128(dataframe.slice16(20));
+    uint32 _minETH = uint32(dataframe.slice4(36));
+    uint32 _maxETH = uint32(dataframe.slice4(40));
+    uint256 _pricingInfo = uint256(dataframe.slice32(44));
+    return (_whitelistedAddress, _customerId, _minETH, _maxETH, _pricingInfo);
   }
 
 }
