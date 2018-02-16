@@ -115,17 +115,33 @@ contract TokenTranchePricing is PricingStrategy, Ownable {
     return true;
   }
 
-  /// @dev Get the current tranche or bail out if we are not in the tranche periods.
+  /// @dev Get the index of the current tranche or bail out if we are not in the tranche periods.
   /// @param tokensSold total amount of tokens sold, for calculating the current tranche
-  /// @return {[type]} [description]
-  function getCurrentTranche(uint tokensSold) private constant returns (Tranche) {
+  /// @return {uint} Index of the current tranche struct in the tranches array
+  function getCurrentTrancheIdx(uint tokensSold) public constant returns (uint) {
     uint i;
 
     for(i=0; i < tranches.length; i++) {
       if(tokensSold < tranches[i].amount) {
-        return tranches[i-1];
+        return i - 1;
       }
     }
+  }
+  /// @dev Get the current tranche or bail out if we are not in the tranche periods.
+  /// @param tokensSold total amount of tokens sold, for calculating the current tranche
+  /// @return {[type]} [description]
+  function getCurrentTranche(uint tokensSold) public constant returns (Tranche) {
+    return tranches[getCurrentTrancheIdx(tokensSold)];
+  }
+  /// @dev Get the total volume to be sold in the current tranche or bail out if we are not in the tranche periods.
+  /// @param tokensSold total amount of tokens sold, for calculating the current tranche
+  /// @return {uint} Number of tokens to be sold in the current tranche
+  function getCurrentTrancheVolume(uint tokensSold) public constant returns (uint) {
+    uint idx = getCurrentTrancheIdx(tokensSold);
+
+    uint currAmount = tranches[idx].amount;
+    uint nextAmount = tranches[idx + 1].amount;
+    return nextAmount - currAmount;
   }
 
   /// @dev Get the current price.

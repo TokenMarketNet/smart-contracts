@@ -45,4 +45,6 @@ contract PricingStrategy {
    * @return Amount of tokens the investor receives
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+
+  function getCurrentTrancheVolume(uint tokensSold) public constant returns (uint);
 }

@@ -82,6 +82,9 @@ contract CrowdsaleBase is Haltable {
   /** Addresses that are allowed to participate at any stage */
   mapping (address => bool) public isKycWhitelist;
 
+  /** Minimum number of transactions in a tranche (protects against large purchases breaking tranche barriers by too much */
+  uint public trancheMinTx = 0;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -170,6 +173,13 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
+   * Tranche TX minimums
+   */
+  function setTrancheMinTx(uint _minimum) public onlyOwner {
+    trancheMinTx = _minimum;
+  }
+
+  /**
    * Make an investment.
    *
    * Crowdsale must be running for one to invest.
@@ -203,6 +213,13 @@ contract CrowdsaleBase is Haltable {
 
     // Dust transaction
     require(tokenAmount != 0);
+
+    // Check that the tx is a reasonable volume for the tranche
+    if (trancheMinTx > 0) {
+      uint trancheVolume = pricingStrategy.getCurrentTrancheVolume(tokensSold);
+      uint maxVolume = trancheVolume / trancheMinTx;
+      require(tokenAmount <= maxVolume);
+    }
 
     if(investedAmountOf[receiver] == 0) {
        // A new investor
