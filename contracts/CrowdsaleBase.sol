@@ -85,6 +85,9 @@ contract CrowdsaleBase is Haltable {
   /** Minimum number of transactions in a tranche (protects against large purchases breaking tranche barriers by too much */
   uint public trancheMinTx = 0;
 
+  /** Maximum that any single address can purchase (1 / max * totalSupply) */
+  uint public maximumPurchaseFraction = 0;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -180,6 +183,13 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
+   * Total allowable purchase of tokens per address
+   */
+  function setMaximumPurchaseFraction(uint _maximum) public onlyOwner {
+    maximumPurchaseFraction = _maximum;
+  }
+
+  /**
    * Make an investment.
    *
    * Crowdsale must be running for one to invest.
@@ -219,6 +229,12 @@ contract CrowdsaleBase is Haltable {
       uint trancheVolume = pricingStrategy.getCurrentTrancheVolume(tokensSold);
       uint maxVolume = trancheVolume / trancheMinTx;
       require(tokenAmount <= maxVolume);
+    }
+
+    if(maximumPurchaseFraction > 0) {
+      uint256 maximumPurchase = token.totalSupply() / maximumPurchaseFraction;
+      uint256 willHaveTokens = tokenAmountOf[receiver] + tokenAmount;
+      require(willHaveTokens <= maximumPurchase);
     }
 
     if(investedAmountOf[receiver] == 0) {
