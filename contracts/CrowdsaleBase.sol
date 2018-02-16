@@ -79,6 +79,9 @@ contract CrowdsaleBase is Haltable {
   /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
   mapping (address => bool) public earlyParticipantWhitelist;
 
+  /** Addresses that are allowed to participate at any stage */
+  mapping (address => bool) public isKycWhitelist;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
 
@@ -105,11 +108,17 @@ contract CrowdsaleBase is Haltable {
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
+  event KycWhitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
   State public testState;
+
+  modifier onlyWhitelist() {
+    require(isKycWhitelist[msg.sender]);
+    _;
+  }
 
   function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -153,6 +162,14 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
+   * Whitelist manegement
+   */
+  function setKycWhitelist(address _address, bool _state) public onlyOwner {
+    isKycWhitelist[_address] = _state;
+    KycWhitelisted(_address, _state);
+  }
+
+  /**
    * Make an investment.
    *
    * Crowdsale must be running for one to invest.
@@ -163,7 +180,7 @@ contract CrowdsaleBase is Haltable {
    *
    * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency onlyWhitelist internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
