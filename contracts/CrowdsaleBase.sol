@@ -82,6 +82,9 @@ contract CrowdsaleBase is Haltable {
   /** Addresses that are allowed to participate at any stage */
   mapping (address => bool) public isKycWhitelist;
 
+  /** Addresses that are allowed to call automated management functions */
+  mapping (address => bool) public isManagement;
+
   /** Minimum number of transactions in a tranche (protects against large purchases breaking tranche barriers by too much */
   uint public trancheMinTx = 0;
 
@@ -115,6 +118,7 @@ contract CrowdsaleBase is Haltable {
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
   event KycWhitelisted(address addr, bool status);
+  event ManagementWhitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
@@ -123,6 +127,10 @@ contract CrowdsaleBase is Haltable {
 
   modifier onlyWhitelist() {
     require(isKycWhitelist[msg.sender]);
+    _;
+  }
+  modifier onlyManagement() {
+    require(isManagement[msg.sender]);
     _;
   }
 
@@ -170,9 +178,16 @@ contract CrowdsaleBase is Haltable {
   /**
    * Whitelist manegement
    */
-  function setKycWhitelist(address _address, bool _state) public onlyOwner {
+  function setKycWhitelist(address _address, bool _state) public onlyManagement {
     isKycWhitelist[_address] = _state;
     KycWhitelisted(_address, _state);
+  }
+  /**
+   * Management list manegement
+   */
+  function setManagement(address _address, bool _state) public onlyOwner {
+    isManagement[_address] = _state;
+    ManagementWhitelisted(_address, _state);
   }
 
   /**
