@@ -84,6 +84,10 @@ Then install ``ico`` Python package and its dependencies:
     pip install -r requirements.txt
     pip install -e .
 
+Notes for Debian 9 stretch
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you encounter test error of "UnicodeDecodeError: 'ascii' codec can't decode byte 0xc2 in position 994: ordinal not in range(128)", the locale needs be set to C.UTF-8. A workaround to resolve the issue is to set LANG="C.UTF-8".
+
 Using your desired Solc version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sometimes it's useful to use some certain version of the Solidity compiler,
