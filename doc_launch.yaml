@@ -1,0 +1,282 @@
+_cam: &cam '0xb2EA4BE7b378231C1FA017fE4f3BBB06705216d1'
+_daniel: &daniel '0x70fC6788493378BDb13ffB7EAAb91BA8fe5d4E87'
+_ricky: &ricky '0x4a8d0df3923ef2b4d6fad62419e1b37edf6c54fd'
+_luke: &luke '0x427C5399C8734fbbfDA641c64dBa5ba8230feFc4'
+_nano: &nano '0xE60278F75449AF64E3EAEf4dbd803557615563F0'
+# TODO janus
+
+_ganache: &ganache '0x627306090abaB3A6e1400e9345bC60c78a8BEf57'
+
+_bbsfin: &bbsfin
+  - *cam
+  - *daniel
+  - *nano
+_bbstech: &bbstech
+  - *cam
+  - *daniel
+  - *ricky
+  - *luke
+  - *nano
+
+kovan:
+  chain: kovan
+  verify_on_etherscan: yes
+  browser_driver: chrome
+
+  solc:
+    # This is the Solidity version tag we verify on EtherScan.
+    # For available versions see
+    # https://kovan.etherscan.io/verifyContract2
+    #
+    # See values in Compiler drop down.
+    # You can also get the local compiler version with:
+    #
+    #     solc --version
+    #
+    # Note that for EtherScan you need to add letter "v" at the front of the version
+    #
+    # Note: You need to have correct optmization settings for the compiler
+    # in populus.json that matches what EtherScan is expecting.
+    #
+    version: v0.4.18+commit.9cf6e910
+
+    #
+    # We supply these to EtherScan as the solc settings we used to compile the contract.
+    # They must match values in populus.json compilication / backends section.
+    #
+    optimizations:
+      optimizer: true
+      runs: 500   
+
+
+  contracts:
+    # This is the address of the multisig wallet where the paymnts eventually land
+    multisig:
+      contract_name: MultiSigWallet
+      contract_file: GnosisWallet.sol
+      arguments:
+        _required: 1
+        _owners: ["{{ deploy_address }}"]
+
+    #
+    # Token contract
+    #
+    # This contract represents ERC-20 token.
+    # It has transfer lock up functionality to prevent the token to be transferable
+    # until the ICO is overe
+    #
+    # We create the whole token supply upfront and no more token minting
+    # happens ever.
+    #
+    # Token has 18 decimals and supply of 1B tokens.
+    #
+    # Token supply is one billion tokens.
+    #
+    # Name and symbol are not set yet. They are set later. In
+    # the case of the deployment fails and we need redeploy
+    # we do not create unnecessary entries in token explorers.
+    #
+    token:
+      contract_name: BurnableCrowdsaleToken
+      contract_file: BurnableCrowdsaleToken.sol
+      arguments:
+        _name: ''
+        _symbol: ''
+        _initialSupply: '{{ 100000000*10**18 }}'
+        _decimals: 18
+        _mintable: false   
+
+    #
+    # Pricing strategy.
+    #
+    # We use ETH tranches. People who buy in in the first
+    # tranches get 20% and 10% bonus tokens.
+    #
+    pricing_strategy:
+      contract_name: TokenTranchePricing
+      contract_file: TokenTranchePricing.sol
+      arguments:
+        _tranches:
+          - 0
+          - 128571428571 #428 TODO *1000 again
+
+          - "{{ to_wei('1400000', 'ether') }}"
+          - 138846153846 #153
+
+          - "{{ to_wei('4000000', 'ether') }}"
+          - 150277777777 #777
+
+          - "{{ to_wei('7600000', 'ether') }}"
+          - 164090909090 #909
+
+          - "{{ to_wei('12000000', 'ether') }}"
+          - 180382352941 #176
+
+          # Dummy milestone marker to mark the end
+          # of the array.
+          - "{{ to_wei('99999999999999999', 'ether') }}"
+          - 0
+
+    #
+    # Crowdsale.
+    #
+    # We use allocated crowdsale as the whole token supply has been created beforehand.
+    # No minting. Later we use approve() to give tokens for this contract to be sold.
+    #
+    crowdsale:
+      contract_name: AllocatedCrowdsale
+      contract_file: AllocatedCrowdsale.sol  # Changes here to multiple multi sigs
+      arguments:
+        _token: '{{ contracts.token.address }}'
+        _pricingStrategy: '{{ contracts.pricing_strategy.address }}'
+        _multisigWallet: '{{ contracts.multisig.address }}'
+        _beneficiary: '{{ contracts.multisig.address }}'
+        _start: 1  # TODO real block
+        _end: 999999999999  # TODO real block
+        _minimumFundingGoal: 0
+
+    #
+    # Because deploy_address controls whole supply,
+    # we do not create any supply dynamically,
+    # we do not need a finalizer.
+    #
+    finalize_agent:
+      contract_name: NullFinalizeAgent
+      contract_file: NullFinalizeAgent.sol
+      arguments:
+        _crowdsale: '{{ contracts.crowdsale.address }}'
+
+
+  # Post-deployment actions connect contracts together.
+  post_actions: |
+    from eth_utils import decode_hex
+
+    cam_addr = '0xb2EA4BE7b378231C1FA017fE4f3BBB06705216d1'
+    daniel_addr = '0x70fC6788493378BDb13ffB7EAAb91BA8fe5d4E87'
+    ricky_addr = '0x4a8d0df3923ef2b4d6fad62419e1b37edf6c54fd'
+    luke_addr = '0x427C5399C8734fbbfDA641c64dBa5ba8230feFc4'
+    nano_addr = '0xE60278F75449AF64E3EAEf4dbd803557615563F0'
+
+    # Make sure crowdsale contract and these accounts
+    # can transfer tokens despite transfer lock up
+    tx_ids = []
+    tx_ids.append(token.transact({"from": deploy_address}).setTransferAgent(multisig.address, True))
+    tx_ids.append(token.transact({"from": deploy_address}).setTransferAgent(crowdsale.address, True))
+    tx_ids.append(token.transact({"from": deploy_address}).setTransferAgent(finalize_agent.address, True))
+    tx_ids.append(token.transact({"from": deploy_address}).setTransferAgent(deploy_address, True))
+    for tx_id in tx_ids: confirm_tx(tx_id)
+
+    all_tokens = token.call().balanceOf(deploy_address)
+    sale_tokens = all_tokens * 0.8
+
+    # Allow crowdsale contract to sell its token
+    #token.transact({"from": deploy_address}).approve(crowdsale.address, 0)
+    #token.transact({"from": deploy_address}).approve(crowdsale.address, 100000000*10**18)
+    confirm_tx(token.transact({'from': deploy_address}).transfer(multisig.address, all_tokens))
+    approve_zero_tx = token._prepare_transaction('approve', (crowdsale.address, 0))
+    approve_all_tx = token._prepare_transaction('approve', (crowdsale.address, sale_tokens))
+    confirm_tx(multisig.transact({'from': deploy_address}).submitTransaction(token.address, 0, decode_hex(approve_zero_tx['data'])))
+    confirm_tx(multisig.transact({'from': deploy_address}).submitTransaction(token.address, 0, decode_hex(approve_all_tx['data'])))
+
+    assert multisig.call().transactions(0)[3] == True
+    assert multisig.call().transactions(1)[3] == True
+
+    # Do not do nothing at the end of the crowdsale
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
+
+    # Owner can release the token transfer when they fel its the time
+    tx_ids.append(token.transact({"from": deploy_address}).setReleaseAgent(multisig.address))
+
+    # Set token upgrade master to team multisig to give the new token path
+    tx_ids.append(token.transact({"from": deploy_address}).setUpgradeMaster(multisig.address))
+
+    # Allow test buys from these accounts before token sale begins.
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(deploy_address, True))
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(multisig.address, True))
+
+    for tx_id in tx_ids: confirm_tx(tx_id)
+
+    # Allow deploy address to buy
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setManagement(deploy_address, True))
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setManagement(multisig.address, True))
+    for tx_id in tx_ids: confirm_tx(tx_id)
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setKycWhitelist(deploy_address, True))
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setKycWhitelist(multisig.address, True))
+    for tx_id in tx_ids: confirm_tx(tx_id)
+
+    # Set the min transactions to prevent tranche-busting
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setTrancheMinTx(10))
+
+    # Set the max that a single addr can buy
+    tx_ids.append(crowdsale.transact({"from": deploy_address}).setMaximumPurchaseFraction(10))  # 476 is good for ganache test
+    # TODO janus
+    multisig_owners = [cam_addr, daniel_addr, nano_addr, ricky_addr]  # TODO remove ricky
+    owner_txes = [multisig._prepare_transaction('addOwner', (addr,)) for addr in multisig_owners]
+    #owner_tx_first_id = multisig.call().submitTransaction(multisig.address, 0, owner_txes[0]['data'])
+    for tx in owner_txes: tx_ids.append(multisig.transact({'from': deploy_address}).submitTransaction(multisig.address, 0, decode_hex(tx['data'])))
+    #for idx in range(len(owner_txes)): confirm_tx(multisig.transact({'from': deploy_address}).executeTransaction(owner_tx_first_id+idx))
+
+
+    tx_ids.append(token.transact({'from': deploy_address}).transferOwnership(multisig.address))
+    tx_ids.append(pricing_strategy.transact({'from': deploy_address}).transferOwnership(multisig.address))
+    tx_ids.append(crowdsale.transact({'from': deploy_address}).transferOwnership(multisig.address))
+
+    for tx_id in tx_ids: confirm_tx(tx_id)
+
+    #w = ['0xf17f52151EbEF6C7334FAD080c5704D77216b732','0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef','0x821aEa9a577a9b44299B9c15c88cf3087F3b5544','0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2']
+    #for ww in w: confirm_tx(crowdsale.transact({"from": deploy_address}).setKycWhitelist(ww, True))
+
+
+  # Sanity check
+  verify_actions: |
+    cam_addr = '0xb2EA4BE7b378231C1FA017fE4f3BBB06705216d1'
+    daniel_addr = '0x70fC6788493378BDb13ffB7EAAb91BA8fe5d4E87'
+    ricky_addr = '0x4a8d0df3923ef2b4d6fad62419e1b37edf6c54fd'
+    luke_addr = '0x427C5399C8734fbbfDA641c64dBa5ba8230feFc4'
+    nano_addr = '0xE60278F75449AF64E3EAEf4dbd803557615563F0'
+
+    assert token.call().owner().lower() == multisig.address.lower()
+    assert token.call().released() == False
+    assert crowdsale.call().owner().lower() == multisig.address.lower()
+    assert crowdsale.call().multisigWallet().lower() == multisig.address.lower()
+    assert finalize_agent.call().isSane()
+    # TODO switch to CrowdsaleState.PreFunding
+    #assert crowdsale.call().getState() == CrowdsaleState.PreFunding   # PreFunding for the final, as it is deployed pre-opening
+    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    assert crowdsale.call().trancheMinTx() == 10
+    assert crowdsale.call().maximumPurchaseFraction() == 10
+
+    #assert set(multisig.call().owners(i).lower() for i in range(4)) == {cam_addr, daniel_addr, nano_addr, ricky_addr}
+
+    tx_gas = 400000
+
+    # Do a test buy using a test address.
+    # This ensures are variables are set and the
+    # funds flow in the multisig wallet.
+    #confirm_tx(crowdsale.transact({"from": deploy_address, 'gas': tx_gas, "value": to_wei("0.01", "ether")}).buy())
+
+    #w = ['0xf17f52151EbEF6C7334FAD080c5704D77216b732','0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef','0x821aEa9a577a9b44299B9c15c88cf3087F3b5544','0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2']
+
+    #confirm_tx(crowdsale.transact({"from": w[0], 'gas': tx_gas, "value": to_wei("0.01", "ether")}).buy())
+    #assert token.call().balanceOf(w[0]) > 0
+
+    #for _ in range(10): confirm_tx(crowdsale.transact({"from": w[1], 'gas': tx_gas, "value": to_wei("0.1", "ether")}).buy())
+    #assert token.call().balanceOf(w[1]) > 0
+
+    #for _ in range(10): confirm_tx(crowdsale.transact({"from": w[2], 'gas': tx_gas, "value": to_wei("0.1", "ether")}).buy())
+    #assert token.call().balanceOf(w[2]) <= token.call().balanceOf(w[1])
+
+    #confirm_tx(crowdsale.transact({"from": w[3], 'gas': tx_gas, "value": to_wei("0.01", "ether")}).buy())
+    #assert token.call().balanceOf(w[3]) > 0
+    #assert token.call().balanceOf(w[3]) < token.call().balanceOf(w[1])
+
+    # As the last action, after successful deployment, set the right token symbol and name so that it shows in a blockchain explorer
+    set_info_tx = token._prepare_transaction('setTokenInformation', ('Duty of Care Token', 'VDOC'))
+    set_token_tx_id = multisig.transact({'from': deploy_address}).submitTransaction(token.address, 0, decode_hex(set_info_tx['data']))
+
+    req_tx = multisig._prepare_transaction('changeRequirement', (2,))
+    confirm_tx(multisig.transact({'from': deploy_address}).submitTransaction(multisig.address, 0, decode_hex(req_tx['data'])))
+    remove_tx = multisig._prepare_transaction('removeOwner', (deploy_address,))
+    confirm_tx(multisig.transact({'from': deploy_address}).submitTransaction(multisig.address, 0, decode_hex(remove_tx['data'])))
+
+    confirm_tx(set_token_tx_id)
