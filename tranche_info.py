@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import sys
 
 import crayons
 import web3
@@ -13,6 +14,10 @@ def num_disp(value):
     return '{:,f}'.format(value)
 
 
+if len(sys.argv) != 2:
+    raise Exception('Must give the Crowdsale address as the only argument')
+
+
 abi_names = dict(
     c = 'AllocatedCrowdsale.sol:AllocatedCrowdsale',
     t = 'BurnableCrowdsaleToken.sol:BurnableCrowdsaleToken',
@@ -20,7 +25,7 @@ abi_names = dict(
     m = 'GnosisWallet.sol:MultiSigWallet',
 )
 addresses = dict(
-    c = '0x852A2f89F4AdBAc5707e73eE576b6B268e59aa75',
+    c = sys.argv[-1],
 )
 address_get_names = dict(
     t = 'token',
