@@ -13,6 +13,7 @@ Actually more of a crowdsale summary
    solc --allow-paths . --combined-json abi contracts/GnosisWallet.sol > m.json
    ```
 1. Ensure that an eth node is available on `127.0.0.1:8545`
+1. In the same python env as the ico tolos, `pip install crayons tabulate`
 1. Run, adding your Crowdsale address as the only argument
    ```
    ./tranche_info.py 0x852A2f89F4AdBAc5707e73eE576b6B268e59aa75
