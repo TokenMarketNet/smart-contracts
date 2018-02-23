@@ -87,7 +87,7 @@ contract TokenVault is Ownable, Recoverable {
 
     owner = _owner;
 
-    // Invalid owenr
+    // Invalid owner
     if(owner == 0) {
       throw;
     }
