@@ -141,10 +141,11 @@ kovan:
     # we do not need a finalizer.
     #
     finalize_agent:
-      contract_name: NullFinalizeAgent
-      contract_file: NullFinalizeAgent.sol
+      contract_name: DefaultFinalizeAgent
+      contract_file: DefaultFinalizeAgent.sol
       arguments:
         _crowdsale: '{{ contracts.crowdsale.address }}'
+        _token: '{{ contracts.token.address }}'
 
 
   # Post-deployment actions connect contracts together.
@@ -185,7 +186,7 @@ kovan:
     tx_ids.append(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
 
     # Owner can release the token transfer when they fel its the time
-    tx_ids.append(token.transact({"from": deploy_address}).setReleaseAgent(multisig.address))
+    tx_ids.append(token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address))
 
     # Set token upgrade master to team multisig to give the new token path
     tx_ids.append(token.transact({"from": deploy_address}).setUpgradeMaster(multisig.address))
