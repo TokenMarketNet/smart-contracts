@@ -149,13 +149,13 @@ kovan:
 
   # Post-deployment actions connect contracts together.
   post_actions: |
-    from eth_utils import decode_hex
-
     cam_addr = '0xb2EA4BE7b378231C1FA017fE4f3BBB06705216d1'
     daniel_addr = '0x70fC6788493378BDb13ffB7EAAb91BA8fe5d4E87'
     ricky_addr = '0x4a8d0df3923ef2b4d6fad62419e1b37edf6c54fd'
     luke_addr = '0x427C5399C8734fbbfDA641c64dBa5ba8230feFc4'
     nano_addr = '0xE60278F75449AF64E3EAEf4dbd803557615563F0'
+
+    from eth_utils import decode_hex
 
     # Make sure crowdsale contract and these accounts
     # can transfer tokens despite transfer lock up
@@ -234,6 +234,8 @@ kovan:
     ricky_addr = '0x4a8d0df3923ef2b4d6fad62419e1b37edf6c54fd'
     luke_addr = '0x427C5399C8734fbbfDA641c64dBa5ba8230feFc4'
     nano_addr = '0xE60278F75449AF64E3EAEf4dbd803557615563F0'
+
+    from eth_utils import decode_hex
 
     assert token.call().owner().lower() == multisig.address.lower()
     assert token.call().released() == False
