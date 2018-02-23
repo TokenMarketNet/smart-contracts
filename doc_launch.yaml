@@ -167,7 +167,7 @@ kovan:
     for tx_id in tx_ids: confirm_tx(tx_id)
 
     all_tokens = token.call().balanceOf(deploy_address)
-    sale_tokens = all_tokens * 0.8
+    sale_tokens = int(all_tokens * 0.8)
 
     # Allow crowdsale contract to sell its token
     #token.transact({"from": deploy_address}).approve(crowdsale.address, 0)
