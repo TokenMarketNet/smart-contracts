@@ -46,6 +46,7 @@ def test_malicious_transfer_agent_set(token: Contract, malicious_address):
     with pytest.raises(TransactionFailed):
         token.transact({"from": malicious_address}).setTransferAgent(malicious_address, True)
 
+
 def test_token_rename(token: Contract, team_multisig, token_new_name, token_new_symbol):
     """We will update token's information here"""
 
@@ -53,6 +54,7 @@ def test_token_rename(token: Contract, team_multisig, token_new_name, token_new_
 
     assert token.call().name() == token_new_name
     assert token.call().symbol() == token_new_symbol
+
 
 def test_own_token_recovery(token: Contract, team_multisig, release_agent):
     """Let's try to recover other tokens from the contract"""
@@ -68,16 +70,16 @@ def test_own_token_recovery(token: Contract, team_multisig, release_agent):
 
     assert token.call().balanceOf(team_multisig) == original_balance
 
-def test_other_token_recovery(token: Contract, other_token: Contract, team_multisig, release_agent):
-    """Let's try to recover other tokens from the contract"""
-    original_balance = other_token.call().balanceOf(team_multisig)
+
+def test_other_token_recovery_only_owner(token: Contract, other_token: Contract, team_multisig, release_agent, malicious_address):
+    """Only the owner can recover ERC-20 tokens."""
 
     token.transact({"from": team_multisig}).setReleaseAgent(release_agent.address)
     release_agent.transact({"from": team_multisig}).release()
 
     other_token.transact({"from": team_multisig}).transfer(token.address, 1)
-    assert other_token.call().balanceOf(team_multisig) != original_balance
 
-    token.transact({"from": team_multisig}).recoverTokens(other_token.address)
+    with pytest.raises(TransactionFailed):
+        token.transact({"from": malicious_address}).recoverTokens(other_token.address)
 
-    assert other_token.call().balanceOf(team_multisig) == original_balance
+

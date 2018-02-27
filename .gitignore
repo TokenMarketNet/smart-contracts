@@ -90,3 +90,6 @@ csvs
 
 # Libreoffice tmp files
 .~*
+
+# Created by pytest
+.pytest_cache
