@@ -3,7 +3,7 @@ import logging
 
 import click
 
-from eth_utils import from_wei, to_wei
+from eth_utils import from_wei
 from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
@@ -20,13 +20,22 @@ from ico.amlreclaim import count_tokens_to_reclaim, reclaim_all
 @click.option('--csv-file', nargs=1, help='CSV file containing distribution data', required=True)
 @click.option('--address-column', nargs=1, help='Name of CSV column containing Ethereum addresses', default="address")
 @click.option('--label-column', nargs=1, help='Name of CSV column containing label for addresses', default="label")
-@click.option('--gas_price', nargs=1, help='Gas price in GWei to used for the transactions')
+@click.option('--gas-price', nargs=1, help='Gas price in GWei to used for the transactions')
 def main(chain, owner_address, token, csv_file, address_column, label_column, gas_price):
     """Reclaim tokens that failed AML check.
 
     Before the token release, after AML/post sale KYC data has been assembled, go through the addresses that failed the checks and get back tokens from those buyers.
 
     Owner account must have balance to perform the the reclaim transactions.
+
+    Example:
+
+        aml-reclaim \
+          --token=0x... \
+          --owner-address=0x... \
+          --address-column="address" \
+          --label-column="label" \
+          --csv-file=test.csv
     """
 
     setup_console_logging()
@@ -59,7 +68,8 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
         if gas_price:
             gas_price = int(gas_price) * 10**9
         else:
-            gas_price = web3.eth.gasPrice * 2
+            # Use default gas price with little multiplies to cut us at the front of the queue
+            gas_price = web3.eth.gasPrice * 1.2
 
         tx_params = {
             "from": owner_address,
@@ -79,7 +89,7 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
         reclaim_all(token, rows, tx_params)
 
         end_balance = from_wei(web3.eth.getBalance(owner_address), "ether")
-        logger.info("Deployment cost is %f", start_balance - end_balance, "ETH")
+        logger.info("Deployment cost is %f ETH", start_balance - end_balance)
         logger.info("All done! Enjoy your decentralized future.")
 
 
