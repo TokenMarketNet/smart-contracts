@@ -36,6 +36,7 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
           --address-column="address" \
           --label-column="label" \
           --csv-file=test.csv
+
     """
 
     setup_console_logging()
@@ -63,7 +64,7 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
 
         decimals = token.call().decimals()
         logger.info("Total supply is %s", token.call().totalSupply() / (10**decimals))
-        logger.info("Owner account token balance is", token.call().balanceOf(owner_address))
+        logger.info("Owner account token balance is %s", token.call().balanceOf(owner_address) / (10**decimals))
 
         if gas_price:
             gas_price = int(gas_price) * 10**9
@@ -76,11 +77,13 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
             "gasPrice": gas_price,
         }
 
-        logger.info("Using gas price of %f", gas_price / 10**9, "GWei")
+        logger.info("Using gas price of %f GWei", gas_price / 10**9)
 
         logger.info("Reading data from %s", csv_file)
         with open(csv_file, "rt") as inp:
             rows = prepare_csv(inp, address_column, label_column)
+
+        logger.info("Total %s rows", len(rows))
 
         amount = count_tokens_to_reclaim(token, rows) / 10**decimals
         logger.info("Claiming total %f tokens", amount)

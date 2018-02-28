@@ -6,10 +6,12 @@ This code is separated from the main script to make it more testable.
 import csv
 import logging
 from collections import namedtuple
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+from web3.contract import Contract
 
 from ico.utils import validate_ethereum_address, check_succesful_tx
-from web3.contract import Contract
+from ico.utils import check_multiple_succesful_txs
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 Entry = namedtuple("Entry", ("address", "label"))
 
 
-def reclaim_address(token: Contract, entry: Entry, tx_params: dict) -> int:
+def reclaim_address(token: Contract, entry: Entry, tx_params: dict) -> Tuple[int, str]:
     """Reclsaim tokens for a single participant.
 
     :param token: Token contract we reclaim
@@ -34,32 +36,52 @@ def reclaim_address(token: Contract, entry: Entry, tx_params: dict) -> int:
 
     if token.call().balanceOf(entry.address) == 0:
         logger.info("%s: looks like already reclaimed %s", entry.address, entry.label)
-        return 0
+        return 0, None
 
     txid = token.transact(tx_params).transferToOwner(entry.address)
     logger.info("%s: reclaiming %s in txid %s", entry.address, entry.label, txid)
-
-    check_succesful_tx(token.web3, txid)
-
-    return 1
+    return 1, txid
 
 
 def reclaim_all(token: Contract, reclaim_list: List[Entry], tx_params: dict) -> int:
     """Reclaim all tokens from the given input sheet.
+
+    Process transactions parallel to speed up the operation.
 
     :param tx_parms: Ethereum transaction parameters to use
     """
 
     total_reclaimed = 0
 
+    tx_to_confirm = []  # List of txids to confirm
+    tx_batch_size = 16  # How many transactions confirm once
+    web3 = token.web3
+
     for entry in reclaim_list:
-        total_reclaimed += reclaim_address(token, entry, tx_params)
+        ops, txid = reclaim_address(token, entry, tx_params)
+        total_reclaimed += ops
+
+        if not txid:
+            # Already reclaimed
+            continue
+
+        tx_to_confirm.append(txid)
+
+        # Confirm N transactions when batch max size is reached
+        if len(tx_to_confirm) >= tx_batch_size:
+            check_multiple_succesful_txs(web3, tx_to_confirm)
+            tx_to_confirm = []
+
+    # Confirm dangling transactions
+    check_multiple_succesful_txs(web3, tx_to_confirm)
 
     return total_reclaimed
 
 
 def prepare_csv(stream, address_key, label_key) -> List[Entry]:
-    """Processa CSV reclaim file.
+    """Process CSV reclaim file.
+
+    Make sure all Ethereum addresses are valid. Filter out duplicates.
 
     :param token: Token contract
     :param owner: ETH account set as the owner of the token
@@ -72,19 +94,35 @@ def prepare_csv(stream, address_key, label_key) -> List[Entry]:
     reader = csv.DictReader(stream)
     rows = [row for row in reader]
     output_rows = []
+    uniq = set()
 
     # Prevalidate addresses
     # Here we do it inline and make skip addresses that are not valid.
     for idx, row in enumerate(rows):
         addr = row[address_key].strip()
         label = row[label_key].strip()
+
+        if not addr:
+            # Empty cell / row
+            continue
+
+        if not addr.startswith("0x"):
+            addr = "0x" + addr
+
         try:
             if addr:
                 validate_ethereum_address(addr)
         except ValueError as e:
-            logger.error("Invalid Ethereum address on row:", idx + 1, "address:", addr, "reason:", str(e), "external_id:",
-                  row[label_key])
+            logger.error("Invalid Ethereum address on row:%d address:%s label:%s reason:%s", idx+1, addr, label, str(e))
             continue
+
+        addr = addr.lower()
+
+        if addr in uniq:
+            logger.warn("Address has duplicates: %s", addr)
+            continue
+
+        uniq.add(addr)
 
         output_row = Entry(address=addr, label=label)
         output_rows.append(output_row)
@@ -97,7 +135,10 @@ def count_tokens_to_reclaim(token, rows: List[Entry]):
 
     total = 0
 
-    for entry in rows:
+    for idx, entry in enumerate(rows):
         total += token.call().balanceOf(entry.address)
+
+        if idx % 20 == 0:
+            logger.info("Prechecking balances %d / %d", idx, len(rows))
 
     return total

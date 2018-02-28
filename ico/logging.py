@@ -11,7 +11,7 @@ def setup_console_logging(log_level=None):
     Don't use logging settings from INI, but use hardcoded defaults.
     """
 
-    formatter = logging.Formatter("[%(asctime)s] [%(name)s %(funcName)s] %(message)s")  # same as default
+    formatter = logging.Formatter("[%(asctime)s] [%(name)s] %(message)s")  # same as default
 
     # setup `RainbowLoggingHandler`
     # and quiet some logs for the test output
@@ -25,7 +25,12 @@ def setup_console_logging(log_level=None):
     log_level = log_level or getattr(logging, env_level.upper())
     logger.setLevel(log_level)
 
-    # Limit requests noisiness
+    # Limit dependency package noisiness
     logger = logging.getLogger("requests.packages.urllib3.connectionpool")
     logger.setLevel(logging.ERROR)
 
+    logger = logging.getLogger("anyconfig")
+    logger.setLevel(logging.ERROR)
+
+    logger = logging.getLogger("populus.compilation")
+    logger.setLevel(logging.ERROR)
