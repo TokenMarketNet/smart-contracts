@@ -42,7 +42,7 @@ def test_reclaim_csv(csv_stream, customer, customer_2, aml_token: Contract, team
 
     start_owner_balance = aml_token.call().balanceOf(team_multisig)
     rows = prepare_csv(csv_stream, "address", "label")
-    performed_op_count = reclaim_all(aml_token, team_multisig, rows)
+    performed_op_count = reclaim_all(aml_token, rows, {"from": team_multisig})
     assert performed_op_count == 1
 
     assert aml_token.call().balanceOf(customer) == 0
@@ -56,10 +56,10 @@ def test_reclaim_twice(csv_stream, customer, aml_token: Contract, team_multisig)
     rows = prepare_csv(csv_stream, "address", "label")
 
     # First run
-    performed_op_count = reclaim_all(aml_token, team_multisig, rows)
+    performed_op_count = reclaim_all(aml_token, rows, {"from": team_multisig})
     assert performed_op_count == 1
 
     # Attempt to continue
-    performed_op_count = reclaim_all(aml_token, team_multisig, rows)
+    performed_op_count = reclaim_all(aml_token, rows, {"from": team_multisig})
     assert performed_op_count == 0
 

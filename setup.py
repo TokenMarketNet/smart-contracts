@@ -71,5 +71,6 @@ setup(
     token-vault=ico.cmd.tokenvault:main
     refund=ico.cmd.refund:main
     combine-csvs=ico.cmd.combine:main
+    aml-reclaim=ico.cmd.amlreclaim:main
     ''',
 )

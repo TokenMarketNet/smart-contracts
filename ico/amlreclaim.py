@@ -6,7 +6,7 @@ This code is separated from the main script to make it more testable.
 import csv
 import logging
 from collections import namedtuple
-from typing import List
+from typing import List, Optional
 
 from ico.utils import validate_ethereum_address, check_succesful_tx
 from web3.contract import Contract
@@ -18,13 +18,14 @@ logger = logging.getLogger(__name__)
 Entry = namedtuple("Entry", ("address", "label"))
 
 
-def reclaim_address(token: Contract, owner: str, entry: Entry) -> int:
+def reclaim_address(token: Contract, entry: Entry, tx_params: dict) -> int:
     """Reclsaim tokens for a single participant.
 
     :param token: Token contract we reclaim
     :param owner: Token owner account
     :param address: Etherereum address
     :param label: User notification label regarding this address
+    :param tx_params: Ethereum transaction parameters to use
     :return: 1 on reclaim, 0 on skip
     """
 
@@ -35,7 +36,7 @@ def reclaim_address(token: Contract, owner: str, entry: Entry) -> int:
         logger.info("%s: looks like already reclaimed %s", entry.address, entry.label)
         return 0
 
-    txid = token.transact({"from": owner}).transferToOwner(entry.address)
+    txid = token.transact(tx_params).transferToOwner(entry.address)
     logger.info("%s: reclaiming %s in txid %s", entry.address, entry.label, txid)
 
     check_succesful_tx(token.web3, txid)
@@ -43,13 +44,16 @@ def reclaim_address(token: Contract, owner: str, entry: Entry) -> int:
     return 1
 
 
-def reclaim_all(token: Contract, owner: str, reclaim_list: List[Entry]) -> int:
-    """Reclaim all tokens from the given input sheet."""
+def reclaim_all(token: Contract, reclaim_list: List[Entry], tx_params: dict) -> int:
+    """Reclaim all tokens from the given input sheet.
+
+    :param tx_parms: Ethereum transaction parameters to use
+    """
 
     total_reclaimed = 0
 
     for entry in reclaim_list:
-        total_reclaimed += reclaim_address(token, owner, entry)
+        total_reclaimed += reclaim_address(token, entry, tx_params)
 
     return total_reclaimed
 
