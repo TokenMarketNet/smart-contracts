@@ -6,6 +6,7 @@ from decimal import Decimal, ROUND_HALF_DOWN
 from typing import List
 
 import click
+import decimal
 from eth_utils import is_address
 from eth_utils import is_checksum_address
 from eth_utils import to_checksum_address
@@ -67,7 +68,7 @@ def read_file(combined: dict, all_errors: List[tuple], book_keeping: collections
 
             try:
                 amount = Decimal(amount)
-            except ValueError:
+            except (ValueError, decimal.InvalidOperation):
                 errors.append((csv_file, line, "Bad decimal amount: {}".format(amount)))
                 continue
 
