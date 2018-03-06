@@ -25,7 +25,7 @@ from ico.utils import get_constructor_arguments
 @click.option('--csv-file', nargs=1, help='CSV file containing distribution data', required=True)
 @click.option('--address-column', nargs=1, help='Name of CSV column containing Ethereum addresses', default="address")
 @click.option('--amount-column', nargs=1, help='Name of CSV column containing decimal token amounts', default="amount")
-@click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
+@click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=10000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
 @click.option('--issuer-address', nargs=1, help='The address of the issuer contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
 @click.option('--gas-price', nargs=1, help='Override gas price. If not set use the default * 2.0. Specify in Gwei e.g. 50.', required=False, default=None)
@@ -188,7 +188,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             transaction = {
                 "from": address,
                 "gasPrice": gas_price,
-                "gas": 100000,  # Use 100k limit
+                "gas": 200000,  # Use 100k limit
             }
 
             tokens = int(tokens)
