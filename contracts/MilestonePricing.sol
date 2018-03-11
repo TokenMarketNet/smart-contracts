@@ -30,7 +30,7 @@ contract MilestonePricing is PricingStrategy, Ownable {
       // UNIX timestamp when this milestone kicks in
       uint time;
 
-      // How many tokens per satoshi you will get after this milestone has been passed
+      // How many tokens per wei you will get after this milestone has been passed
       uint price;
   }
 
