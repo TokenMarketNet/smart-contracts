@@ -8,7 +8,7 @@ from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
 
-from ico.logging import setup_console_logging
+from ico.logutils import setup_console_logging
 from ico.amlreclaim import prepare_csv
 from ico.amlreclaim import count_tokens_to_reclaim, reclaim_all
 
