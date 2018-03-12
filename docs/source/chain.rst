@@ -32,7 +32,11 @@ Supported backend and nodes include
 Default configuration
 =====================
 
-The default configuration set in the packge distribution is in ``populus.json`` file. It is as
+The default configuration set in the packge distribution is in `populus.json <https://github.com/TokenMarketNet/ico/blob/master/populus.json>`_ file.
+
+Edit this file for your own node IP addresses and ports.
+
+The default configuration is
 
 * ``http://127.0.0.1:8545`` is mainnet JSON-RPC, `populus.json` network sa `mainnet`
 
@@ -41,6 +45,8 @@ The default configuration set in the packge distribution is in ``populus.json`` 
 * ``http://127.0.0.1:8547`` is Kovan JSON-RPC, `populus.json` network sa `ropsten`
 
 Ethereum node software (geth, parity) must be started beforehand and configured to allow JSON-RPC in the particular port.
+
+For more information about `populus.json` file refer to `Populus documentation <http://populus.readthedocs.io/en/latest/config.html#custom-chains-using-the-externalchain-class>`_.
 
 Starting Ethereum node and creating deployment accounts
 =======================================================
