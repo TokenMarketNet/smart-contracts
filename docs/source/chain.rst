@@ -17,6 +17,10 @@ Supported backend and nodes include
 
 * Parity
 
+* Infura (Ethereum node as a service)
+
+* Quicknode (Ethereum node as a service)
+
 * Ethereum mainnet
 
 * Ethereum Ropsten test network
