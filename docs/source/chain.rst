@@ -36,8 +36,8 @@ The default configuration set in the packge distribution is in ``populus.json`` 
 
 Ethereum node software (geth, parity) must be started beforehand and configured to allow JSON-RPC in the particular port.
 
-Starting Ethereum node
-======================
+Starting Ethereum node and creating deployment accounts
+=======================================================
 
 Go Ethereun mainnet
 ^^^^^^^^^^^^^^^^^^^
@@ -48,15 +48,29 @@ Example how to start Go Ethereum JSON-RPC for mainnet:
 
     geth --fast --ipcdisable --rpc --rpcapi "db,eth,net,web3,personal" --verbosity 3 --rpccorsdomain "*"  --cache 2048
 
+You can create a new mainnet account which you will use a deployment account from geth console::
+
+    geth attach http://localhost:8545
+
+Create a new private key from a seed phrase in geth console::
+
+    > web3.sha3("my super secret seed phrase")
+    0x000000...
+
+Now import this 256-bit number as a geth account private key::
+
+    > personal.importRawKey("0x00000", "my account password")
+
 You also need to unlock your deployment every time you do a deployment from `geth` console.
 
 Example::
 
     geth attach http://localhost:8545
 
-Then unlock account for 1 hour:
+Then unlock account for 1 hour in geth console::
 
-    personal.unlockAccount("0x00000000...", "your account password", 3600)
+    personal.unlockAccount("0x00000000...", "my account password", 3600)
+
 
 Kovan testnet
 ^^^^^^^^^^^^^
@@ -78,12 +92,5 @@ Example how to start Parity JSON-RPC for Kovan testnet, unlocking your Kovan acc
 .. note ::
 
     It is recommended that you use Kovan testnet for any testing and trials, because of faster transaction confirmation times.
-
-Unlocking the deployment account
-================================
-
-For Parity you need to have `parity --unlock` given from the command line to unlock the account for automatic access.
-
-For Go Ethereum you need to use `geth console` and run `personal.unlockAccount` to unlock your account for some time, say 3600 seconds, before running scripts.
 
 
