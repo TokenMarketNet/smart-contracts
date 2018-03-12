@@ -57,6 +57,12 @@ Below are two examples for Go Ethereum and Parity.
 
     We recommend using Kovan or Ropsten testnet for any testing and trials, because of faster transaction confirmation times. However, as the writing of this, Kovan testnet is only available for Parity and not for Go Ethereum. Go Ethereum and Parity have a different command line syntax and account unlocking mechanisms. It might take some effort to learn and start using both.
 
+
+Account unlocking
+^^^^^^^^^^^^^^^^^
+
+When you make an Ethereum transaction, including deploying a contract, you need to have an Ethereum account with ETH balance on it. Furthermore this account must be unlocked. By default the accounts are available only in an encrypted file in the hard disk. When you unlock the account you can use it from the scripts for performing transactions.
+
 Go Ethereun for mainnet
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -107,5 +113,11 @@ Example how to start Parity JSON-RPC for Kovan testnet, unlocking your Kovan acc
 
     parity --chain=kovan --unlock 0x001fc7d... --password password.txt --jsonrpc-apis "web3,eth,net,parity,traces,rpc,personal" --jsonrpc-port 8547 --no-ipc --port 30306 --tracing on --allow-ips=public
 
+Getting Kovan testnet ETH
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Your options
 
+* `Kindly ask people to send you Kovan ETH (KETH) on the Kovan Gitter channel <https://github.com/kovan-testnet/faucet#gitter-channel-manual-github-verification>`_
+
+* `Use Parity provided SMS authentication to get KETH. <https://github.com/kovan-testnet/faucet#icarus-faucet-automated-sms-verification>`_ in this case you need to start the Parity node in mainnet first, import in the same account and then get some real ETH balance for it.
