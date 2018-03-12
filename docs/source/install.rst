@@ -84,6 +84,15 @@ Then install ``ico`` Python package and its dependencies:
     pip install -r requirements.txt
     pip install -e .
 
+Installing Ethereum node (geth or parity)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You need to have Go Ethereum (geth), Parity or some other mean to communicate with Ethereum blockchain.
+
+The default set up assumes you run JSON-RPC in `http://localhost:8545` for mainnnet and `http://localhost:8547` for Kovan testnet.
+
+For more information see :ref:`chain configuration <chain-configuration>`.
+
 Using your desired Solc version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Sometimes it's useful to use some certain version of the Solidity compiler,
