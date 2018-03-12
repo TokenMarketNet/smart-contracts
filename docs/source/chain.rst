@@ -4,6 +4,8 @@
 Chain configuration
 ===================
 
+.. contents:: :local:
+
 Introduction
 ============
 
@@ -39,8 +41,14 @@ Ethereum node software (geth, parity) must be started beforehand and configured 
 Starting Ethereum node and creating deployment accounts
 =======================================================
 
-Go Ethereun mainnet
-^^^^^^^^^^^^^^^^^^^
+Below are two examples for Go Ethereum and Parity.
+
+.. note ::
+
+    We recommend using Kovan or Ropsten testnet for any testing and trials, because of faster transaction confirmation times. However, as the writing of this, Kovan testnet is only available for Parity and not for Go Ethereum. Go Ethereum and Parity have a different command line syntax and account unlocking mechanisms. It might take some effort to learn and start using both.
+
+Go Ethereun for mainnet
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Example how to start Go Ethereum JSON-RPC for mainnet:
 
@@ -72,8 +80,8 @@ Then unlock account for 1 hour in geth console::
     personal.unlockAccount("0x00000000...", "my account password", 3600)
 
 
-Kovan testnet
-^^^^^^^^^^^^^
+Parity with Kovan testnet
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 First start `parity --chain=kovan` to generate the chaindata files and such.
 
@@ -89,8 +97,5 @@ Example how to start Parity JSON-RPC for Kovan testnet, unlocking your Kovan acc
 
     parity --chain=kovan --unlock 0x001fc7d... --password password.txt --jsonrpc-apis "web3,eth,net,parity,traces,rpc,personal" --jsonrpc-port 8547 --no-ipc --port 30306 --tracing on --allow-ips=public
 
-.. note ::
-
-    It is recommended that you use Kovan testnet for any testing and trials, because of faster transaction confirmation times.
 
 
