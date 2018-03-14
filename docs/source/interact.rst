@@ -998,3 +998,4 @@ Example:
         # Get a Dayta payload for calling a contract function refund()
         sig_data = contract._prepare_transaction(function)
         print("Data payload for {}() is {}".format(function, sig_data["data"]))
+

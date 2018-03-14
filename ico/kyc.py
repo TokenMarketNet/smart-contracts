@@ -1,4 +1,5 @@
 """AML data passing helpers."""
+from binascii import hexlify
 from uuid import UUID
 
 from eth_utils import is_checksum_address
@@ -61,3 +62,35 @@ def pack_kyc_pricing_dataframe(whitelisted_address: str, customer_id: UUID, min_
     data = addr_b + customer_b + min_b + max_b + pricing_data
     assert len(data) == 76, "Got length: {}".format(len(data))
     return data
+
+
+def unpack_kyc_pricing_dataframe(b: bytes) -> dict:
+    """Unpack a KYC payloda for diagnostics purposes.
+
+    Useful to troubleshoot live transactions. Grab the transaction hex data from Etherscan, starting on [5], make it a single string and use this function to see what parameters where given to the user.
+
+    Example::
+
+        import binascii
+        from ico.kyc import unpack_kyc_pricing_dataframe
+
+        h = "83dcb...40000000000000000000000000000000000000000000000000000000000000001"
+        b = binascii.unhexlify(h)
+        unpack_kyc_pricing_dataframe(b)
+
+    """
+
+    assert len(b) == 76, "Got byte array of length: {}".format(len(b))
+    addr_value = b[0:20]
+    customer_id = b[20:36]
+    min_b = b[36:40]
+    max_b = b[40:44]
+    pricing_data = b[44:76]
+
+    return {
+        "address": "0x" + hexlify(addr_value).decode("ascii"),
+        "customer_id": UUID(int=int(hexlify(customer_id), 16)),
+        "min_payment_eth": int(hexlify(min_b), 16) / 10000.0,
+        "max_payment_eth": int(hexlify(max_b), 16) / 10000.0,
+        "pricing_data": int(hexlify(pricing_data), 16),
+    }
