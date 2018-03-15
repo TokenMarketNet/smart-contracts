@@ -4,7 +4,7 @@
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
-import "zeppelin/contracts/token/ERC20.sol";
+import "zeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StandardTokenExt.sol";
 import "./SafeMathLib.sol";
 
@@ -35,7 +35,7 @@ contract MintableToken is StandardTokenExt {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
+    totalSupply_ = totalSupply_.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
 
     // This will make the mint transaction apper in EtherScan.io

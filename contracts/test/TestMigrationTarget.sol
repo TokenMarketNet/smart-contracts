@@ -37,7 +37,7 @@ contract TestMigrationTarget is StandardTokenExt, UpgradeAgent {
     if (msg.sender != address(oldToken)) throw; // only upgrade from oldToken
 
     // Mint new tokens to the migrator
-    totalSupply = totalSupply.plus(_value);
+    totalSupply_ = totalSupply_.plus(_value);
     balances[_from] = balances[_from].plus(_value);
     Transfer(0, _from, _value);
   }
