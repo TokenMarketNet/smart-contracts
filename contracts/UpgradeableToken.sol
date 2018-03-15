@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.8;
 
-import "zeppelin/contracts/token/ERC20.sol";
+import "zeppelin/contracts/token/ERC20/ERC20.sol";
 import "./StandardTokenExt.sol";
 import "./UpgradeAgent.sol";
 
@@ -71,7 +71,7 @@ contract UpgradeableToken is StandardTokenExt {
       balances[msg.sender] = balances[msg.sender].sub(value);
 
       // Take tokens out from circulation
-      totalSupply = totalSupply.sub(value);
+      totalSupply_ = totalSupply_.sub(value);
       totalUpgraded = totalUpgraded.add(value);
 
       // Upgrade agent reissues the tokens
@@ -100,7 +100,7 @@ contract UpgradeableToken is StandardTokenExt {
       // Bad interface
       if(!upgradeAgent.isUpgradeAgent()) throw;
       // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
+      if (upgradeAgent.originalSupply() != totalSupply_) throw;
 
       UpgradeAgentSet(upgradeAgent);
   }
