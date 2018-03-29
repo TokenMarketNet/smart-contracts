@@ -1,0 +1,46 @@
+version: '2'
+services:
+    ganache:
+        image: trufflesuite/ganache-cli
+        container_name: ganache-cli
+        tty: true
+        ports:
+          - "4545:8545/tcp"
+          - "4546:8546/tcp"
+          - "50303:30303/tcp"
+          - "50303:30303/udp"
+          - "50304:30304/udp"
+        networks:
+          testnet:
+            ipv4_address: 172.21.0.2
+
+
+    tkn:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        container_name: tkn
+        tty: true
+        networks:
+          testnet:
+            ipv4_address: 172.21.0.3
+        volumes:
+          - "./contracts:/usr/src/app/contracts"
+          - "./crowdsales:/usr/src/app/crowdsales"
+          - "./zeppelin:/usr/src/app/zeppelin"
+          - "./ico:/usr/src/app/ico"
+          - "./populus.json:/usr/src/app/populus.json"
+        depends_on:
+          - "ganache"
+
+networks:
+  testnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local

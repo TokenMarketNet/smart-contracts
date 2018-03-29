@@ -1,0 +1,73 @@
+# This is an example for deploying a crowdsale compatible EIP-20 token on a private testnet.
+#
+# First start a transient local Ethereum chain using populus and geth:
+#
+#   populus chain run local
+#
+# This will start a private chain running geth in port 8548. The
+# first launch might be slow as it has to generate 1 GB DAG file.
+# Leave populus + geth running on the background.
+#
+# Then in another terminal you can run a command to deploy this token script:
+#
+# deploy-contracts --address=coinbase --deployment-file=crowdsales/crowdsale-token-example.yml --deployment-name=local-token
+#
+# This will deploy a new token using the default coinbase account
+# on the local chain. Running the command takes ~60 seconds.
+#
+# You can find it your coinbase account (account 0) by doing:
+#
+#   geth attach http://localhost:8548
+#
+#   > eth.accounts
+#   ["0xce90d9e5024e97f3123999aae6a1c395bb3c2013"]
+#
+
+# This is the deployment-name parameter.
+# We can have multiple deployments in a single YAML file.
+local-token:
+
+    # This is the chain name in populus.json
+    chain: ganache
+
+    # We cannot verify the contract on EtherScan, because EtherScan only supports public nets
+    verify_on_etherscan: no
+
+    contracts:
+
+        # This deploys CrowdsaleToken contract.
+        # This contract is a superset of EIP-20 token
+        # with added metadata, upgrade and release functionality.
+        token:
+            contract_name: CrowdsaleToken
+            contract_file: CrowdsaleToken.sol
+            arguments:
+                _name: "MooToken"
+                _symbol: "MOO"
+                _initialSupply: "{{ 100000000000*10**18 }}"
+                _decimals: 18  # Standardish decimals for EIP-20 tokens
+                _mintable: false
+
+    # No special post-deployment transactions needed
+    post_actions: |
+        # By default, our crowdsale token tranfers work only on whitelisted address.
+        # (To prevent shadow markets during the token sale).
+        # In post-actions we make token transferable.
+
+        # Make owner to be address / contract that controls the release
+        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(deploy_address))
+
+        # Unlock token transfers
+        confirm_tx(token.transact({"from": deploy_address}).releaseTokenTransfer())
+
+    # Verify that we have correctly deployed the contract
+    verify_actions: |
+
+        # Token is now transferable
+        assert token.call().released()
+
+        # We deployed using coinbase account
+        assert deploy_address == web3.eth.accounts[0]
+
+        # Check that the owner got all initial balance
+        assert token.call().balanceOf(deploy_address) == 100000000000*10**18
