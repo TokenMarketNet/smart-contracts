@@ -1,3 +1,9 @@
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * Author: Ville Sundell <ville at tokenmarket.net>
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 pragma solidity ^0.4.18;
 
 import "./CrowdsaleToken.sol";
@@ -18,6 +24,7 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
   event Announced(address indexed proposal, uint256 indexed proposalType, bytes32 indexed proposalName, bytes32 proposalURI);
+  event UpdatedTokenInformation(string newName, string newSymbol);
 
   address[] public proposals;
 
@@ -59,4 +66,19 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
     Burned(burner, value);
   }
 
+  /**
+  * Whitelisted can update token information here.
+  *
+  * It is often useful to conceal the actual token association, until
+  * the token operations, like central issuance or reissuance have been completed.
+  *
+  * This function allows the token owner to rename the token after the operations
+  * have been completed and then point the audience to use the token contract.
+  */
+  function setTokenInformation(string _name, string _symbol) external onlyWhitelisted {
+    name = _name;
+    symbol = _symbol;
+
+    UpdatedTokenInformation(name, symbol);
+  }
 }

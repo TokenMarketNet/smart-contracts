@@ -1,7 +1,8 @@
 """TAPAS tests"""
 import pytest
+from random import randint
 from web3.contract import Contract
-
+from ico.tests.utils import check_gas
 
 @pytest.fixture
 def tapas_token_name() -> str:
@@ -36,9 +37,11 @@ def tapas_token(chain, team_multisig, tapas_token_name, tapas_token_symbol, tapa
 
     contract, hash = chain.provider.deploy_contract('TAPASToken', deploy_args=args, deploy_transaction=tx)
 
-    contract.transact(tx).addAddressToWhitelist(team_multisig)
-    contract.transact(tx).issueTokens(999999998000000000000000000)
-    contract.transact(tx).issueTokens(1000000000000000000)
+    check_gas(chain, hash)
+
+    check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
+    check_gas(chain, contract.transact(tx).issueTokens(999999998000000000000000000))
+    check_gas(chain, contract.transact(tx).issueTokens(1000000000000000000))
 
     assert contract.call().totalSupply() == 999999999000000000000000000
     assert contract.call().balanceOf(team_multisig) == 999999999000000000000000000
@@ -66,13 +69,31 @@ def test_tapas_token_interface(tapas_token: Contract, token_owner: str, zero_add
     assert approval
 
 
-def test_tapas_transfer(tapas_token: Contract, team_multisig, zero_address, customer):
+def test_tapas_transfer(chain, tapas_token, team_multisig, zero_address, customer):
     """Basic ERC-20 Transfer"""
 
     # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
 
-    tapas_token.transact({"from": team_multisig}).transfer(customer, 100)
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 100), gaslimit=140000)
     assert tapas_token.call().balanceOf(customer) == 100
     assert tapas_token.call().balanceOf(zero_address) == 0
     assert tapas_token.call().balanceAt(customer, 1) == 0
     assert tapas_token.call().balanceAt(customer, 999999) == 100
+
+def test_tapas_transfer_stresstest(chain, tapas_token, team_multisig, zero_address, customer):
+    """Basic ERC-20 Transfer"""
+
+    # Feel free to raise the number of iterations according to your needs:
+    # (These were run with fixed y = 1)
+    # After 3 iterations, balanceAt() takes      25,177 gas each
+    # After 3,000 iterations, balanceAt() takes  37,224 gas each
+    # After 10,000 iterations, balanceAt() takes 39,780 gas each
+    # Randomized 3,000 iterations (current) took 37,284 gas per transaction
+    for x in range(0):
+        check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 100))
+        assert tapas_token.call().balanceOf(customer) == 100
+        assert tapas_token.call().balanceOf(zero_address) == 0
+        check_gas(chain, tapas_token.transact({"from": customer}).transfer(team_multisig, 100))
+        y = 1+randint(0, x)
+        check_gas(chain, tapas_token.transact().balanceAt(customer, y), tag=str(y))
+        assert tapas_token.call().balanceOf(customer) == 0
