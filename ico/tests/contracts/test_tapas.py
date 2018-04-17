@@ -16,7 +16,7 @@ def tapas_token_symbol() -> str:
 
 @pytest.fixture
 def tapas_initial_supply() -> str:
-    return 10000000
+    return 999999999000000000000000000
 
 @pytest.fixture
 def zero_address() -> str:
@@ -40,16 +40,50 @@ def tapas_token(chain, team_multisig, tapas_token_name, tapas_token_symbol, tapa
     check_gas(chain, hash)
 
     check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
-    check_gas(chain, contract.transact(tx).issueTokens(999999998000000000000000000))
-    check_gas(chain, contract.transact(tx).issueTokens(1000000000000000000))
+    check_gas(chain, contract.transact(tx).issueTokens(tapas_initial_supply))
 
-    assert contract.call().totalSupply() == 999999999000000000000000000
-    assert contract.call().balanceOf(team_multisig) == 999999999000000000000000000
+    assert contract.call().totalSupply() == tapas_initial_supply
+    assert contract.call().balanceOf(team_multisig) == tapas_initial_supply
 
     return contract
 
+def test_tapas_issue(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).issueTokens(tapas_initial_supply))
+    assert tapas_token.call().totalSupply() == (tapas_initial_supply * 2)
 
-def test_tapas_token_interface(tapas_token: Contract, token_owner: str, zero_address: str):
+
+def test_tapas_burn(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(tapas_token.address, tapas_initial_supply))
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).burnTokens(tapas_initial_supply - 1))
+    assert tapas_token.call().totalSupply() == 1
+
+
+def test_tapas_force(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    assert tapas_token.call().balanceOf(team_multisig) == tapas_initial_supply
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).forceTransfer(team_multisig, customer, tapas_initial_supply))
+    assert tapas_token.call().totalSupply() == tapas_initial_supply
+    assert tapas_token.call().balanceOf(team_multisig) == 0
+    assert tapas_token.call().balanceOf(customer) == tapas_initial_supply
+
+def test_tapas_ask_balanceat(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact().balanceAt(team_multisig, 1), gaslimit=26000)
+
+
+def test_tapas_change_name_and_symbol(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).setTokenInformation("NewToken", "NEW"))
+    assert tapas_token.call().name() == "NewToken"
+    assert tapas_token.call().symbol() == "NEW"
+
+
+def test_tapas_approve(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).approve(customer, tapas_initial_supply))
+    assert tapas_token.call().allowance(team_multisig, customer) == tapas_initial_supply
+    check_gas(chain, tapas_token.transact({"from": customer}).transferFrom(team_multisig, customer, tapas_initial_supply))
+    assert tapas_token.call().balanceOf(team_multisig) == 0
+    assert tapas_token.call().balanceOf(customer) == tapas_initial_supply
+
+
+def test_tapas_token_interface(tapas_token, token_owner: str, zero_address: str):
     """TAPAS satisfies ERC-20/ERC-827 interface."""
 
     # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
@@ -89,7 +123,7 @@ def test_tapas_transfer_stresstest(chain, tapas_token, team_multisig, zero_addre
     # After 3,000 iterations, balanceAt() takes  37,224 gas each
     # After 10,000 iterations, balanceAt() takes 39,780 gas each
     # Randomized 3,000 iterations (current) took 37,284 gas per transaction
-    for x in range(0):
+    for x in range(3):
         check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 100))
         assert tapas_token.call().balanceOf(customer) == 100
         assert tapas_token.call().balanceOf(zero_address) == 0

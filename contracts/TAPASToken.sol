@@ -23,6 +23,7 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   // TAPAS specific
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
+  event Forced(address indexed from, address indexed to, uint256 value);
   event Announced(address indexed proposal, uint256 indexed proposalType, bytes32 indexed proposalName, bytes32 proposalURI);
   event UpdatedTokenInformation(string newName, string newSymbol);
 
@@ -39,6 +40,8 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
 
   function forceTransfer(address from, address to, uint256 value) external onlyWhitelisted {
     transferInternal(from, to, value);
+
+    Forced(from, to, value);
   }
 
   function issueTokens(uint256 value) external onlyWhitelisted {
