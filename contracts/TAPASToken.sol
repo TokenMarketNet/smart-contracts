@@ -11,11 +11,11 @@ import "./CheckpointToken.sol";
 import "./Recoverable.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 
-/// @dev TAPAS proposal interface
-interface TAPASProposal {
-  function proposalName() public view returns (bytes32);
-  function proposalURI() public view returns (bytes32);
-  function proposalType() public view returns (uint256);
+/// @dev TAPAS announcement interface
+interface TAPASAnnouncement {
+  function announcementName() public view returns (bytes32);
+  function announcementURI() public view returns (bytes32);
+  function announcementType() public view returns (uint256);
 }
 
 contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
@@ -24,18 +24,18 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
   event Forced(address indexed from, address indexed to, uint256 value);
-  event Announced(address indexed proposal, uint256 indexed proposalType, bytes32 indexed proposalName, bytes32 proposalURI);
+  event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI);
   event UpdatedTokenInformation(string newName, string newSymbol);
 
-  address[] public proposals;
+  address[] public announcements;
 
   function TAPASToken(string _name, string _symbol) CheckpointToken(_name, _symbol, 18) public {
 
   }
 
-  function announce(TAPASProposal proposal) external onlyWhitelisted {
-    proposals.push(proposal);
-    Announced(proposal, proposal.proposalType(), proposal.proposalName(), proposal.proposalURI());
+  function announce(TAPASAnnouncement announcement) external onlyWhitelisted {
+    announcements.push(announcement);
+    Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI());
   }
 
   function forceTransfer(address from, address to, uint256 value) external onlyWhitelisted {
