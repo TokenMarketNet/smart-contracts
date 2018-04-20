@@ -3,12 +3,48 @@ import pytest
 from random import randint
 from web3.contract import Contract
 from ico.tests.utils import check_gas
+from ico.tests.utils import removeNonPrintable
 from rlp.utils import decode_hex
 from ethereum.tester import TransactionFailed
 
 @pytest.fixture
 def testpayload() -> str:
     return decode_hex("a3e76c0f") # function receive() returns(bool)
+
+@pytest.fixture
+def announcement_name() -> str:
+    return "Announcement 1"
+
+@pytest.fixture
+def announcement_uri() -> str:
+    return "https://tokenmarket.net"
+
+@pytest.fixture
+def announcement_type() -> int:
+    return 123
+
+
+@pytest.fixture
+def announcement(chain, team_multisig, announcement_name, announcement_uri, announcement_type) -> Contract:
+    """Create a bogus announcement for testing"""
+
+    args = [announcement_name, announcement_uri, announcement_type]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash = chain.provider.deploy_contract('BogusTAPASAnnouncement', deploy_args=args, deploy_transaction=tx)
+
+
+    check_gas(chain, hash)
+
+    assert removeNonPrintable(contract.call().announcementName()) == announcement_name
+    assert removeNonPrintable(contract.call().announcementURI()) == announcement_uri
+    assert contract.call().announcementType() == announcement_type
+
+    return contract
+
 
 @pytest.fixture
 def receiver(chain, team_multisig) -> Contract:
@@ -84,6 +120,7 @@ def test_tapas_force(chain, tapas_token, tapas_initial_supply, team_multisig, ze
     assert tapas_token.call().balanceOf(team_multisig) == 0
     assert tapas_token.call().balanceOf(customer) == tapas_initial_supply
 
+
 def test_tapas_ask_balanceat(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
     check_gas(chain, tapas_token.transact().balanceAt(team_multisig, 1), gaslimit=26000)
 
@@ -100,6 +137,15 @@ def test_tapas_approve(chain, tapas_token, tapas_initial_supply, team_multisig, 
     check_gas(chain, tapas_token.transact({"from": customer}).transferFrom(team_multisig, customer, tapas_initial_supply))
     assert tapas_token.call().balanceOf(team_multisig) == 0
     assert tapas_token.call().balanceOf(customer) == tapas_initial_supply
+
+
+def test_tapas_approve_bad_amount(chain, tapas_token, tapas_initial_supply, team_multisig, zero_address, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).approve(customer, tapas_initial_supply))
+    assert tapas_token.call().allowance(team_multisig, customer) == tapas_initial_supply
+    with pytest.raises(TransactionFailed):
+        tapas_token.transact({"from": customer}).transferFrom(team_multisig, customer, (tapas_initial_supply * 2))
+    assert tapas_token.call().balanceOf(team_multisig) == tapas_initial_supply
+    assert tapas_token.call().balanceOf(customer) == 0
 
 
 def test_tapas_token_interface(tapas_token, token_owner: str, zero_address: str):
@@ -133,6 +179,20 @@ def test_tapas_transfer(chain, tapas_token, team_multisig, zero_address, custome
     assert tapas_token.call().balanceAt(customer, 1) == 0
     assert tapas_token.call().balanceAt(customer, 999999) == 100
 
+
+def test_tapas_transfer_bad_amount(chain, tapas_token, team_multisig, zero_address, customer):
+    """Basic ERC-20 Transfer"""
+    original_balance = tapas_token.call().balanceOf(team_multisig)
+
+    # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
+
+    with pytest.raises(TransactionFailed):
+        tapas_token.transact({"from": team_multisig}).transfer(customer, 10000000000000000000000000000000000)
+
+    assert tapas_token.call().balanceOf(customer) == 0
+    assert tapas_token.call().balanceOf(team_multisig) == original_balance
+
+
 def test_tapas_transfer_stresstest(chain, tapas_token, team_multisig, zero_address, customer):
     """Basic ERC-20 Transfer"""
 
@@ -151,6 +211,21 @@ def test_tapas_transfer_stresstest(chain, tapas_token, team_multisig, zero_addre
         check_gas(chain, tapas_token.transact().balanceAt(customer, y), tag=str(y))
         assert tapas_token.call().balanceOf(customer) == 0
 
+
+def test_tapas_announce(chain, tapas_token, team_multisig, zero_address, customer, announcement, announcement_name, announcement_uri, announcement_type):
+    """Announce TAPASAnnouncement """
+    tapas_token.transact({"from": team_multisig}).announce(announcement.address)
+
+    events = tapas_token.pastEvents("Announced").get()
+    assert len(events) == 1
+    e = events[0]
+
+    assert e["args"]["announcement"] == announcement.address
+    assert removeNonPrintable(e["args"]["announcementName"]) == announcement_name
+    assert removeNonPrintable(e["args"]["announcementURI"]) == announcement_uri
+    assert e["args"]["announcementType"] == announcement_type
+
+
 def test_tapas_erc827_allowance(tapas_token, team_multisig, testpayload, receiver, customer):
     """Testing succesful approve+transferFrom combination"""
 
@@ -164,6 +239,7 @@ def test_tapas_erc827_allowance(tapas_token, team_multisig, testpayload, receive
 
     tapas_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 100, testpayload)
 
+
 def test_tapas_erc827_allowance_bad_amount(tapas_token, team_multisig, testpayload, receiver, customer):
     """Testing unsuccesful approve+transferFrom combination with too large amount"""
 
@@ -173,6 +249,7 @@ def test_tapas_erc827_allowance_bad_amount(tapas_token, team_multisig, testpaylo
 
     with pytest.raises(TransactionFailed):
         tapas_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 100, testpayload)
+
 
 def test_tapas_erc827_allowance_bad_claimant(tapas_token, team_multisig, testpayload, receiver, customer, customer_2):
     """Testing unsuccesful approve+transferFrom combination by 3rd party"""
@@ -184,6 +261,7 @@ def test_tapas_erc827_allowance_bad_claimant(tapas_token, team_multisig, testpay
     with pytest.raises(TransactionFailed):
         tapas_token.transact({"from": customer_2}).transferFrom(team_multisig, receiver.address, 50, testpayload)
 
+
 def test_tapas_erc827_allowance_without_approve(tapas_token, team_multisig, testpayload, receiver, customer, customer_2):
     """Testing succesful transferFrom without approve()"""
 
@@ -192,11 +270,13 @@ def test_tapas_erc827_allowance_without_approve(tapas_token, team_multisig, test
     with pytest.raises(TransactionFailed):
         tapas_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 50, testpayload)
 
+
 def test_tapas_erc827_transfer(tapas_token, team_multisig, testpayload, receiver):
     """Testing succesful token transfer"""
     assert tapas_token.call().balanceOf(receiver.address) == 0
     tapas_token.transact({"from": team_multisig}).transfer(receiver.address, 100, testpayload)
     assert tapas_token.call().balanceOf(receiver.address) == 100
+
 
 def test_tapas_erc827_transfer_bad_amount(tapas_token, team_multisig, testpayload, receiver):
     """Testing unsuccesful token transfer with too large amount"""
