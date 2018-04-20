@@ -77,37 +77,37 @@ contract CheckpointToken is ERC20, ERC827 {
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
    *
-   * approve should be called when allowed[_spender] == 0. To increment
+   * approve should be called when allowed[spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
+   * @param spender The address which will spend the funds.
+   * @param addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+  function increaseApproval(address spender, uint addedValue) public returns (bool) {
+    allowed[msg.sender][spender] = allowed[msg.sender][spender].add(addedValue);
+    Approval(msg.sender, spender, allowed[msg.sender][spender]);
     return true;
   }
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
    *
-   * approve should be called when allowed[_spender] == 0. To decrement
+   * approve should be called when allowed[spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   * @param spender The address which will spend the funds.
+   * @param subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
+  function decreaseApproval(address spender, uint subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][spender];
+    if (subtractedValue > oldValue) {
+      allowed[msg.sender][spender] = 0;
     } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+      allowed[msg.sender][spender] = oldValue.sub(subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, spender, allowed[msg.sender][spender]);
     return true;
   }
 
@@ -124,18 +124,18 @@ contract CheckpointToken is ERC20, ERC827 {
      afterwards:
      https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
 
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
+     @param spender The address that will spend the funds.
+     @param value The amount of tokens to be spent.
+     @param data ABI-encoded contract call to call `_to` address.
 
      @return true if the call function was executed successfully
    */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
+  function approve(address spender, uint256 value, bytes data) public returns (bool) {
+    require(spender != address(this));
 
-    approve(_spender, _value);
+    approve(spender, value);
 
-    require(_spender.call(_data));
+    require(spender.call(data));
 
     return true;
   }
@@ -144,18 +144,18 @@ contract CheckpointToken is ERC20, ERC827 {
      @dev Addition to ERC20 token methods. Transfer tokens to a specified
      address and execute a call with the sent data on the same transaction
 
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
+     @param to address The address which you want to transfer to
+     @param value uint256 the amout of tokens to be transfered
+     @param data ABI-encoded contract call to call `_to` address.
 
      @return true if the call function was executed successfully
    */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
+  function transfer(address to, uint256 value, bytes data) public returns (bool) {
+    require(to != address(this));
 
-    transfer(_to, _value);
+    transfer(to, value);
 
-    require(_to.call(_data));
+    require(to.call(data));
     return true;
   }
 
@@ -163,19 +163,19 @@ contract CheckpointToken is ERC20, ERC827 {
      @dev Addition to ERC20 token methods. Transfer tokens from one address to
      another and make a contract call on the same transaction
 
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
+     @param from The address which you want to send tokens from
+     @param to The address which you want to transfer to
+     @param value The amout of tokens to be transferred
+     @param data ABI-encoded contract call to call `_to` address.
 
      @return true if the call function was executed successfully
    */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
+  function transferFrom(address from, address to, uint256 value, bytes data) public returns (bool) {
+    require(to != address(this));
 
-    transferFrom(_from, _to, _value);
+    transferFrom(from, to, value);
 
-    require(_to.call(_data));
+    require(to.call(data));
     return true;
   }
 
@@ -183,20 +183,20 @@ contract CheckpointToken is ERC20, ERC827 {
    * @dev Addition to StandardToken methods. Increase the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
    *
-   * approve should be called when allowed[_spender] == 0. To increment
+   * approve should be called when allowed[spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
+   * @param spender The address which will spend the funds.
+   * @param addedValue The amount of tokens to increase the allowance by.
+   * @param data ABI-encoded contract call to call `spender` address.
    */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
+  function increaseApproval(address spender, uint addedValue, bytes data) public returns (bool) {
+    require(spender != address(this));
 
-    increaseApproval(_spender, _addedValue);
+    increaseApproval(spender, addedValue);
 
-    require(_spender.call(_data));
+    require(spender.call(data));
 
     return true;
   }
@@ -205,20 +205,20 @@ contract CheckpointToken is ERC20, ERC827 {
    * @dev Addition to StandardToken methods. Decrease the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
    *
-   * approve should be called when allowed[_spender] == 0. To decrement
+   * approve should be called when allowed[spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
+   * @param spender The address which will spend the funds.
+   * @param subtractedValue The amount of tokens to decrease the allowance by.
+   * @param data ABI-encoded contract call to call `spender` address.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
+  function decreaseApproval(address spender, uint subtractedValue, bytes data) public returns (bool) {
+    require(spender != address(this));
 
-    decreaseApproval(_spender, _subtractedValue);
+    decreaseApproval(spender, subtractedValue);
 
-    require(_spender.call(_data));
+    require(spender.call(data));
 
     return true;
   }
