@@ -2,6 +2,7 @@ from populus.chain import TestRPCChain
 from web3.testing import Testing
 from populus.utils.wait import wait_for_transaction_receipt
 import warnings
+import string
 
 
 def check_gas(chain, txid: str, gaslimit=5000000, timeout=180, tag="") -> int:
@@ -24,3 +25,6 @@ def time_travel(chain: TestRPCChain, timestamp: float):
     web3 = chain.web3
     testing = Testing(web3)
     testing.timeTravel(timestamp)
+
+def removeNonPrintable(s) -> str:
+    return ''.join(list(filter(lambda x: x in string.printable, s)))
