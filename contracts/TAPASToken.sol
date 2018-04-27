@@ -9,6 +9,7 @@ pragma solidity ^0.4.18;
 import "./CrowdsaleToken.sol";
 import "./CheckpointToken.sol";
 import "./Recoverable.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 
 /**
@@ -27,6 +28,7 @@ interface TAPASAnnouncement {
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
 contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
+  using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   /** TAPAS specific events **/
   event Issued(address indexed to, uint256 value);

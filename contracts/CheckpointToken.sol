@@ -33,14 +33,23 @@ contract CheckpointToken is ERC20, ERC827 {
 
   mapping (address => mapping (address => uint256)) public allowed;
 
-  function CheckpointToken(string _name, string _symbol, uint256 _decimals) {
+  /**
+   * @dev Constructor for CheckpointToken, initializing the token
+   *
+   * Here we define initial values for name, symbol and decimals.
+   *
+   * @param _name Initial name of the token
+   * @param _symbol Initial symbol of the token
+   * @param _decimals Number of decimals for the token, industry standard is 18
+   */
+  function CheckpointToken(string _name, string _symbol, uint256 _decimals) public {
     name = _name;
     symbol = _symbol;
     decimals = _decimals;
   }
 
-  // PUBLIC
-  //////////
+  /** PUBLIC FUNCTIONS
+   ****************************************/
 
   /**
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
@@ -160,8 +169,9 @@ contract CheckpointToken is ERC20, ERC827 {
     return true;
   }
 
-  // ERC827 Functions from OpenZeppelin
-  ////////////////////////
+  /** ERC827 Functions from OpenZeppelin
+   ****************************************/
+
   /**
      @dev Addition to ERC20 token methods. It allows to
      approve the transfer of value and execute a call with the sent data.
@@ -272,8 +282,8 @@ contract CheckpointToken is ERC20, ERC827 {
     return true;
   }
 
-  // INTERNALS
-  /////////////
+  /** INTERNALS
+   ****************************************/
 
   function balanceAtBlock(Checkpoint[] storage checkpoints, uint256 blockNumber) internal returns (uint256 balance) {
     uint256 currentBlockNumber;
@@ -293,10 +303,9 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
 
-  // CORE
-  //////////////////////
-  // The magic happens below:
-  //////////////////////
+  /** CORE
+   ** The Magic happens below:
+   ***************************************/
 
   function setCheckpoint(Checkpoint[] storage checkpoints, uint256 newValue) internal {
     if ((checkpoints.length == 0) || (checkpoints[checkpoints.length.sub(1)].blockNumber < block.number)) {
