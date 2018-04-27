@@ -1,3 +1,13 @@
+TokenMarket 2018 conference, Gibraltar, June 27th - 28th
+========================================================
+
+Our conference TokenMarket 2018: Insights into the Token Economy is held June 27th in Gibraltar. Tokenisation has created new financial markets. Join the industry leaders to discuss where those markets are heading.
+
+`View conference and buy the tickets now <https://tokenmarket.net/conference-2018>`_ 
+
+About
+=====
+
 This package contains Ethereum smart contracts and command line toolchain for launching and managing token sales.
 
 .. image:: https://badges.gitter.im/TokenMarketNet/ico.svg
@@ -17,14 +27,6 @@ This package contains Ethereum smart contracts and command line toolchain for la
 .. image:: https://readthedocs.org/projects/ico/badge/?version=latest
     :alt: Documentation Status
     :target: https://ico.readthedocs.io/en/latest/?badge=latest
-
-We are hiring
-=============    
-
-TokenMarket is hiring smart contract developers. Advanced Python (3-5 years) and basic Solidity (< 1 years) experience needed. 
-Prior contributions and track record on working with open source projects required.
-Remote work, but occassional travel to Europe and UK is required.
-Please email  your CV and your Github profile link to jobs@tokenmarket.net
 
 Links
 =====
