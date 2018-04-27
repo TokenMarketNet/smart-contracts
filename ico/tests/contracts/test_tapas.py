@@ -6,6 +6,7 @@ from ico.tests.utils import check_gas
 from ico.tests.utils import removeNonPrintable
 from rlp.utils import decode_hex
 from ethereum.tester import TransactionFailed
+import time
 
 @pytest.fixture
 def testpayload() -> str:
@@ -55,6 +56,18 @@ def receiver(chain, team_multisig) -> Contract:
     }
 
     contract, hash = chain.provider.deploy_contract('ERC827Receiver', deploy_transaction=tx)
+    return contract
+
+
+@pytest.fixture
+def failsafetester(chain, team_multisig) -> Contract:
+    """Create a contract for testing the failsafe."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
     return contract
 
 @pytest.fixture
@@ -287,3 +300,30 @@ def test_tapas_erc827_transfer_bad_amount(tapas_token, team_multisig, testpayloa
         tapas_token.transact({"from": team_multisig}).transfer(receiver.address, 10000000000000000000000000000000000, testpayload)
     assert tapas_token.call().balanceOf(receiver.address) == 0
     assert tapas_token.call().balanceOf(team_multisig) == original_balance
+
+
+def test_tapas_failsafe(chain, tapas_token, failsafetester, team_multisig, customer):
+    """Basic ERC-20 Transfer"""
+    index = 2
+
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 1))
+
+    original_block, original_balance = tapas_token.call().tokenBalances(customer, index);
+
+    tester_result, tester_balance, tester_block = failsafetester.call().getTokenBalance(tapas_token.address, original_block, customer, index);
+
+    assert tester_result == True
+    assert tester_balance == original_balance
+    assert tester_block == original_block
+
+    tester_result, tester_balance, tester_block = failsafetester.call().getTokenBalance(tapas_token.address, original_block, customer, 0);
+    assert tester_result == False
+
+    with pytest.raises(TransactionFailed):
+        failsafetester.call().getTokenBalance(tapas_token.address, original_block, customer, 9999);
+
+    # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
+    #tapas_token.transact({"from": team_multisig}).transfer(customer, 1)
