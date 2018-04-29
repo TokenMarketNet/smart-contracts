@@ -1,7 +1,7 @@
-TokenMarket 2018 conference, Gibraltar, June 27th - 28th
+TokenMarket 2018 conference, Gibraltar, June 28th - 29th
 ========================================================
 
-Our conference TokenMarket 2018: Insights into the Token Economy is held June 27th in Gibraltar. Tokenisation has created new financial markets. Join the industry leaders to discuss where those markets are heading.
+Our conference TokenMarket 2018: Insights into the Token Economy is held June 28th in Gibraltar. Tokenisation has created new financial markets. Join the industry leaders to discuss where those markets are heading.
 
 `View conference and buy the tickets now <https://tokenmarket.net/conference-2018>`_ 
 
