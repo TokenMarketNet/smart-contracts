@@ -7,7 +7,6 @@
 pragma solidity ^0.4.14;
 
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
-import "zeppelin/contracts/token/ERC827/ERC827Token.sol";
 import "./Recoverable.sol";
 
 
@@ -17,7 +16,7 @@ import "./Recoverable.sol";
  * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
  *
  */
-contract StandardTokenExt is StandardToken, ERC827Token, Recoverable {
+contract StandardTokenExt is StandardToken, Recoverable {
 
   /* Interface declaration */
   function isToken() public constant returns (bool weAre) {
