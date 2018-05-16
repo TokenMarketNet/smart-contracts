@@ -12,7 +12,7 @@ from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 from ico.sign import get_ethereum_address_from_private_key
 from ico.sign import sign
-from ico.kyc import pack_kyc_dataframe
+from ico.kyc import pack_kyc_pricing_dataframe
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def test_kyc_participate_with_signed_address(chain, kyc_crowdsale, customer, cus
     assert not kyc_crowdsale.call().isBreakingCap(wei_value, tokens_per_eth, wei_value, tokens_per_eth)
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_dataframe(customer, customer_id, 0, 1*10000)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1*10000, 1)
     signed_data = sign(kyc_payload, private_key)
 
     kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
@@ -177,7 +177,7 @@ def test_kyc_participate_bad_signature(chain, kyc_crowdsale, customer, customer_
     wei_value = to_wei(1, "ether")
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_dataframe(customer, customer_id, 0, 1*10000)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1*10000, 1)
     signed_data = sign(kyc_payload, private_key + "x")  # Use bad private key
 
     with pytest.raises(TransactionFailed):
@@ -194,7 +194,7 @@ def test_kyc_participate_under_payment(chain, kyc_crowdsale, customer, customer_
     wei_value = to_wei(0.1, "ether")
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_dataframe(customer, customer_id, int(0.5 * 10000), 1*10000)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, int(0.5 * 10000), 1*10000, 1)
     signed_data = sign(kyc_payload, private_key)  # Use bad private key
 
     with pytest.raises(TransactionFailed):
@@ -210,7 +210,7 @@ def test_kyc_participate_over_payment(chain, kyc_crowdsale, customer, customer_i
     wei_value = to_wei(1, "ether")
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_dataframe(customer, customer_id, 0, 10*10000)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 10*10000, 1)
     signed_data = sign(kyc_payload, private_key)  # Use bad private key
 
     kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
