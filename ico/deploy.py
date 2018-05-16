@@ -49,12 +49,12 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
             request_account_unlock(chain, deploy_address, timeout=3600)
 
     # Use non-default gas price for speedier processing
-    gas_price = int(web3.eth.gasPrice * 1.2)
+    gas_price = int(web3.eth.gasPrice * 2)
 
     transaction = {"from": deploy_address, "gasPrice": gas_price}
     kwargs = dict(**contract_def["arguments"])  # Unwrap YAML CommentedMap
 
-    print("Starting", contract_name, "deployment, with arguments ", kwargs)
+    print("Starting", contract_name, "deployment, with arguments ", kwargs, "gas price is", gas_price / (10**9), "GWei")
 
     # TODO: Workaround when deploying the same contract twice in run,
     # because Populus contract_identity allows only one contract_identity per contract class
