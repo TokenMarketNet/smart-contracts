@@ -213,7 +213,7 @@ contract CrowdsaleBase is Haltable {
   }
 
   function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
-    return buyTokens(receiver, customerId, calculateTokens(msg.value, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals())));
+    return buyTokens(receiver, customerId, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals()));
   }
 
   function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public returns(uint tokensTotal) {
