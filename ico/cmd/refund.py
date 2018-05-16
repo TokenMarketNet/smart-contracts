@@ -22,7 +22,7 @@ from ico.utils import check_succesful_tx
 
 @click.command()
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
-@click.option('--hot-wallet-address', nargs=1, help='The account that deploys the issuer contract, controls the contract and pays for the gas fees', required=True)
+@click.option('--hot-wallet-address', nargs=1, help='The account that holds the refunded balance', required=True)
 @click.option('--csv-file', nargs=1, help='CSV file containing distribution data', required=True)
 @click.option('--address-column', nargs=1, help='Name of CSV column containing Ethereum addresses', default="address")
 @click.option('--amount-column', nargs=1, help='Name of CSV column containing decimal token amounts', default="amount")
