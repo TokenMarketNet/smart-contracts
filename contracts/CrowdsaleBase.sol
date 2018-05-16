@@ -160,7 +160,7 @@ contract CrowdsaleBase is Haltable {
    *
    * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+  function buyTokens(address receiver, uint128 customerId, uint256 tokenAmount) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -177,9 +177,6 @@ contract CrowdsaleBase is Haltable {
     }
 
     uint weiAmount = msg.value;
-
-    // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     // Dust transaction
     require(tokenAmount != 0);
@@ -213,6 +210,14 @@ contract CrowdsaleBase is Haltable {
     Invested(receiver, weiAmount, tokenAmount, customerId);
 
     return tokenAmount;
+  }
+
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+    return buyTokens(receiver, customerId, calculateTokens(msg.value, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals())));
+  }
+
+  function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public returns(uint tokensTotal) {
+    return weisTotal/pricePerToken;
   }
 
   /**

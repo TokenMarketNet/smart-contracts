@@ -44,7 +44,9 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
 
       bytes32 hash = sha256(dataframe);
 
-      var (whitelistedAddress, customerId, minETH, maxETH) = getKYCPayload(dataframe);
+      var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPresalePayload(dataframe);
+
+      uint256 tokensTotal = calculateTokens(msg.value, pricingInfo);
 
       // Check that the KYC data is signed by our server
       require(ecrecover(hash, v, r, s) == signerAddress);
@@ -52,7 +54,7 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
       // Only whitelisted address can participate the transaction
       require(whitelistedAddress == msg.sender);
 
-      _tokenAmount = investInternal(msg.sender, customerId);
+      _tokenAmount = buyTokens(msg.sender, customerId, tokensTotal);
 
     }
 
