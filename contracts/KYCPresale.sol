@@ -48,7 +48,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
     require(!halted);
 
     bytes32 hash = sha256(dataframe);
-    var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPresalePayload(dataframe);
+    var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPayload(dataframe);
     uint multiplier = 10 ** 18;
     address receiver = msg.sender;
     uint weiAmount = msg.value;

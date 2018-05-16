@@ -150,15 +150,16 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
-   * Make an investment.
+   * @dev Make an investment.
    *
    * Crowdsale must be running for one to invest.
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
    * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   * @param tokenAmount Amount of tokens which be credited to receiver
    *
-   * @return tokenAmount How mony tokens were bought
+   * @return tokensBought How mony tokens were bought
    */
   function buyTokens(address receiver, uint128 customerId, uint256 tokenAmount) stopInEmergency internal returns(uint tokensBought) {
 
@@ -212,10 +213,29 @@ contract CrowdsaleBase is Haltable {
     return tokenAmount;
   }
 
+  /**
+   * @dev Make an investment based on pricing strategy
+   *
+   * This is a wrapper for buyTokens(), but the amount of tokens receiver will
+   * have depends on the pricing strategy used.
+   *
+   * @param receiver The Ethereum address who receives the tokens
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   *
+   * @return tokensBought How mony tokens were bought
+   */
   function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
     return buyTokens(receiver, customerId, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals()));
   }
 
+  /**
+   * @dev Calculate tokens user will have for theirr purchase
+   *
+   * @param weisTotal How much ethers (in wei) the user putssssss in
+   * @param pricePerToken What is the price for one token
+   *
+   * @return tokensTotal which is weisTotal divided by pricePerToken
+   */
   function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public returns(uint tokensTotal) {
     return weisTotal/pricePerToken;
   }

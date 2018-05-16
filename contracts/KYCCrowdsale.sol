@@ -44,7 +44,7 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
 
       bytes32 hash = sha256(dataframe);
 
-      var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPresalePayload(dataframe);
+      var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPayload(dataframe);
 
       uint256 tokensTotal = calculateTokens(msg.value, pricingInfo);
 
