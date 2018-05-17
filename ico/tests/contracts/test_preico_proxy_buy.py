@@ -131,7 +131,7 @@ def test_proxy_buy(chain, web3, customer, customer_2, team_multisig, proxy_buyer
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
     assert web3.eth.getBalance(proxy_buyer.address) == 0
 
@@ -185,7 +185,7 @@ def test_proxy_buy_claim_twice(chain, web3, customer, customer_2, team_multisig,
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
 
     # We got our tokens
@@ -263,7 +263,7 @@ def test_proxy_buy_load_refund(chain, web3, customer, customer_2, team_multisig,
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
 
     proxy_buyer.transact({"from": team_multisig}).forceRefund()
@@ -293,7 +293,7 @@ def test_proxy_buy_move_funds_twice(chain, web3, customer, customer_2, team_mult
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
 
     with pytest.raises(TransactionFailed):
@@ -311,7 +311,7 @@ def test_proxy_buy_claim_too_much(chain, web3, customer, customer_2, team_multis
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
 
     # We got our tokens
@@ -377,7 +377,7 @@ def test_proxy_buyforeverybody_halted(chain, web3, customer, customer_2, team_mu
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": team_multisig}).halt()
     with pytest.raises(TransactionFailed):
         proxy_buyer.transact({"from": customer}).buyForEverybody()
@@ -394,7 +394,7 @@ def test_proxy_buyforeverybody_halted_owner(chain, web3, customer, customer_2, t
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": team_multisig}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": team_multisig}).halt()
     proxy_buyer.transact({"from": team_multisig}).buyForEverybody()
 
@@ -407,7 +407,7 @@ def test_proxy_buy_presale_pricing(chain, proxy_buyer, tranche_crowdsale, finali
     """
 
     # We have set up the contracts in the way the presale purchaser gets special pricing
-    assert tranche_crowdsale.call().pricingStrategy() == tranche_pricing.address
+    assert tranche_crowdsale.call().pricingStrategy() == chain.web3.toChecksumAddress(tranche_pricing.address)
     assert tranche_pricing.call().isPresalePurchase(proxy_buyer.address) == True
 
     value = to_wei(20000, "ether")
@@ -472,7 +472,7 @@ def test_proxy_timelock(chain, web3, customer, customer_2, team_multisig, proxy_
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
     assert web3.eth.getBalance(proxy_buyer.address) == 0
 
@@ -529,7 +529,7 @@ def test_proxy_timelock_early(chain, web3, customer, customer_2, team_multisig, 
     # Move over
     assert crowdsale.call().getState() == CrowdsaleState.Funding
     proxy_buyer.transact({"from": customer_2}).setCrowdsale(crowdsale.address)
-    assert proxy_buyer.call().crowdsale() == crowdsale.address
+    assert proxy_buyer.call().crowdsale() == web3.toChecksumAddress(crowdsale.address)
     proxy_buyer.transact({"from": customer}).buyForEverybody()
     assert web3.eth.getBalance(proxy_buyer.address) == 0
 

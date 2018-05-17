@@ -52,6 +52,7 @@ def presale_fund_collector(chain, presale_freeze_ends_at, team_multisig) -> Cont
     ]
     tx = {
         "from": team_multisig,
+        "gas": 4000000
     }
     presale_fund_collector, hash = chain.provider.deploy_contract('PresaleFundCollector', deploy_args=args, deploy_transaction=tx)
     return presale_fund_collector
