@@ -344,7 +344,7 @@ def test_close_early(chain: TestRPCChain, ico: Contract, customer: str, preico_s
     pricing_strategy, hash = chain.provider.deploy_contract('FlatPricing', deploy_args=args, deploy_transaction=tx)
 
     ico.transact({"from": team_multisig}).setPricingStrategy(pricing_strategy.address)
-    assert ico.call().pricingStrategy() == pricing_strategy.address
+    assert ico.call().pricingStrategy() == chain.web3.toChecksumAddress(pricing_strategy.address)
 
     ico.transact({"from": customer, "value": 1}).buy()
 

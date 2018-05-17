@@ -185,9 +185,9 @@ testnet:
     # Make sure that everything we have deployed all contracts in good state
     # and their internal state is sane
     verify_actions: |
-        assert token.call().owner() == team_multisig.address
-        assert crowdsale.call().owner() == team_multisig.address
-        assert preico.call().owner() == team_multisig.address
-        assert finalize_agent.call().teamMultisig() == team_multisig.address
+        assert token.call().owner() == web3.toChecksumAddress(team_multisig.address)
+        assert crowdsale.call().owner() == web3.toChecksumAddress(team_multisig.address)
+        assert preico.call().owner() == web3.toChecksumAddress(team_multisig.address)
+        assert finalize_agent.call().teamMultisig() == web3.toChecksumAddress(team_multisig.address)
         assert finalize_agent.call().isSane()
         assert crowdsale.call().getState() == CrowdsaleState.PreFunding

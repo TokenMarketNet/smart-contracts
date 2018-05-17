@@ -34,7 +34,8 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
 
     time_travel(chain, preico_ends_at + 1)
     assert uncapped_flatprice_final.call().getState() == CrowdsaleState.Success
-    assert uncapped_flatprice_final.call().finalizeAgent() == default_finalize_agent.address
+    assert uncapped_flatprice_final.call().finalizeAgent() == chain.web3.toChecksumAddress(
+        default_finalize_agent.address)
 
     # Release the tokens
     uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
