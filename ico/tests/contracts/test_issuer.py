@@ -23,9 +23,9 @@ def token(chain, team_multisig) -> Contract:
 
 
 @pytest.fixture
-def issue_script_owner(accounts):
+def issue_script_owner(web3,  accounts):
     """Ethereum account that interacts with issuer contract."""
-    return accounts[8]
+    return web3.toChecksumAddress(accounts[8])
 
 
 @pytest.fixture
