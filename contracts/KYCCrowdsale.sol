@@ -3,15 +3,14 @@ import "./AllocatedCrowdsaleMixin.sol";
 import "./KYCPayloadDeserializer.sol";
 
 /**
- * A crowdsale that allows only signed payload with server-side specified buy in limits.
- *
+ * A crowdsale that allows buys only from signed payload with server-side specified limits and price.
  *
  * The token distribution happens as in the allocated crowdsale.
  *
  */
 contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
 
-  /* Server holds the private key to this address to decide if the AML payload is valid or not. */
+  /* Server holds the private key to this address to sign incoming buy payloads to signal we have KYC records in the books for these users. */
   address public signerAddress;
 
   /* A new server-side signer key was set to be effective */
@@ -42,12 +41,12 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
       _tokenAmount = investInternal(msg.sender, 0x1000);
 
     } else {
+      // User comes through the server, check that the signature to ensure ther server
+      // side KYC has passed for this customer id and whitelisted Ethereum address
 
       bytes32 hash = sha256(dataframe);
 
       var (whitelistedAddress, customerId, minETH, maxETH, pricingInfo) = getKYCPayload(dataframe);
-
-      uint256 tokensTotal = calculateTokens(msg.value, pricingInfo);
 
       // Check that the KYC data is signed by our server
       require(ecrecover(hash, v, r, s) == signerAddress);
@@ -55,8 +54,10 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
       // Only whitelisted address can participate the transaction
       require(whitelistedAddress == msg.sender);
 
-      _tokenAmount = buyTokens(msg.sender, customerId, tokensTotal);
+      // Server gives us information what is the buy price for this user
+      uint256 tokensTotal = calculateTokens(msg.value, pricingInfo);
 
+      _tokenAmount = buyTokens(msg.sender, customerId, tokensTotal);
     }
 
     if(!earlyParticipantWhitelist[msg.sender]) {
