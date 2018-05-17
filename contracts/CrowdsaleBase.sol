@@ -236,7 +236,7 @@ contract CrowdsaleBase is Haltable {
    *
    * @return tokensTotal which is weisTotal divided by pricePerToken
    */
-  function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public returns(uint tokensTotal) {
+  function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public constant returns(uint tokensTotal) {
     return weisTotal/pricePerToken;
   }
 

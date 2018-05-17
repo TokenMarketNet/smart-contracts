@@ -37,7 +37,8 @@ contract KYCCrowdsale is AllocatedCrowdsaleMixin, KYCPayloadDeserializer {
     // Perform signature check for normal addresses
     // (not deployment accounts, etc.)
     if(earlyParticipantWhitelist[msg.sender]) {
-      // For test purchases use this faux customer id
+      // Deployment provided early participant list is for deployment and diagnostics
+      // For test purchases use this faux customer id 0x1000
       _tokenAmount = investInternal(msg.sender, 0x1000);
 
     } else {
