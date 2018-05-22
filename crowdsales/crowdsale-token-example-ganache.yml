@@ -10,7 +10,7 @@
 #
 # Then in another terminal you can run a command to deploy this token script:
 #
-# deploy-contracts --address=coinbase --deployment-file=crowdsales/crowdsale-token-example.yml --deployment-name=local-token
+# deploy-contracts --address=coinbase --deployment-file=crowdsales/crowdsale-token-example-ganache.yml --deployment-name=local-token
 #
 # This will deploy a new token using the default coinbase account
 # on the local chain. Running the command takes ~60 seconds.
