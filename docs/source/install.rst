@@ -93,32 +93,27 @@ The default set up assumes you run JSON-RPC in `http://localhost:8545` for mainn
 
 For more information see :ref:`chain configuration <chain-configuration>`.
 
-Using your desired Solc version
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Sometimes it's useful to use some certain version of the Solidity compiler,
-this can be done using py-solc package, like this:
+Using your desired Solidity version
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: console
+We recommend using Docker and official Ethereum Solidity docker builds as the static binary like installation for the compiler.
 
-    python -m solc.install v0.4.16
+Example:
 
-If you are lucky, you can now run binary:
+.. code-block:: shell
 
-.. code-block:: console
+    # This is a supplied shell script wrapper that is honoured by Populus and py-solc packages when they look for solc binary
+    export SOLC_BINARY=`pwd`/dockerized-solc.sh
 
-    ~/.py-solc/solc-v0.4.16/bin/solc --version
+    # Give the Solidity version we want to use for our Docker wrapper scripts
+    export SOLC_VERSION=0.4.18
 
-The binary is not available every platform.
-Remember to update your PATH accordingly:
-
-.. code-block:: console
-
-    export PATH=$HOME/.py-solc/solc-v0.4.16/bin:$PATH
-    # Then you can try if contracts compile correctly
+    # Populus now uses Dockerized solc. Any missing version is automatically downloaded and cached.
     populus compile
 
-Docker
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Docker Ganache image
+^^^^^^^^^^^^^^^^^^^^
+
 TokenMarket contracts can optionally be built, run, and tested using Docker (https://www.docker.com/).
 To be able to TokenMarket development environment inside Docker, install Docker and docker-compose (https://docs.docker.com/compose/) first. Then run in ico folder:
 

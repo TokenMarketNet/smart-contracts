@@ -65,7 +65,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
       // pass
     } else {
       // Unwanted state
-      revert;
+      revert();
     }
 
     if(investedAmountOf[receiver] == 0) {
@@ -135,7 +135,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
    * @dev Have this taken away from the parent contract?
    */
   function assignTokens(address receiver, uint tokenAmount) internal {
-    revert;
+    revert();
   }
 
   /**
