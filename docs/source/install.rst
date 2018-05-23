@@ -111,6 +111,11 @@ Example:
     # Populus now uses Dockerized solc. Any missing version is automatically downloaded and cached.
     populus compile
 
+
+.. note ::
+
+  Docker volume mounts do not support symbolic links and thus this kind of `solc` alias behavior might be differnt from having natively installed solc.
+
 Docker Ganache image
 ^^^^^^^^^^^^^^^^^^^^
 
