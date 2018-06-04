@@ -278,6 +278,12 @@ def _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_ad
 
 def deploy_crowdsale_from_file(project: Project, yaml_filename: str, deployment_name: str, deploy_address: str):
     """Deploy crowdsale plan."""
+
+    if not yaml_filename.endswith(".yml"):
+        # A stop gap fix
+        # Otherwise our backup filename generator may get confused
+        raise RuntimeError("YAML files must have .yml extension")
+
     chain_data = load_crowdsale_definitions(yaml_filename, deployment_name)
     chain_name = chain_data["chain"]
 

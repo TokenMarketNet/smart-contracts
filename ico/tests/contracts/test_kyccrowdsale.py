@@ -149,7 +149,7 @@ def test_kyc_participate_with_signed_address(chain, kyc_crowdsale, customer, cus
     assert not kyc_crowdsale.call().isBreakingCap(wei_value, tokens_per_eth, wei_value, tokens_per_eth)
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1*10000, 1)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1*10000, 1*10**18)
     signed_data = sign(kyc_payload, private_key)
 
     kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
@@ -210,7 +210,7 @@ def test_kyc_participate_over_payment(chain, kyc_crowdsale, customer, customer_i
     wei_value = to_wei(1, "ether")
 
     # KYC limits for this participant: 0...1 ETH
-    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 10*10000, 1)
+    kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 10*10000, 1*10**18)
     signed_data = sign(kyc_payload, private_key)  # Use bad private key
 
     kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
@@ -246,7 +246,7 @@ def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, custom
     # Do a test buy for 1 ETH
     wei_value = to_wei(1, "ether")
     excepted_token_value = int(0.5 * 10**18)
-    price = 2  # wei per token
+    price = 2*10**18  # wei per token
 
     assert kyc_crowdsale.call().calculateTokens(wei_value, price) == excepted_token_value
 
@@ -274,7 +274,7 @@ def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, custom
     # More tokens, different price this time
     wei_value = to_wei(1, "ether")
     new_excepted_token_value = int(0.25 * 10**18)
-    price = 4  # wei per token
+    price = 4*10**18 # wei per token
 
     # New transaction, increased per person cap to 2 ETH
     kyc_payload = pack_kyc_pricing_dataframe(whitelisted_address, customer_id, 0, 2*10000, price)
