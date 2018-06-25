@@ -269,18 +269,30 @@
       "SolcAutoBackend": {
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
-          "optimize": true,
-          "output_values": [
-            "abi",
-            "bin",
-            "bin-runtime",
-            "metadata"
-          ],
           "command_line_options": {
             "allow_paths": "/"
           },
           "stdin": {
-            "evmVersion": "homestead"
+            "output_values": [
+              "abi",
+              "bin",
+              "bin-runtime",
+              "metadata"
+            ],
+            "evmVersion": "homestead",
+            "optimizer": {
+              "enabled": true,
+              "runs": 500
+            },
+            "outputSelection": {
+              "*": {
+                "*": [
+                  "abi",
+                  "metadata",
+                  "evm"
+                 ]
+              }
+            }
           }
         }
       },
