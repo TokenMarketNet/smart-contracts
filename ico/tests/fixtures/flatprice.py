@@ -76,7 +76,6 @@ def uncapped_flatprice(chain, team_multisig, preico_starts_at, preico_ends_at, f
 
     tx = {
         "from": team_multisig,
-        "gas": 6000000,
     }
 
     contract, hash = chain.provider.deploy_contract('UncappedCrowdsale', deploy_args=args, deploy_transaction=tx)
