@@ -277,8 +277,10 @@
             "metadata"
           ],
           "command_line_options": {
-            "allow_paths": "/",
-            "evm_version": "homestead"
+            "allow_paths": "/"
+          },
+          "stdin": {
+            "evmVersion": "homestead"
           }
         }
       },
