@@ -1,7 +1,9 @@
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 TokenMarket Ltd. For more information see https://tokenmarket.net
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  * NatSpec is used intentionally to cover also other than public functions
+ * Solidity 0.4.18 is intentionally used: it's stable, and our framework is
+ * based on that.
  */
 
 pragma solidity ^0.4.18;
@@ -291,7 +293,6 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
-    // TODO: Make a failsafe transport mechanism to transfer manually, maybe the dependant contract would need it, and not this one?
     uint256 fromBalance;
     uint256 toBalance;
 
@@ -343,5 +344,4 @@ contract CheckpointToken is ERC20, ERC827 {
 
     return (checkpoints[min].blockNumber, checkpoints[min].value);
   }
-
 }

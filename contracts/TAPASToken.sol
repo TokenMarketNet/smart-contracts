@@ -1,7 +1,9 @@
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 TokenMarket Ltd. For more information see https://tokenmarket.net
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  * NatSpec is used intentionally to cover also other than public functions
+ * Solidity 0.4.18 is intentionally used: it's stable, and our framework is
+ * based on that.
  */
 
 pragma solidity ^0.4.18;
@@ -95,10 +97,10 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
    */
   function issueTokens(uint256 value) external onlyWhitelisted {
     address issuer = msg.sender;
-    uint256 zeroBalance = balanceOf(address(0)); /// TODO: Rename!
+    uint256 blackHoleBalance = balanceOf(address(0));
     uint256 totalSupplyNow = totalSupply();
 
-    setCheckpoint(tokenBalances[address(0)], zeroBalance.add(value));
+    setCheckpoint(tokenBalances[address(0)], blackHoleBalance.add(value));
     transferInternal(address(0), issuer, value);
     setCheckpoint(tokensTotal, totalSupplyNow.add(value));
 
