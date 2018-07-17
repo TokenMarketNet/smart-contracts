@@ -24,6 +24,7 @@ interface TAPASAnnouncement {
   function announcementName() public view returns (bytes32);
   function announcementURI() public view returns (bytes32);
   function announcementType() public view returns (uint256);
+  function announcementHash() public view returns (uint256);
 }
 
 /**
@@ -36,7 +37,7 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
   event Forced(address indexed from, address indexed to, uint256 value);
-  event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI);
+  event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI, uint256 announcementHash);
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   address[] public announcements;
@@ -66,7 +67,7 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
    */
   function announce(TAPASAnnouncement announcement) external onlyWhitelisted {
     announcements.push(announcement);
-    Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI());
+    Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI(), announcement.announcementHash());
   }
 
   /**

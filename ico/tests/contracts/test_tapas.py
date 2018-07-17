@@ -18,18 +18,22 @@ def announcement_name() -> str:
 
 @pytest.fixture
 def announcement_uri() -> str:
-    return "https://tokenmarket.net"
+    return "https://tokenmarket.net/"
 
 @pytest.fixture
 def announcement_type() -> int:
     return 123
 
+@pytest.fixture
+def announcement_hash() -> int:
+    return 1234
+
 
 @pytest.fixture
-def announcement(chain, team_multisig, announcement_name, announcement_uri, announcement_type) -> Contract:
+def announcement(chain, team_multisig, announcement_name, announcement_uri, announcement_type, announcement_hash) -> Contract:
     """Create a bogus announcement for testing"""
 
-    args = [announcement_name, announcement_uri, announcement_type]
+    args = [announcement_name, announcement_uri, announcement_type, announcement_hash]
 
     tx = {
         "from": team_multisig
@@ -225,7 +229,7 @@ def test_tapas_transfer_stresstest(chain, tapas_token, team_multisig, zero_addre
         assert tapas_token.call().balanceOf(customer) == 0
 
 
-def test_tapas_announce(chain, tapas_token, team_multisig, zero_address, customer, announcement, announcement_name, announcement_uri, announcement_type):
+def test_tapas_announce(chain, tapas_token, team_multisig, zero_address, customer, announcement, announcement_name, announcement_uri, announcement_type, announcement_hash):
     """Announce TAPASAnnouncement """
     tapas_token.transact({"from": team_multisig}).announce(announcement.address)
 
@@ -237,6 +241,7 @@ def test_tapas_announce(chain, tapas_token, team_multisig, zero_address, custome
     assert removeNonPrintable(e["args"]["announcementName"]) == announcement_name
     assert removeNonPrintable(e["args"]["announcementURI"]) == announcement_uri
     assert e["args"]["announcementType"] == announcement_type
+    assert e["args"]["announcementHash"] == announcement_hash
 
 
 def test_tapas_erc827_allowance(tapas_token, team_multisig, testpayload, receiver, customer):
