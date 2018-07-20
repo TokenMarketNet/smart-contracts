@@ -202,6 +202,10 @@ contract TokenVault is Ownable, Recoverable {
         sinceLastClaim = freezeEndsAt;
       }
 
+      if (now < freezeEndsAt) {
+        return 0;
+      }
+
       maxClaim = (now - sinceLastClaim) * tokensPerSecond;
 
       if (maxClaim > maxTokensLeft) {
