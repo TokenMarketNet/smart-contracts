@@ -192,7 +192,7 @@ contract TokenVault is Ownable, Recoverable {
   /// @dev Check how many tokens "investor" can claim
   /// @param investor Address of the investor
   /// @return uint How many tokens the investor can claim now
-  function getClaimLeft(address investor) public constant returns (uint claimLeft) {
+  function getClaimableAmount(address investor) public constant returns (uint claimableAmount) {
     uint maxTokensLeft = balances[investor] - claimed[investor];
     uint sinceLastClaim = lastClaimed[investor];
     uint maxClaim;
@@ -232,7 +232,7 @@ contract TokenVault is Ownable, Recoverable {
       throw;
     }
 
-    uint amount = getClaimLeft(investor);
+    uint amount = getClaimableAmount(investor);
     require (amount > 0);
 
     lastClaimed[investor] = now;
