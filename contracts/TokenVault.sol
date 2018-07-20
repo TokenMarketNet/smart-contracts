@@ -50,7 +50,7 @@ contract TokenVault is Ownable, Recoverable {
   mapping(address => uint) public claimed;
 
   /** When was the last claim by an investor **/
-  mapping(address => uint) public lastClaimed;
+  mapping(address => uint) public lastClaimedAt;
 
   /** When our claim freeze is over (UNIX timestamp) */
   uint public freezeEndsAt;
@@ -194,7 +194,7 @@ contract TokenVault is Ownable, Recoverable {
   /// @return uint How many tokens the investor can claim now
   function getClaimableAmount(address investor) public constant returns (uint claimableAmount) {
     uint maxTokensLeft = balances[investor] - claimed[investor];
-    uint sinceLastClaim = lastClaimed[investor];
+    uint sinceLastClaim = lastClaimedAt[investor];
     uint maxClaim;
 
     if (tokensPerSecond > 0) {
@@ -239,7 +239,7 @@ contract TokenVault is Ownable, Recoverable {
     uint amount = getClaimableAmount(investor);
     require (amount > 0);
 
-    lastClaimed[investor] = now;
+    lastClaimedAt[investor] = now;
 
     claimed[investor] += amount;
 
