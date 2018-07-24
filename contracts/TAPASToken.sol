@@ -129,21 +129,53 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   }
 
   /**
-  * @dev Whitelisted users (The Board, BAC) can update token information here.
-  *
-  * It is often useful to conceal the actual token association, until
-  * the token operations, like central issuance or reissuance have been completed.
-  *
-  * This function allows the token owner to rename the token after the operations
-  * have been completed and then point the audience to use the token contract.
-  *
-  * @param _name New name of the token
-  * @param _symbol New symbol of the token
-  */
+   * @dev Whitelisted users (The Board, BAC) can update token information here.
+   *
+   * It is often useful to conceal the actual token association, until
+   * the token operations, like central issuance or reissuance have been completed.
+   *
+   * This function allows the token owner to rename the token after the operations
+   * have been completed and then point the audience to use the token contract.
+   *
+   * @param _name New name of the token
+   * @param _symbol New symbol of the token
+   */
   function setTokenInformation(string _name, string _symbol) external onlyWhitelisted {
     name = _name;
     symbol = _symbol;
 
     UpdatedTokenInformation(name, symbol);
+  }
+
+  /**
+   * @dev Whitelisted addresses can temporarily freeze all token transfers
+   *
+   * This is needed for example in situations where stolen tokens move
+   * from account to account faster than we can confiscate. In these cases
+   * we can temporarily freeze all transfers. However, for investor safety,
+   * there are a couple of limitations:
+   *   - Freeze duration cannot be more than 2 days (specified in freeze())
+   *   - Freeze can be set only once in a week, so transfer cannot be freezed
+   *     indefinitely
+   */
+  function freeze() external onlyWhitelisted {
+    require(now > (freezedAt + 1 weeks));
+
+    freezedAt = now;
+  }
+
+  /**
+   * @dev Function to set duration of the freeze when calling freeze()
+   *
+   * This function is used to define the duration of the freeze. This can be
+   * redefined during the freeze, so token transfers can be enabled sooner if
+   * needed. For investor safety, there is a maximum length for the freeze.
+   *
+   * @param _freezeDuration New duration for a freeze in seconds
+   */
+  function setFreezeDuration(uint256 _freezeDuration) external onlyWhitelisted {
+    require(_freezeDuration < 2 days);
+
+    freezeDuration = _freezeDuration;
   }
 }

@@ -24,6 +24,8 @@ contract CheckpointToken is ERC20, ERC827 {
   string public name;
   string public symbol;
   uint256 public decimals;
+  uint256 public freezedAt = 0;
+  uint256 public freezeDuration = 1 days; // Default is one day
 
   struct Checkpoint {
     uint256 blockNumber;
@@ -96,11 +98,11 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   /**
-  * @dev transfer token for a specified address
-  * @param to The address to transfer to.
-  * @param value The amount to be transferred.
-  * @return true if the call function was executed successfully
-  */
+   * @dev transfer token for a specified address
+   * @param to The address to transfer to.
+   * @param value The amount to be transferred.
+   * @return true if the call function was executed successfully
+   */
   function transfer(address to, uint256 value) public returns (bool) {
     transferInternal(msg.sender, to, value);
     Transfer(msg.sender, to, value);
@@ -108,28 +110,28 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   /**
-  * @dev total number of tokens in existence
-  * @return A uint256 specifying the total number of tokens in existence
-  */
+   * @dev total number of tokens in existence
+   * @return A uint256 specifying the total number of tokens in existence
+   */
   function totalSupply() public view returns (uint256 tokenCount) {
     tokenCount = balanceAtBlock(tokensTotal, block.number);
   }
 
   /**
-  * @dev Gets the balance of the specified address.
-  * @param owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
+   * @dev Gets the balance of the specified address.
+   * @param owner The address to query the the balance of.
+   * @return An uint256 representing the amount owned by the passed address.
+   */
   function balanceOf(address owner) public view returns (uint256 balance) {
     balance = balanceAtBlock(tokenBalances[owner], block.number);
   }
 
   /**
-  * @dev Gets the balance of the specified address.
-  * @param owner The address to query the the balance of.
-  * @param blockNumber The block number we want to query for the balance.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
+   * @dev Gets the balance of the specified address.
+   * @param owner The address to query the the balance of.
+   * @param blockNumber The block number we want to query for the balance.
+   * @return An uint256 representing the amount owned by the passed address.
+   */
   function balanceAt(address owner, uint256 blockNumber) external view returns (uint256 balance) {
     balance = balanceAtBlock(tokenBalances[owner], blockNumber);
   }
@@ -175,22 +177,22 @@ contract CheckpointToken is ERC20, ERC827 {
    ****************************************/
 
   /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param spender The address that will spend the funds.
-     @param value The amount of tokens to be spent.
-     @param data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
+    * @dev Addition to ERC20 token methods. It allows to
+    * approve the transfer of value and execute a call with the sent data.
+    *
+    * Beware that changing an allowance with this method brings the risk that
+    * someone may use both the old and the new allowance by unfortunate
+    * transaction ordering. One possible solution to mitigate this race condition
+    * is to first reduce the spender's allowance to 0 and set the desired value
+    * afterwards:
+    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    *
+    * @param spender The address that will spend the funds.
+    * @param value The amount of tokens to be spent.
+    * @param data ABI-encoded contract call to call `_to` address.
+    *
+    * @return true if the call function was executed successfully
+    */
   function approve(address spender, uint256 value, bytes data) public returns (bool) {
     require(spender != address(this));
 
@@ -202,14 +204,14 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-
-     @param to address The address which you want to transfer to
-     @param value uint256 the amout of tokens to be transfered
-     @param data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
+   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
+   * address and execute a call with the sent data on the same transaction
+   *
+   * @param to address The address which you want to transfer to
+   * @param value uint256 the amout of tokens to be transfered
+   * @param data ABI-encoded contract call to call `_to` address.
+   *
+   * @return true if the call function was executed successfully
    */
   function transfer(address to, uint256 value, bytes data) public returns (bool) {
     require(to != address(this));
@@ -221,15 +223,15 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-
-     @param from The address which you want to send tokens from
-     @param to The address which you want to transfer to
-     @param value The amout of tokens to be transferred
-     @param data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
+   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
+   * another and make a contract call on the same transaction
+   *
+   * @param from The address which you want to send tokens from
+   * @param to The address which you want to transfer to
+   * @param value The amout of tokens to be transferred
+   * @param data ABI-encoded contract call to call `_to` address.
+   *
+   * @return true if the call function was executed successfully
    */
   function transferFrom(address from, address to, uint256 value, bytes data) public returns (bool) {
     require(to != address(this));
@@ -293,6 +295,8 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
+    require(now > (freezedAt + freezeDuration));
+
     uint256 fromBalance;
     uint256 toBalance;
 
