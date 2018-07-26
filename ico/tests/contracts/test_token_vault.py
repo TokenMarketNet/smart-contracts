@@ -73,6 +73,7 @@ def token_vault(chain, team_multisig, token, freeze_ends_at, token_vault_balance
         freeze_ends_at,
         token.address,
         total,
+        0 # Disable the tap
     ]
     contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
     return contract
@@ -89,6 +90,23 @@ def token_vault_single(chain, team_multisig, token, freeze_ends_at, token_vault_
         freeze_ends_at,
         token.address,
         total,
+        0 # Disable the tap
+    ]
+    contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
+    return contract
+
+@pytest.fixture
+def token_vault_tapped(chain, team_multisig, token, freeze_ends_at) -> Contract:
+    """Another token vault deployment with a single customer."""
+
+    total = 3000
+
+    args = [
+        team_multisig,
+        freeze_ends_at,
+        token.address,
+        total,
+        1 # Enable tap, 1 token per second
     ]
     contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
     return contract
@@ -262,6 +280,7 @@ def test_claim_early(chain, loaded_token_vault, team_multisig, token, customer, 
     with pytest.raises(TransactionFailed):
         loaded_token_vault.transact({"from": customer}).claim()
 
+
 def test_emergency_claim_our_token(chain, loaded_token_vault, team_multisig, token, customer, customer_2):
     """Trying to claim extra tokens we have sent."""
 
@@ -275,6 +294,7 @@ def test_emergency_claim_our_token(chain, loaded_token_vault, team_multisig, tok
     loaded_token_vault.transact({"from": team_multisig}).recoverTokens(token.address)
     assert token.call().balanceOf(team_multisig) == amount_after_locking
 
+
 def test_emergency_claim_other_token(chain, loaded_token_vault, team_multisig, token, other_token, customer, customer_2):
     """Trying to claim extra tokens (other than the vault's own) we have sent."""
 
@@ -287,3 +307,35 @@ def test_emergency_claim_other_token(chain, loaded_token_vault, team_multisig, t
 
     loaded_token_vault.transact({"from": team_multisig}).recoverTokens(other_token.address)
     assert other_token.call().balanceOf(team_multisig) == amount_after_locking
+
+
+def test_tapped_claim(chain, token_vault_tapped, team_multisig, token, customer, customer_2, token_vault_balances):
+    """Tokens can be claimed after freeze time is over."""
+    for address, balance in token_vault_balances:
+        token_vault_tapped.transact({"from": team_multisig}).setInvestor(address, balance)
+
+    token.transact({"from": team_multisig}).transfer(token_vault_tapped.address, 3000)
+    token_vault_tapped.transact({"from": team_multisig}).lock()
+
+    assert token_vault_tapped.call().getState() == TokenVaultState.Holding
+
+    time_travel(chain, token_vault_tapped.call().freezeEndsAt()+2)
+    token_vault_tapped.call().getState() == TokenVaultState.Distributing
+
+    assert token.call().balanceOf(customer) == 0
+    token_vault_tapped.transact({"from": customer}).claim()
+    assert token.call().balanceOf(customer) == 2
+    assert token_vault_tapped.call().balances(customer) == 1000
+
+
+    time_travel(chain, token_vault_tapped.call().freezeEndsAt()+400)
+    token_vault_tapped.transact({"from": customer}).claim()
+    assert token_vault_tapped.call().claimed(customer) == 400
+
+    time_travel(chain, token_vault_tapped.call().freezeEndsAt()+2000)
+
+    assert token.call().balanceOf(customer_2) == 0
+    token_vault_tapped.transact({"from": customer_2}).claim()
+    assert token.call().balanceOf(customer_2) == 2000
+
+    assert token_vault_tapped.call().totalClaimed() == 2400

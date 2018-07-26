@@ -49,11 +49,17 @@ contract TokenVault is Ownable, Recoverable {
   /** How many tokens investors have claimed */
   mapping(address => uint) public claimed;
 
+  /** When was the last claim by an investor **/
+  mapping(address => uint) public lastClaimedAt;
+
   /** When our claim freeze is over (UNIX timestamp) */
   uint public freezeEndsAt;
 
   /** When this vault was locked (UNIX timestamp) */
   uint public lockedAt;
+
+  /** defining the tap **/
+  uint public tokensPerSecond;
 
   /** We can also define our own token, which will override the ICO one ***/
   StandardTokenExt public token;
@@ -80,10 +86,10 @@ contract TokenVault is Ownable, Recoverable {
    * @param _owner Who can load investor data and lock
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
-   * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
-   *
+   * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplication
+   * @param _tokensPerSecond Define the tap: how many tokens we permit an user to withdraw per second, 0 to disable
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated) {
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated, uint _tokensPerSecond) {
 
     owner = _owner;
 
@@ -109,8 +115,13 @@ contract TokenVault is Ownable, Recoverable {
       throw;
     }
 
-    freezeEndsAt = _freezeEndsAt;
+    if (_freezeEndsAt < now) {
+      freezeEndsAt = now;
+    } else {
+      freezeEndsAt = _freezeEndsAt;
+    }
     tokensToBeAllocated = _tokensToBeAllocated;
+    tokensPerSecond = _tokensPerSecond;
   }
 
   /// @dev Add a presale participating allocation
@@ -178,6 +189,36 @@ contract TokenVault is Ownable, Recoverable {
     return token.balanceOf(address(this));
   }
 
+  /// @dev Check how many tokens "investor" can claim
+  /// @param investor Address of the investor
+  /// @return uint How many tokens the investor can claim now
+  function getCurrentlyClaimableAmount(address investor) public constant returns (uint claimableAmount) {
+    uint maxTokensLeft = balances[investor] - claimed[investor];
+
+    if (now < freezeEndsAt) {
+      return 0;
+    }
+
+    if (tokensPerSecond > 0) {
+      uint previousClaimAt = lastClaimedAt[investor];
+      uint maxClaim;
+
+      if (previousClaimAt == 0) {
+        previousClaimAt = freezeEndsAt;
+      }
+
+      maxClaim = (now - previousClaimAt) * tokensPerSecond;
+
+      if (maxClaim > maxTokensLeft) {
+        return maxTokensLeft;
+      } else {
+        return maxClaim;
+      }
+    } else {
+      return maxTokensLeft;
+    }
+  }
+
   /// @dev Claim N bought tokens to the investor as the msg sender
   function claim() {
 
@@ -196,13 +237,12 @@ contract TokenVault is Ownable, Recoverable {
       throw;
     }
 
-    if(claimed[investor] > 0) {
-      throw; // Already claimed
-    }
+    uint amount = getCurrentlyClaimableAmount(investor);
+    require (amount > 0);
 
-    uint amount = balances[investor];
+    lastClaimedAt[investor] = now;
 
-    claimed[investor] = amount;
+    claimed[investor] += amount;
 
     totalClaimed += amount;
 
