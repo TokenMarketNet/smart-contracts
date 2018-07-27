@@ -2,6 +2,7 @@
 
 import pytest
 from ethereum.tester import TransactionFailed
+from populus.chain import TestRPCChain
 from web3.contract import Contract
 
 from ico.state import UpgradeState
@@ -40,14 +41,14 @@ def test_can_upgrade_released_token(released_token: Contract):
     assert released_token.call().getUpgradeState() == UpgradeState.WaitingForAgent
 
 
-def test_set_upgrade_agent(released_token: Contract, upgrade_agent: Contract, team_multisig):
+def test_set_upgrade_agent(chain: TestRPCChain, released_token: Contract, upgrade_agent: Contract, team_multisig):
     """Upgrade agent can be set on a released token."""
 
     # Preconditions are met
     assert upgrade_agent.call().isUpgradeAgent()
     assert released_token.call().canUpgrade()
     assert released_token.call().upgradeMaster() == team_multisig
-    assert upgrade_agent.call().oldToken() == released_token.address
+    assert upgrade_agent.call().oldToken() == chain.web3.toChecksumAddress(released_token.address)
     assert upgrade_agent.call().originalSupply() == released_token.call().totalSupply()
 
     released_token.transact({"from": team_multisig}).setUpgradeAgent(upgrade_agent.address)

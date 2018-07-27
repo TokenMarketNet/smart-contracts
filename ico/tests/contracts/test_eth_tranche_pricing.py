@@ -318,7 +318,7 @@ def test_presale_update_counters(chain, presale_fund_collector, wei_tranche_ico,
     """
 
     # We have set up the contracts in the way the presale purchaser gets special pricing
-    assert wei_tranche_ico.call().pricingStrategy() == wei_tranche_pricing.address
+    assert wei_tranche_ico.call().pricingStrategy() == chain.web3.toChecksumAddress(wei_tranche_pricing.address)
     wei_tranche_pricing.transact({"from": team_multisig}).setPreicoAddress(customer, to_wei("0.05", "ether"))
 
     assert wei_tranche_pricing.call().isPresalePurchase(customer) == True
