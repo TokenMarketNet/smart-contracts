@@ -55,20 +55,20 @@ local-token:
         # In post-actions we make token transferable.
 
         # Make owner to be address / contract that controls the release
-        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(deploy_address))
+        confirm_tx(token.functions.setReleaseAgent(deploy_address).transact({"from": deploy_address}))
 
         # Unlock token transfers
-        confirm_tx(token.transact({"from": deploy_address}).releaseTokenTransfer())
+        confirm_tx(token.functions.releaseTokenTransfer().transact({"from": deploy_address}))
 
     # Verify that we have correctly deployed the contract
     verify_actions: |
 
         # Token is now transferable
-        assert token.call().released()
+        assert token.functions.released().call()
 
         # We deployed using coinbase account
         assert deploy_address == web3.eth.accounts[0]
 
         # Check that the owner got all initial balance
-        assert token.call().balanceOf(deploy_address) == 100000000000*10**18
+        assert token.functions.balanceOf(deploy_address).call() == 100000000000*10**18
 

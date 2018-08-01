@@ -54,7 +54,7 @@ unit_test:
         team_multisig:
             contract_name: MultiSigWallet
             contract_file: GnosisWallet.sol
-            address: "0x40a05d4ce308bf600cb275d7a3e9113518f59c54"
+            address: "0x40a05D4CE308BF600cb275d7a3e9113518f59C54"
         #
         # Pre-ICO fund collector
         #
@@ -76,7 +76,7 @@ unit_test:
             arguments:
                 _owner: "{{contracts.team_multisig.address}}"
                 # Set 30 days in the future from the moment of deployment
-                _freezeEndsAt: "{{ time() + 30*24*3600 }}"
+                _freezeEndsAt: "{{ pending_block_timestamp + 30*24*3600 }}"
                 _weiMinimumLimit: "{{ to_wei(750, 'ether') }}"
         #
         # Token contract
@@ -139,8 +139,8 @@ unit_test:
                 _token: "{{contracts.token.address}}"
                 _pricingStrategy: "{{contracts.pricing_strategy.address}}"
                 _multisigWallet: "{{contracts.team_multisig.address}}"
-                _start: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) }}"
-                _end: "{{ timestamp(datetime(2017, 4, 15, 16, 0)) + 30*24*3600 }}"
+                _start: "{{ pending_block_timestamp }}"
+                _end: "{{ pending_block_timestamp + 30*24*3600 }}"
                 _minimumFundingGoal: 7500
                 _maximumSellableTokens: 4000000
         #
@@ -166,35 +166,35 @@ unit_test:
     # They set ownership and allowed actions, so that contracts can interact
     post_actions: |
         # Enable new token minting by a crowdsale contract
-        confirm_tx(token.transact({"from": deploy_address}).setMintAgent(crowdsale.address, True))
+        confirm_tx(token.functions.setMintAgent(crowdsale.address, True).transact({"from": deploy_address}))
 
         # Set actions what happen at the end of the crodsale.
         # Enable token mintint at the end of the crowdsale to create bonus pool, founder pool and such
-        confirm_tx(token.transact({"from": deploy_address}).setMintAgent(finalize_agent.address, True))
-        confirm_tx(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
-        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(finalize_agent.address))
+        confirm_tx(token.functions.setMintAgent(finalize_agent.address, True).transact({"from": deploy_address}))
+        confirm_tx(crowdsale.functions.setFinalizeAgent(finalize_agent.address).transact({"from": deploy_address}))
+        confirm_tx(token.functions.setReleaseAgent(finalize_agent.address).transact({"from": deploy_address}))
 
         # Move ownership of all owned contracts to the team multisig address
-        confirm_tx(crowdsale.transact({"from": deploy_address}).transferOwnership(team_multisig.address))
-        confirm_tx(token.transact({"from": deploy_address}).transferOwnership(team_multisig.address))
+        confirm_tx(crowdsale.functions.transferOwnership(team_multisig.address).transact({"from": deploy_address}))
+        confirm_tx(token.functions.transferOwnership(team_multisig.address).transact({"from": deploy_address}))
 
         # Set token upgrade master
-        confirm_tx(token.transact({"from": deploy_address}).setUpgradeMaster(team_multisig.address))
+        confirm_tx(token.functions.setUpgradeMaster(team_multisig.address).transact({"from": deploy_address}))
 
         # Set a pre-ICO address here
-        confirm_tx(pricing_strategy.transact({"from": deploy_address}).setPreicoAddress(preico.address, 123456))
+        confirm_tx(pricing_strategy.functions.setPreicoAddress(preico.address, 123456).transact({"from": deploy_address}))
 
     # Make sure that everything we have deployed all contracts in good state
     # and their internal state is sane
     verify_actions: |
-        assert token.call().owner() == web3.toChecksumAddress(team_multisig.address), "Expected owner {}, got {}".format(token.call().owner(),team_multisig.address)
-        assert crowdsale.call().owner() == web3.toChecksumAddress(team_multisig.address)
-        assert preico.call().owner() == web3.toChecksumAddress(team_multisig.address)
-        assert token.call().owner() == web3.toChecksumAddress(team_multisig.address)
-        assert token.call().upgradeMaster() == web3.toChecksumAddress(team_multisig.address)
-        assert finalize_agent.call().teamMultisig() == web3.toChecksumAddress(team_multisig.address)
-        assert finalize_agent.call().isSane()
-        assert crowdsale.call().getState() == CrowdsaleState.PreFunding
+        assert token.functions.owner().call() == team_multisig.address, "Expected owner {}, got {}".format(token.call().owner(),team_multisig.address)
+        assert crowdsale.functions.owner().call() == team_multisig.address
+        assert preico.functions.owner().call() == team_multisig.address
+        assert token.functions.owner().call() == team_multisig.address
+        assert token.functions.upgradeMaster().call() == team_multisig.address
+        assert finalize_agent.functions.teamMultisig().call() == team_multisig.address
+        assert finalize_agent.functions.isSane().call()
+        assert crowdsale.functions.getState().call() == CrowdsaleState.Preparing
 
         # To be used with the deposit instructions for contributors
         sig_data = crowdsale._prepare_transaction("buy")
