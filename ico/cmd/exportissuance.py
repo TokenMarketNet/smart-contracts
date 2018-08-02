@@ -41,15 +41,15 @@ def main(chain, address, csv_file):
         contract = IssuerWithId(address=address)
 
         CentrallyIssuedToken = c.provider.get_base_contract_factory('CentrallyIssuedToken')
-        token = CentrallyIssuedToken(address=contract.call().token())
+        token = CentrallyIssuedToken(address=contract.functions.token().call())
 
-        decimals = token.call().decimals()
+        decimals = token.functions.decimals().call()
         decimal_multiplier = 10**decimals
 
-        print("Token", token.call().symbol(), "has", decimals, "decimals, multiplier is", decimal_multiplier)
+        print("Token", token.functions.symbol().call(), "has", decimals, "decimals, multiplier is", decimal_multiplier)
 
         print("Getting events")
-        events = contract.pastEvents("Issued").get(only_changes=False)
+        events = contract.events.Issued().createFilter(fromBlock=0).get_all_entries()
 
         print("Writing results to", csv_file)
 

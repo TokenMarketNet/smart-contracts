@@ -63,9 +63,9 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
         relaunched_crowdsale = RelaunchedCrowdsale(address=contract_address)
 
         print("Crowdsale contract is", contract_address)
-        print("Currently issued", relaunched_crowdsale.call().tokensSold())
+        print("Currently issued", relaunched_crowdsale.functions.tokensSold().call())
 
-        assert relaunched_crowdsale.call().owner().lower() == address.lower(), "We are not the crowdsale owner. Real owner is {}, we are {}".format(relaunched_crowdsale.call().owner(), address)
+        assert relaunched_crowdsale.functions.owner().call() == address, "We are not the crowdsale owner. Real owner is {}, we are {}".format(relaunched_crowdsale.functions.owner().call(), address)
 
         multiplier = 10**multiplier
 
@@ -99,7 +99,7 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
             spent = start_balance - end_balance
             print("Row", i,  "giving", tokens, "to", addr, "from tx", orig_txid, "ETH spent", spent, "time passed", time.time() - start_time, "gas price", transaction["gasPrice"])
 
-            if relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid):
+            if relaunched_crowdsale.functions.getRestoredTransactionStatus(orig_txid).call():
                 print("Already restored, skipping")
                 continue
 
@@ -107,7 +107,12 @@ def main(chain, address, contract_address, csv_file, limit, start_from, multipli
 
             if cap_check:
                 # See if our cap calculation is screwed
-                if relaunched_crowdsale.call().isBreakingCap(wei, tokens, relaunched_crowdsale.call().weiRaised(), relaunched_crowdsale.call().tokensSold()):
+                if relaunched_crowdsale.functions.isBreakingCap(
+                    wei,
+                    tokens,
+                    relaunched_crowdsale.functions.weiRaised().call(),
+                    relaunched_crowdsale.functions.tokensSold().call()
+                ).call():
                     raise RuntimeError("Cap error")
 
             txid = relaunched_crowdsale.transact(transaction).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
