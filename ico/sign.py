@@ -1,25 +1,32 @@
 """Sign data with Ethereum private key."""
 import binascii
+import hashlib
 
-import bitcoin
-from eth_utils import pad_left
-from ethereum import utils
-from ethereum.utils import big_endian_to_int, sha3
-from secp256k1 import PrivateKey
+from eth_account import Account
+from eth_keys import KeyAPI
+from eth_keys.datatypes import PublicKey, PrivateKey, Signature
+from eth_utils import to_bytes, keccak
+from web3 import Web3
+
+
+CHAIN_ID_OFFSET = 35
+V_OFFSET = 27
+
+
+def sha256_msg(msg: bytes) -> bytes:
+    return to_bytes(hexstr=hashlib.sha256(msg).hexdigest())
 
 
 def get_ethereum_address_from_private_key(private_key_seed_ascii: str) -> str:
     """Generate Ethereum address from a private key.
 
-    https://github.com/ethereum/pyethsaletool/blob/master/pyethsaletool.py#L111
-
     :param private_key: Any string as a seed
 
     :return: 0x prefixed hex string
     """
-    priv = utils.sha3(private_key_seed_ascii)
-    pub = bitcoin.encode_pubkey(bitcoin.privtopub(priv), 'bin_electrum')
-    return "0x" + binascii.hexlify(sha3(pub)[12:]).decode("ascii")
+    priv_key = Web3.sha3(text=private_key_seed_ascii)
+    acc = Account.privateKeyToAccount(priv_key)
+    return acc.address
 
 
 def get_address_as_bytes(address: str) -> bytes:
@@ -29,33 +36,32 @@ def get_address_as_bytes(address: str) -> bytes:
     return address_bytes
 
 
-def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha256):
+def to_eth_v(v_raw, chain_id=None):
+    """
+    Implementation of EIP 155
+    """
+    if chain_id is None:
+        v = v_raw + V_OFFSET
+    else:
+        v = v_raw + CHAIN_ID_OFFSET + 2 * chain_id
+    return v
+
+
+def sign(data: bytes, private_key_seed_ascii: str, hash_function=sha256_msg):
     """Sign data using Ethereum private key.
 
     :param private_key_seed_ascii: Private key seed as ASCII string
     """
-
+    priv_key = PrivateKey(Web3.sha3(text=private_key_seed_ascii))
     msghash = hash_function(data)
-
-    priv = utils.sha3(private_key_seed_ascii)
-    pub = bitcoin.privtopub(priv)
-
-    # Based on ethereum/tesrt_contracts.py test_ecrecover
-    pk = PrivateKey(priv, raw=True)
-
-    signature = pk.ecdsa_recoverable_serialize(pk.ecdsa_sign_recoverable(msghash, raw=True))
-    signature = signature[0] + utils.bytearray_to_bytestr([signature[1]])
-
-    # Enforce non-tightly-packed arguments for signing
-    # (0x00 left pad)
-    # https://github.com/ethereum/web3.py/issues/466
-    v = utils.safe_ord(signature[64]) + 27
-    r_bytes = signature[0:32]
-    r_bytes = pad_left(r_bytes, 32, b"\0")
-    r = big_endian_to_int(r_bytes)
-    s_bytes = signature[32:64]
-    s_bytes = pad_left(s_bytes, 32, b"\0")
-    s = big_endian_to_int(s_bytes)
+    signature = priv_key.sign_msg_hash(msghash)
+    v, r, s = signature.vrs
+    # assuming chainID is 1 i.e the main net
+    # TODO: take in chainID as a param, so that v is set appropriately
+    # currently there's no good way to determine chainID
+    v = to_eth_v(v)
+    r_bytes = to_bytes(r)
+    s_bytes = to_bytes(s)
 
     # Make sure we use bytes data and zero padding stays
     # good across different systems
@@ -63,8 +69,10 @@ def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha
     s_hex = binascii.hexlify(s_bytes).decode("ascii")
 
     # Convert to Etheruem address format
-    addr = utils.big_endian_to_int(utils.sha3(bitcoin.encode_pubkey(pub, 'bin')[1:])[12:])
-
+    pub_key = priv_key.public_key
+    addr = pub_key.to_checksum_address()
+    pub = pub_key.to_bytes()
+    #
     # Return various bits about signing so it's easier to debug
     return {
         "signature": signature,
@@ -76,10 +84,10 @@ def sign(data: bytes, private_key_seed_ascii: str, hash_function=bitcoin.bin_sha
         "r_hex": "0x" + r_hex,
         "s_hex": "0x" + s_hex,
         "address_bitcoin": addr,
-        "address_ethereum": get_ethereum_address_from_private_key(priv),
+        "address_ethereum": get_ethereum_address_from_private_key(private_key_seed_ascii),
         "public_key": pub,
         "hash": msghash,
-        "payload": binascii.hexlify(bytes([v] + list(r_bytes)+ list(s_bytes,)))
+        "payload": binascii.hexlify(bytes([v] + list(r_bytes) + list(s_bytes,)))
     }
 
 
@@ -88,10 +96,5 @@ def verify(msghash: bytes, signature, public_key):
     :param signature:
     :return:
     """
-
-    V = utils.safe_ord(signature[64]) + 27
-    R = big_endian_to_int(signature[0:32])
-    S = big_endian_to_int(signature[32:64])
-
-    return bitcoin.ecdsa_raw_verify(msghash, (V, R, S), public_key)
-
+    key_api = KeyAPI('eth_keys.backends.NativeECCBackend')
+    return key_api.ecdsa_verify(msghash, Signature(signature), PublicKey(public_key))

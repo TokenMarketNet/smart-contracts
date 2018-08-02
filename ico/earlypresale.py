@@ -41,24 +41,24 @@ def participate_early(chain, web3: Web3, presale_address: str, crowdsale_address
 
     # Double check presale has a presale price set
     MilestonePricing = get_contract_by_name(chain, "MilestonePricing")
-    pricing_strategy = MilestonePricing(address=crowdsale.call().pricingStrategy())
+    pricing_strategy = MilestonePricing(address=crowdsale.functions.pricingStrategy().call())
 
-    if not pricing_strategy.call().preicoAddresses(presale.address):
+    if not pricing_strategy.functions.preicoAddresses(presale.address).call():
         raise RuntimeError("Was not listed as presale address for pricing: {}".format(presale.address))
 
-    for i in range(start, min(end, presale.call().investorCount())):
+    for i in range(start, min(end, presale.functions.investorCount().call())):
 
-        investor = presale.call().investors(i)
+        investor = presale.functions.investors(i).call()
 
         if presale.call().balances(investor) > 0:
             print("Whitelisting for {} to crowdsale {}".format(investor, crowdsale.address))
-            txid = crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(investor, True)
+            txid = crowdsale.functions.setEarlyParicipantWhitelist(investor, True).transact({"from": deploy_address})
             print("Broadcasting whitelist transaction {}".format(txid))
             check_succesful_tx(web3, txid, timeout=timeout)
 
-            funds = from_wei(presale.call().balances(investor), "ether")
+            funds = from_wei(presale.functions.balances(investor).call(), "ether")
             print("Moving funds {} ETH for investor {} to presale {}".format(funds, investor, presale.address))
-            txid = presale.transact({"from": deploy_address}).participateCrowdsaleInvestor(investor)
+            txid = presale.functions.participateCrowdsaleInvestor(investor).transact({"from": deploy_address})
             print("Broadcasting transaction {}".format(txid))
             check_succesful_tx(web3, txid, timeout=timeout)
             updated += 1

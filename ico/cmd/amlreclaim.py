@@ -62,9 +62,9 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
 
         logger.info("Token address is %s", token.address)
 
-        decimals = token.call().decimals()
-        logger.info("Total supply is %s", token.call().totalSupply() / (10**decimals))
-        logger.info("Owner account token balance is %s", token.call().balanceOf(owner_address) / (10**decimals))
+        decimals = token.functions.decimals().call()
+        logger.info("Total supply is %s", token.functions.totalSupply().call() / (10**decimals))
+        logger.info("Owner account token balance is %s", token.functions.balanceOf(owner_address).call() / (10**decimals))
 
         if gas_price:
             gas_price = int(gas_price) * 10**9

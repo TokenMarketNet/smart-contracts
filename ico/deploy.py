@@ -212,6 +212,7 @@ def exec_lines(lines: str, context: dict, print_prefix=None):
         try:
             exec(buffer, context)
         except Exception as e:
+            import pdb; pdb.set_trace()
             raise RuntimeError("Failed when running: {}".format(buffer)) from e
 
         buffer = ""
@@ -262,7 +263,7 @@ def _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_ad
         deploy_address = web3.eth.accounts[0]
 
     address = deploy_address
-    print("Web3 provider is", web3.currentProvider)
+    print("Web3 provider is", web3.providers[0])
     print("Owner address is", address)
     start_balance = from_wei(web3.eth.getBalance(address), "ether")
     print("Owner balance is", start_balance, "ETH")
