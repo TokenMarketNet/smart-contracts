@@ -224,32 +224,6 @@
           "class": "web3.providers.tester.EthereumTesterProvider"
         }
       }
-    },
-    "testrpc": {
-      "chain": {
-        "class": "populus.chain.testrpc.TestRPCChain"
-      },
-      "contracts": {
-        "backends": {
-          "Memory": {
-            "class": "populus.contracts.backends.memory.MemoryBackend",
-            "priority": 50
-          },
-          "ProjectContracts": {
-            "class": "populus.contracts.backends.project.ProjectContractsBackend",
-            "priority": 20
-          },
-          "TestContracts": {
-            "class": "populus.contracts.backends.testing.TestContractsBackend",
-            "priority": 40
-          }
-        }
-      },
-      "web3": {
-        "provider": {
-          "class": "web3.providers.tester.TestRPCProvider"
-        }
-      }
     }
   },
   "compilation": {
@@ -367,7 +341,7 @@
       }
     }
   },
-  "version": "8",
+  "version": "9",
   "web3": {
     "GethIPC": {
       "provider": {
@@ -396,14 +370,9 @@
         }
       }
     },
-    "TestRPC": {
-      "provider": {
-        "class": "web3.providers.tester.TestRPCProvider"
-      }
-    },
     "Ganache": {
       "provider": {
-        "class": "web3.providers.tester.TestRPCProvider",
+        "class": "web3.providers.tester.TesterChain",
         "settings": {
           "endpoint_uri": "http://172.21.0.2:8545"
         }
@@ -411,7 +380,7 @@
     },
     "Tester": {
       "provider": {
-        "class": "web3.providers.tester.EthereumTesterProvider"
+        "class": "web3.providers.eth_tester.EthereumTesterProvider"
       }
     }
   }

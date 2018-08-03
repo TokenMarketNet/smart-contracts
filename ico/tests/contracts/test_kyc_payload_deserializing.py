@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-from eth_utils import to_normalized_address, to_checksum_address
 from web3.contract import Contract
 
 from ico.kyc import pack_kyc_pricing_dataframe
@@ -19,7 +18,7 @@ def kyc_deserializer(chain, presale_crowdsale, uncapped_token, team_multisig) ->
 
 @pytest.fixture()
 def whitelisted_address(accounts):
-    return to_checksum_address(accounts[0])
+    return accounts[0]
 
 
 def test_roundtrip_kyc_data(kyc_deserializer, whitelisted_address):
@@ -27,13 +26,13 @@ def test_roundtrip_kyc_data(kyc_deserializer, whitelisted_address):
 
     customer_id = uuid.uuid4()
     dataframe = pack_kyc_pricing_dataframe(whitelisted_address, customer_id, int(0.1 * 10000), int(9999 * 10000), 1)
-    tuple_value = kyc_deserializer.call().getKYCPayload(dataframe)
+    tuple_value = kyc_deserializer.functions.getKYCPayload(dataframe).call()
 
     #
     # Check that the output looks like what we did expect
     #
 
-    assert tuple_value[0].lower() == whitelisted_address.lower()
+    assert tuple_value[0] == whitelisted_address
     # Do a raw integer comparison, because web3.py and UUID disagree about left padding zeroes
     assert tuple_value[1] == customer_id.int
     assert tuple_value[2] == 1000
@@ -44,13 +43,13 @@ def test_roundtrip_kyc_presale_data(kyc_deserializer, whitelisted_address):
 
     customer_id = uuid.uuid4()
     dataframe = pack_kyc_pricing_dataframe(whitelisted_address, customer_id, int(0.1 * 10000), int(9999 * 10000), 123)
-    tuple_value = kyc_deserializer.call().getKYCPayload(dataframe)
+    tuple_value = kyc_deserializer.functions.getKYCPayload(dataframe).call()
 
     #
     # Check that the output looks like what we did expect
     #
 
-    assert tuple_value[0].lower() == whitelisted_address.lower()
+    assert tuple_value[0] == whitelisted_address
     # Do a raw integer comparison, because web3.py and UUID disagree about left padding zeroes
     assert tuple_value[1] == customer_id.int
     assert tuple_value[2] == 1000

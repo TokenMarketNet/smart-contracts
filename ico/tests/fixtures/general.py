@@ -20,43 +20,43 @@ def initial_supply() -> str:
 @pytest.fixture
 def customer(web3, accounts) -> str:
     """Get a customer address."""
-    return web3.toChecksumAddress(accounts[1])
+    return accounts[1]
 
 
 @pytest.fixture
 def customer_2(web3, accounts) -> str:
     """Get another customer address."""
-    return web3.toChecksumAddress(accounts[2])
+    return accounts[2]
 
 
 @pytest.fixture
 def beneficiary(web3, accounts) -> str:
     """The team control address."""
-    return web3.toChecksumAddress(accounts[3])
+    return accounts[3]
 
 
 @pytest.fixture
 def team_multisig(web3, accounts) -> str:
     """The team multisig address."""
-    return web3.toChecksumAddress(accounts[4])
+    return accounts[4]
 
 
 @pytest.fixture
 def malicious_address(web3, accounts) -> str:
     """Somebody who tries to perform activities they are not allowed to."""
-    return web3.toChecksumAddress(accounts[5])
+    return accounts[5]
 
 
 @pytest.fixture
 def empty_address(web3, accounts):
     """This account never holds anything."""
-    return web3.toChecksumAddress(accounts[6])
+    return accounts[6]
 
 
 @pytest.fixture
 def allowed_party(web3, accounts):
     """Gets ERC-20 allowance."""
-    return web3.toChecksumAddress(accounts[7])
+    return accounts[7]
 
 
 
