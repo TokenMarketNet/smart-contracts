@@ -16,9 +16,9 @@ CSV_SOURCE = """address,label
 def aml_reclaim_setup(aml_token: Contract, team_multisig: str, customer: str, customer_2):
     """Setup some tokens for accounts for performing the reclaim test. ."""
 
-    aml_token.transact({"from": team_multisig}).setTransferAgent(team_multisig, True)
-    aml_token.transact({"from": team_multisig}).transfer(customer, 1000000)
-    aml_token.transact({"from": team_multisig}).transfer(customer_2, 2000000)
+    aml_token.functions.setTransferAgent(team_multisig, True).transact({"from": team_multisig})
+    aml_token.functions.transfer(customer, 1000000).transact({"from": team_multisig})
+    aml_token.functions.transfer(customer_2, 2000000).transact({"from": team_multisig})
 
 
 @pytest.fixture
@@ -40,14 +40,14 @@ def test_count_reclaim(csv_stream, customer, aml_token: Contract, team_multisig)
 def test_reclaim_csv(csv_stream, customer, customer_2, aml_token: Contract, team_multisig):
     """Tokens are reclaimed correctly from CSV input.."""
 
-    start_owner_balance = aml_token.call().balanceOf(team_multisig)
+    start_owner_balance = aml_token.functions.balanceOf(team_multisig).call()
     rows = prepare_csv(csv_stream, "address", "label")
     performed_op_count = reclaim_all(aml_token, rows, {"from": team_multisig})
     assert performed_op_count == 1
 
-    assert aml_token.call().balanceOf(customer) == 0
-    assert aml_token.call().balanceOf(customer_2) == 2000000
-    assert aml_token.call().balanceOf(team_multisig) == start_owner_balance + 1000000
+    assert aml_token.functions.balanceOf(customer).call() == 0
+    assert aml_token.functions.balanceOf(customer_2).call() == 2000000
+    assert aml_token.functions.balanceOf(team_multisig).call() == start_owner_balance + 1000000
 
 
 def test_reclaim_twice(csv_stream, customer, aml_token: Contract, team_multisig):

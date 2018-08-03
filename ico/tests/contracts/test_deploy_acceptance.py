@@ -53,7 +53,7 @@ def presale_investor_4(accounts) -> str:
 def everything_deployed(project, chain, web3, accounts, deploy_address) -> dict:
     """Deploy our token plan."""
     yaml_filename = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..","crowdsales", "allocated-token-sale-acceptance-test.yml"))
-    deployment_name = "testrpc"
+    deployment_name = "tester"
     chain_data = load_crowdsale_definitions(yaml_filename, deployment_name)
     runtime_data, statistics, contracts = _deploy_contracts(project, chain, web3, yaml_filename, chain_data, deploy_address)
     return contracts
@@ -67,9 +67,11 @@ def crowdsale(everything_deployed) -> Contract:
 
 
 @pytest.fixture()
-def proxy_buyer_freeze_ends_at(chain, crowdsale) -> Contract:
+def proxy_buyer_freeze_ends_at(chain, crowdsale) -> int:
     """When investors can reclaim."""
-    return int(datetime.datetime(2017, 9, 20).timestamp())
+    return int(
+        (datetime.datetime.now() + datetime.timedelta(days=1)).timestamp()
+    )
 
 
 @pytest.fixture

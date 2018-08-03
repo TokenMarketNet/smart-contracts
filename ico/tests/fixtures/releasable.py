@@ -23,11 +23,11 @@ def release_agent(chain, team_multisig, token) -> Contract:
 def released_token(chain, team_multisig, token, release_agent, customer) -> Contract:
     """Create a Crowdsale token where transfer restrictions have been lifted."""
 
-    token.transact({"from": team_multisig}).setReleaseAgent(release_agent.address)
-    release_agent.transact({"from": team_multisig}).release()
+    token.functions.setReleaseAgent(release_agent.address).transact({"from": team_multisig})
+    release_agent.functions.release().transact({"from": team_multisig})
 
     # Make sure customer 1 has some token balance
-    token.transact({"from": team_multisig}).transfer(customer, 10000)
+    token.functions.transfer(customer, 10000).transact({"from": team_multisig})
 
     return token
 

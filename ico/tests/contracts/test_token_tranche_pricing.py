@@ -1,10 +1,7 @@
 """Tranche based pricing"""
-import datetime
-
 import pytest
 from decimal import Decimal
 from eth_utils import to_wei
-from ethereum.tester import TransactionFailed
 from web3.contract import Contract
 
 
@@ -31,8 +28,8 @@ def presale_fund_collector(chain, presale_freeze_ends_at, team_multisig) -> Cont
 
 
 @pytest.fixture
-def start_time() -> int:
-    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
+def start_time(web3) -> int:
+    return web3.eth.getBlock('pending').timestamp + 24 * 60 * 60
 
 
 @pytest.fixture
@@ -76,12 +73,14 @@ def tranche_pricing(chain, presale_fund_collector, start_time, end_time, team_mu
     ]
 
     tx = {
-        "gas": 4000000,
+        "gas": 3141592,
         "from": team_multisig
     }
     contract, hash = chain.provider.deploy_contract('TokenTranchePricing', deploy_args=args, deploy_transaction=tx)
 
-    contract.transact({"from": team_multisig}).setPreicoAddress(presale_fund_collector.address, to_wei("0.05", "ether"))
+    contract.functions.setPreicoAddress(
+        presale_fund_collector.address, to_wei("0.05", "ether")
+    ).transact({"from": team_multisig})
     return contract
 
 
@@ -104,12 +103,12 @@ def tranche_ico(chain, team_multisig, start_time, tranche_pricing, preico_cap, p
 
     contract, hash = chain.provider.deploy_contract('UncappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
 
     # Allow crowdsale contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     return contract
 
@@ -125,15 +124,15 @@ def finalizer(chain, token, tranche_ico, team_multisig) -> Contract:
     ]
     contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
 
-    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    tranche_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    tranche_ico.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
 def test_tranche_getter(chain, tranche_pricing, start_time):
     """Tranche data is exposed to the world."""
 
-    amount, price = tranche_pricing.call().getTranche(0)
+    amount, price = tranche_pricing.functions.getTranche(0).call()
     assert amount == 0 #Tranche amount
     assert price == 100000000000000000
 
@@ -142,7 +141,7 @@ def test_tranche_data(chain, tranche_pricing, start_time):
     """Tranche data can be read."""
 
     for i in range(0, 4):
-        time, price = tranche_pricing.call().getTranche(i)
+        time, price = tranche_pricing.functions.getTranche(i).call()
         print("-", time)
         print("-", price)
 
@@ -151,114 +150,114 @@ def test_tranche_prices(chain, tranche_pricing, start_time, end_time, customer):
     """We get correct tranche prices for different dates."""
 
     #TODO: Instead of timetravel, buy tokens here after this line, and then copy this
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.10", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 1
+    ).call() == 1
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.10", "ether"),
         122,
         0,
         customer,
         0,
-    ) == 1
+    ).call() == 1
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.12", "ether"),
         123,
         0,
         customer,
         0,
-    ) == 1
+    ).call() == 1
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.39", "ether"),
         1234,
         0,
         customer,
         0,
-    ) == 3
+    ).call() == 3
 
 
 def test_non_fractional_price(chain, tranche_pricing, customer, end_time):
     """We divide price correctly for integer only amount."""
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.28", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.281", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.11", "ether"),
         122,
         0,
         customer,
         0,
-    ) == 1
+    ).call() == 1
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.25", "ether"),
         0,
         123,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.40", "ether"),
         0,
         1234,
         customer,
         0,
-    ) == 3
+    ).call() == 3
 
 
 def test_tranche_calculate_preico_price(chain, tranche_pricing, start_time, presale_fund_collector):
     """Preico contributors get their special price."""
 
     # Pre-ico address always buys at the fixed price
-    assert tranche_pricing.call().calculatePrice(
+    assert tranche_pricing.functions.calculatePrice(
         to_wei("0.05", "ether"),
         0,
         0,
         presale_fund_collector.address,
         0
-    ) == 1
+    ).call() == 1
 
 
 def test_presale_move_to_tranche_based_crowdsale(chain, presale_fund_collector, tranche_ico, finalizer, token, start_time, team_multisig, customer, customer_2):
     """When pre-ico contract funds are moved to the crowdsale, the pre-sale investors gets tokens with a preferred price and not the current tranche price."""
 
     value = to_wei(50, "ether")
-    presale_fund_collector.transact({"from": customer, "value": value}).invest()
+    presale_fund_collector.functions.invest().transact({"from": customer, "value": value})
 
     # ICO begins, Link presale to an actual ICO
-    presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(tranche_ico.address)
+    presale_fund_collector.functions.setCrowdsale(tranche_ico.address).transact({"from": team_multisig})
     time_travel(chain, start_time)
 
-    assert tranche_ico.call().getState() == CrowdsaleState.Funding
+    assert tranche_ico.functions.getState().call() == CrowdsaleState.Funding
 
     # Load funds to ICO
     presale_fund_collector.transact().participateCrowdsaleAll()
 
     # Tokens received, paid by preico price
-    tranche_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
-    token.call().balanceOf(customer) == 50 / 0.050
+    assert tranche_ico.functions.investedAmountOf(customer).call() == to_wei(50, "ether")
+    assert token.functions.balanceOf(customer).call() == 50 / 0.050
 
 
 def test_fractional_preico_pricing(presale_fund_collector, tranche_pricing, fractional_token):
@@ -286,13 +285,13 @@ def test_fractional_preico_pricing(presale_fund_collector, tranche_pricing, frac
 def test_fractional_tranche_pricing(chain, presale_fund_collector, tranche_pricing, fractional_token, customer):
     """Tranche amount is calculated correctly for a token having fractions."""
 
-    amount = tranche_pricing.call().calculatePrice(
+    amount = tranche_pricing.functions.calculatePrice(
         to_wei("0.512345678", "ether"),
         0,
         0,
         customer,
         fractional_token.call().decimals()
-    )
+    ).call()
 
     assert amount == 512345678
     d = decimalize_token_amount(fractional_token, amount)

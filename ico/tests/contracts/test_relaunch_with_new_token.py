@@ -1,11 +1,10 @@
 """Rebuilding broken crowdsale contracts."""
 import csv
-import datetime
 from io import StringIO
 
 import pytest
 from eth_utils import to_wei
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
@@ -33,9 +32,8 @@ def new_token(chain, team_multisig, token_name, token_symbol) -> Contract:
 
 
 @pytest.fixture
-def start_time() -> int:
-    """Start Apr 15th"""
-    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
+def start_time(web3) -> int:
+    return web3.eth.getBlock('pending').timestamp + 24 * 60 * 60
 
 
 @pytest.fixture
@@ -95,11 +93,11 @@ def set_finalizer(chain, token, crowdsale, team_multisig, founder_allocation) ->
     contract, hash = chain.provider.deploy_contract('BonusFinalizeAgent', deploy_args=args)
 
     # Allow finalzier to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
-    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    crowdsale.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
@@ -118,7 +116,7 @@ def milestone_pricing(chain, start_time, end_time):
     ]
 
     tx = {
-        "gas": 4000000
+        "gas": 3141592
     }
     contract, hash = chain.provider.deploy_contract('MilestonePricing', deploy_args=args, deploy_transaction=tx)
     return contract
@@ -147,13 +145,13 @@ def original_crowdsale(chain, team_multisig, start_time, end_time, milestone_pri
 
     contract, hash = chain.provider.deploy_contract('MintedTokenCappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
-    assert contract.call().maximumSellableTokens() == cap
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
+    assert contract.functions.maximumSellableTokens().call() == cap
 
     # Allow crowdsale contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     set_finalizer(chain, token, contract, team_multisig, founder_allocation)
 
@@ -180,13 +178,13 @@ def relaunched_crowdsale(chain, team_multisig, start_time, end_time, milestone_p
 
     contract, hash = chain.provider.deploy_contract('RelaunchedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not new_token.call().released()
-    assert contract.call().maximumSellableTokens() == cap
+    assert contract.functions.owner().call() == team_multisig
+    assert not new_token.functions.released().call()
+    assert contract.functions.maximumSellableTokens().call() == cap
 
     # Allow crowdsale contract to do mint()
-    new_token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert new_token.call().mintAgents(contract.address) == True
+    new_token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert new_token.functions.mintAgents(contract.address).call() == True
     set_finalizer(chain, new_token, contract, team_multisig, founder_allocation)
 
     return contract
@@ -195,17 +193,17 @@ def relaunched_crowdsale(chain, team_multisig, start_time, end_time, milestone_p
 def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, token, new_token, relaunched_crowdsale, sample_data, team_multisig, customer, customer_2):
     """Rebuild a crowdsale that is not going to reach its minimum goal."""
 
-    time_travel(chain, original_crowdsale.call().startsAt() + 1)
-    assert original_crowdsale.call().getState() == CrowdsaleState.Funding
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Funding
+    time_travel(chain, original_crowdsale.functions.startsAt().call() + 1)
+    assert original_crowdsale.functions.getState().call() == CrowdsaleState.Funding
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Funding
 
     for data in sample_data:
         addr = data["Address"]
         wei = to_wei(data["Invested ETH"], "ether")
-        original_crowdsale.transact({"from": addr, "value": wei}).buy()
+        original_crowdsale.functions.buy().transact({"from": addr, "value": wei})
 
     # We have a confirmation hash
-    events = original_crowdsale.pastEvents("Invested").get()
+    events = original_crowdsale.events.Invested().createFilter(fromBlock=0).get_all_entries()
     assert len(events) == 2
     e = events[-1]
 
@@ -216,7 +214,9 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
         tokens = int(data["Received tokens"])
         orig_txid = int(data["Tx hash"], 16)
         orig_tx_index = int(data["Tx index"])
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
+        relaunched_crowdsale.functions.setInvestorDataAndIssueNewToken(
+            addr, wei, tokens, orig_txid
+        ).transact({"from": team_multisig})
 
     # No double issuance for the same tx
     data = sample_data[0]
@@ -226,44 +226,46 @@ def test_rebuild_failed_crowdsale_with_new_token(chain, original_crowdsale, toke
     orig_txid = int(data["Tx hash"], 16)
     orig_tx_index = int(data["Tx index"])
     with pytest.raises(TransactionFailed):
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
+        relaunched_crowdsale.functions.setInvestorDataAndIssueNewToken(
+            addr, wei, tokens, orig_txid
+        ).transact({"from": team_multisig})
 
     # Compare that both crowdsales and tokens look the same
-    assert original_crowdsale.call().tokensSold() == relaunched_crowdsale.call().tokensSold()
-    assert original_crowdsale.call().investedAmountOf(customer) == relaunched_crowdsale.call().investedAmountOf(customer)
-    assert original_crowdsale.call().investedAmountOf(customer_2) == relaunched_crowdsale.call().investedAmountOf(customer_2)
+    assert original_crowdsale.functions.tokensSold().call() == relaunched_crowdsale.functions.tokensSold().call()
+    assert original_crowdsale.call().investedAmountOf(customer) == relaunched_crowdsale.functions.investedAmountOf(customer).call()
+    assert original_crowdsale.functions.investedAmountOf(customer_2).call() == relaunched_crowdsale.functions.investedAmountOf(customer_2).call()
 
-    assert token.call().balanceOf(customer) == relaunched_crowdsale.call().tokenAmountOf(customer)
-    assert token.call().balanceOf(customer_2) == relaunched_crowdsale.call().tokenAmountOf(customer_2)
-    assert token.call().balanceOf(customer) == new_token.call().balanceOf(customer)
-    assert token.call().balanceOf(customer_2) == new_token.call().balanceOf(customer_2)
+    assert token.functions.balanceOf(customer).call() == relaunched_crowdsale.functions.tokenAmountOf(customer).call()
+    assert token.functions.balanceOf(customer_2).call() == relaunched_crowdsale.functions.tokenAmountOf(customer_2).call()
+    assert token.functions.balanceOf(customer).call() == new_token.functions.balanceOf(customer).call()
+    assert token.functions.balanceOf(customer_2).call() == new_token.functions.balanceOf(customer_2).call()
 
-    assert token.call().totalSupply() == new_token.call().totalSupply()
+    assert token.functions.totalSupply().call() == new_token.functions.totalSupply().call()
 
-    time_travel(chain, original_crowdsale.call().endsAt() + 1)
+    time_travel(chain, original_crowdsale.functions.endsAt().call() + 1)
 
-    assert original_crowdsale.call().getState() == CrowdsaleState.Failure
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Failure
-    relaunched_crowdsale.transact({"from": team_multisig, "value": to_wei(30, "ether")}).loadRefund()
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Refunding
+    assert original_crowdsale.functions.getState().call() == CrowdsaleState.Failure
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Failure
+    relaunched_crowdsale.functions.loadRefund().transact({"from": team_multisig, "value": to_wei(30, "ether")})
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Refunding
 
-    relaunched_crowdsale.transact({"from": customer}).refund()
-    relaunched_crowdsale.transact({"from": customer_2}).refund()
+    relaunched_crowdsale.functions.refund().transact({"from": customer})
+    relaunched_crowdsale.functions.refund().transact({"from": customer_2})
 
     # No double refund
     with pytest.raises(TransactionFailed):
-        relaunched_crowdsale.transact({"from": customer}).refund()
+        relaunched_crowdsale.functions.refund().transact({"from": customer})
 
     with pytest.raises(TransactionFailed):
-        original_crowdsale.transact({"from": customer}).refund()
+        original_crowdsale.functions.refund().transact({"from": customer})
 
 
 
 def test_rebuild_success_crowdsale_with_new_token(chain, new_token, relaunched_crowdsale, success_sample_data, team_multisig, customer, customer_2):
     """Rebuild a crowdsale that reaches its minimum goal."""
 
-    time_travel(chain, relaunched_crowdsale.call().startsAt() + 1)
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Funding
+    time_travel(chain, relaunched_crowdsale.functions.startsAt().call() + 1)
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Funding
 
     # Import old transactions from the multisig contract
     for data in success_sample_data:
@@ -272,28 +274,30 @@ def test_rebuild_success_crowdsale_with_new_token(chain, new_token, relaunched_c
         tokens = int(data["Received tokens"])
         orig_txid = int(data["Tx hash"], 16)
         # orig_tx_index = int(data["Tx index"])
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorDataAndIssueNewToken(addr, wei, tokens, orig_txid)
+        relaunched_crowdsale.functions.setInvestorDataAndIssueNewToken(
+            addr, wei, tokens, orig_txid
+        ).transact({"from": team_multisig})
 
-        assert relaunched_crowdsale.call().getRestoredTransactionStatus(orig_txid)
+        assert relaunched_crowdsale.functions.getRestoredTransactionStatus(orig_txid).call()
 
     # Compare that both crowdsales and tokens look the same
-    assert relaunched_crowdsale.call().investorCount() == 2
+    assert relaunched_crowdsale.functions.investorCount().call() == 2
 
     # We restored 3 events
-    events = relaunched_crowdsale.pastEvents("RestoredInvestment").get()
+    events = relaunched_crowdsale.events.RestoredInvestment().createFilter(fromBlock=0).get_all_entries()
     assert len(events) == 3
 
-    assert new_token.call().balanceOf(customer_2) == 1222
-    assert new_token.call().balanceOf(customer) == relaunched_crowdsale.call().tokenAmountOf(customer)
-    assert new_token.call().balanceOf(customer_2) == relaunched_crowdsale.call().tokenAmountOf(customer_2)
-    assert new_token.call().totalSupply() == relaunched_crowdsale.call().tokensSold()
+    assert new_token.functions.balanceOf(customer_2).call() == 1222
+    assert new_token.functions.balanceOf(customer).call() == relaunched_crowdsale.functions.tokenAmountOf(customer).call()
+    assert new_token.functions.balanceOf(customer_2).call() == relaunched_crowdsale.functions.tokenAmountOf(customer_2).call()
+    assert new_token.functions.totalSupply().call() == relaunched_crowdsale.functions.tokensSold().call()
 
-    time_travel(chain, relaunched_crowdsale.call().endsAt() + 1)
+    time_travel(chain, relaunched_crowdsale.functions.endsAt().call() + 1)
 
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Success
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Success
 
-    before_final = new_token.call().totalSupply()
-    relaunched_crowdsale.transact({"from": team_multisig}).finalize()
-    assert new_token.call().totalSupply() == int(before_final * 1.20)
+    before_final = new_token.functions.totalSupply().call()
+    relaunched_crowdsale.functions.finalize().transact({"from": team_multisig})
+    assert new_token.functions.totalSupply().call() == int(before_final * 1.20)
 
-    assert new_token.call().released()
+    assert new_token.functions.released().call()

@@ -4,12 +4,10 @@ from decimal import Decimal
 
 import time
 import web3
-from eth_utils import add_0x_prefix, is_hex_address, is_checksum_address
-from ethereum.chain import Chain
+from eth_utils import is_hex_address, is_checksum_address
 from populus.utils.contracts import CONTRACT_FACTORY_FIELDS
 from web3 import Web3
 from web3.contract import Contract
-from web3.utils.abi import get_constructor_abi, merge_args_and_kwargs
 from web3.utils.transactions import wait_for_transaction_receipt
 
 from populus.chain.base import BaseChain
@@ -17,6 +15,11 @@ from populus.contracts.contract import build_populus_meta, PopulusContract
 
 truthy = frozenset(('t', 'true', 'y', 'yes', 'on', '1'))
 falsey = frozenset(('f', 'false', 'n', 'no', 'off', '0'))
+
+CONTRACT_FIELDS_TO_REMOVE = {
+    'bytecode',
+    'bytecode_runtime',
+}
 
 
 class TransactionFailure(Exception):
@@ -76,17 +79,7 @@ def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwa
 
     https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
     """
-    constructor_abi = get_constructor_abi(contract.abi)
-
-    if args is not None:
-        return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
-    else:
-        constructor_abi = get_constructor_abi(contract.abi)
-        arguments = merge_args_and_kwargs(constructor_abi, [], kwargs)
-        deploy_data = add_0x_prefix(
-            contract._encode_abi(constructor_abi, arguments)
-        )
-        return deploy_data
+    return contract._encode_constructor_data(args=args, kwargs=kwargs)
 
 
 def get_libraries(chain: BaseChain, contract_name: str, contract: Contract) -> dict:
@@ -141,10 +134,18 @@ def get_contract_by_name(chain: BaseChain, name: str) -> web3.contract.Contract:
 
     contract_data = chain.provider.get_contract_data(name)
 
+    # There's a bug in populus where bytecode and bytecode-runtime can't be linked.
+    # These fields are not needed during interaction with a smart contract,
+    # so they can be ignored
+    contract_factory_fields = filter(
+        lambda x: x not in CONTRACT_FIELDS_TO_REMOVE,
+        CONTRACT_FACTORY_FIELDS
+    )
+
     factory_kwargs = {
         key: contract_data[key]
         for key
-        in CONTRACT_FACTORY_FIELDS
+        in contract_factory_fields
         if key in contract_data
     }
 

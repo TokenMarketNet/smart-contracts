@@ -1,9 +1,8 @@
 """Token core functionality."""
 
-import datetime
 import enum
 import pytest
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 from ico.tests.utils import time_travel
 from web3.contract import Contract
 
@@ -23,12 +22,12 @@ def token(chain, team_multisig):
         "TKN",
         1000000,
         0,
-        int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds())
+        chain.web3.eth.getBlock('pending').timestamp + 1
     ]
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
     assert contract.call().balanceOf(team_multisig) == 1000000
 
-    contract.transact({"from": team_multisig}).releaseTokenTransfer()
+    contract.functions.releaseTokenTransfer().transact({"from": team_multisig})
     return contract
 
 
@@ -40,12 +39,12 @@ def other_token(chain, team_multisig):
         "OTH",
         1000000,
         0,
-        int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds())
+        chain.web3.eth.getBlock('pending').timestamp + 1
     ]
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
     assert contract.call().balanceOf(team_multisig) == 1000000
 
-    contract.transact({"from": team_multisig}).releaseTokenTransfer()
+    contract.functions.releaseTokenTransfer().transact({"from": team_multisig})
     return contract
 
 
@@ -116,7 +115,7 @@ def token_vault_tapped(chain, team_multisig, token, freeze_ends_at) -> Contract:
 def loaded_token_vault(token_vault, team_multisig, token_vault_balances):
     """Token vault with investor balances set."""
     for address, balance in token_vault_balances:
-        token_vault.transact({"from": team_multisig}).setInvestor(address, balance)
+        token_vault.functions.setInvestor(address, balance).transact({"from": team_multisig})
     return token_vault
 
 
@@ -124,12 +123,12 @@ def loaded_token_vault(token_vault, team_multisig, token_vault_balances):
 def distributing_token_vault(chain, loaded_token_vault, team_multisig, token, token_vault_balances):
     """Token vault set to distributing state."""
 
-    token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 3000)
-    loaded_token_vault.transact({"from": team_multisig}).lock()
+    token.functions.transfer(loaded_token_vault.address, 3000).transact({"from": team_multisig})
+    loaded_token_vault.functions.lock().transact({"from": team_multisig})
 
-    assert loaded_token_vault.call().getState() == TokenVaultState.Holding
-    time_travel(chain, loaded_token_vault.call().freezeEndsAt()+1)
-    loaded_token_vault.call().getState() == TokenVaultState.Distributing
+    assert loaded_token_vault.functions.getState().call() == TokenVaultState.Holding
+    time_travel(chain, loaded_token_vault.functions.freezeEndsAt().call()+1)
+    assert loaded_token_vault.functions.getState().call() == TokenVaultState.Distributing
 
     return loaded_token_vault
 
@@ -275,7 +274,8 @@ def test_claim_early(chain, loaded_token_vault, team_multisig, token, customer, 
     token.transact({"from": team_multisig}).transfer(loaded_token_vault.address, 3000)
     loaded_token_vault.transact({"from": team_multisig}).lock()
 
-    time_travel(chain, loaded_token_vault.call().freezeEndsAt() - 1)
+    # two minutes before freeze
+    time_travel(chain, loaded_token_vault.call().freezeEndsAt() - 120)
 
     with pytest.raises(TransactionFailed):
         loaded_token_vault.transact({"from": customer}).claim()

@@ -15,8 +15,8 @@ def deserializer(chain, presale_crowdsale, uncapped_token, team_multisig) -> Con
 def test_decode_bytes32(deserializer):
     """We correctly get bytes 32 back."""
     encoded_payload = 0x01.to_bytes(32, byteorder='little')
-    bytes32 = deserializer.call().getBytes32(encoded_payload, 0x00)
-    assert bytes32 =='\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    bytes32 = deserializer.functions.getBytes32(encoded_payload, 0x00).call()
+    assert bytes32 == b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
 
 def test_decode_uint256(deserializer):
@@ -31,7 +31,7 @@ def test_decode_uint256(deserializer):
     for i in range(31):
         payload = 0x01 << (8*i)
         encoded_payload = payload.to_bytes(32, byteorder='big')
-        value = deserializer.call().getUint256(encoded_payload, 0x00)
+        value = deserializer.functions.getUint256(encoded_payload, 0x00).call()
         assert value == payload, "Did not deserializer correctly: {} {}".format(payload, encoded_payload)
 
 
@@ -42,7 +42,7 @@ def test_offset_uint256(deserializer):
         offset = b"\x00" * i
         payload = 0x01 << (8*i)
         encoded_payload = offset + payload.to_bytes(32, byteorder='big')
-        value = deserializer.call().getUint256(encoded_payload, i)
+        value = deserializer.functions.getUint256(encoded_payload, i).call()
         assert value == payload, "Did not deserializer correctly: {} {}".format(payload, encoded_payload)
 
 
@@ -52,7 +52,7 @@ def test_decode_uint128(deserializer):
     for i in range(15):
         payload = 0x01 << (8*i)
         encoded_payload = payload.to_bytes(16, byteorder='big')
-        value = deserializer.call().getUint128(encoded_payload, 0x00)
+        value = deserializer.functions.getUint128(encoded_payload, 0x00).call()
         assert value == payload, "Did not deserializer correctly: {} {}".format(payload, encoded_payload)
 
 
@@ -62,7 +62,7 @@ def test_decode_uint16(deserializer):
     for i in range(2):
         payload = 0x01 << (8*i)
         encoded_payload = payload.to_bytes(2, byteorder='big')
-        value = deserializer.call().getUint16(encoded_payload, 0x00)
+        value = deserializer.functions.getUint16(encoded_payload, 0x00).call()
         assert value == payload, "Did not deserializer correctly: {} {}".format(payload, encoded_payload)
 
 
@@ -72,7 +72,7 @@ def test_decode_uint32(deserializer):
     for i in range(2):
         payload = 0x01 << (8*i)
         encoded_payload = payload.to_bytes(2, byteorder='big')
-        value = deserializer.call().getUint16(encoded_payload, 0x00)
+        value = deserializer.functions.getUint16(encoded_payload, 0x00).call()
         assert value == payload, "Did not deserializer correctly: {} {}".format(payload, encoded_payload)
 
 
@@ -82,5 +82,5 @@ def test_decode_address(deserializer):
 
     addr_value = int(address, 16)
     addr_b = addr_value.to_bytes(20, byteorder="big")  # Ethereum address is 20 bytes
-    value = deserializer.call().getAddress(addr_b, 0)
-    assert value.lower() == address.lower(), "Did not deserializer correctly: {} {}".format(value, address)
+    value = deserializer.functions.getAddress(addr_b, 0).call()
+    assert value == address, "Did not deserializer correctly: {} {}".format(value, address)
