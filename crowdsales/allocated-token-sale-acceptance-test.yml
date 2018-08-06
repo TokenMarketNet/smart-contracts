@@ -3,9 +3,9 @@
 # Please note that some numbers are slightly changed.
 #
 
-testrpc:
+tester:
 
-    chain: testrpc
+    chain: tester
 
     # Use automated Chrome to verify all contracts on etherscan.io
     verify_on_etherscan: no
@@ -145,7 +145,7 @@ testrpc:
         confirm_tx(crowdsale.functions.setFinalizeAgent(finalize_agent.address).transact({"from": deploy_address}))
 
         # Owner can release the token transfer when they fel its the time
-        confirm_tx(token.functions.setReleaseAgent(deploy_address)transact({"from": deploy_address}))
+        confirm_tx(token.functions.setReleaseAgent(deploy_address).transact({"from": deploy_address}))
 
         # Set token upgrade master to team multisig to give the new token path
         confirm_tx(token.functions.setUpgradeMaster(team_multisig.address).transact({"from": deploy_address}))
