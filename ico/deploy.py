@@ -212,7 +212,6 @@ def exec_lines(lines: str, context: dict, print_prefix=None):
         try:
             exec(buffer, context)
         except Exception as e:
-            import pdb; pdb.set_trace()
             raise RuntimeError("Failed when running: {}".format(buffer)) from e
 
         buffer = ""
