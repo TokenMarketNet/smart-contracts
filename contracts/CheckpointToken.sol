@@ -141,7 +141,7 @@ contract CheckpointToken is ERC20, ERC827 {
    * @param blockNumber The block number we want to query for the balance.
    * @return An uint256 representing the amount owned by the passed address.
    */
-  function balanceAt(address owner, uint256 blockNumber) external view returns (uint256 balance) {
+  function balanceAt(address owner, uint256 blockNumber) public view returns (uint256 balance) {
     balance = balanceAtBlock(tokenBalances[owner], blockNumber);
   }
 
