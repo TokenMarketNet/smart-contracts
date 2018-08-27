@@ -33,6 +33,8 @@ interface TAPASAnnouncement {
 contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
+  string public version = 'TAPAS 0.1';
+
   /** TAPAS specific events **/
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);

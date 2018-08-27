@@ -20,7 +20,6 @@ import "zeppelin/contracts/token/ERC827/ERC827Token.sol";
 contract CheckpointToken is ERC20, ERC827 {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
-  string public version = 'TAPAS 0.1';
   string public name;
   string public symbol;
   uint256 public decimals;
