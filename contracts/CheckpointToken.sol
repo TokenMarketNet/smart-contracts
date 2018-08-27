@@ -118,6 +118,15 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   /**
+   * @dev total number of tokens in existence at the given block
+   * @param blockNumber The block number we want to query for the total supply
+   * @return A uint256 specifying the total number of tokens at a given block
+   */
+  function totalSupplyAt(uint256 blockNumber) public view returns (uint256 tokenCount) {
+    tokenCount = balanceAtBlock(tokensTotal, blockNumber);
+  }
+
+  /**
    * @dev Gets the balance of the specified address.
    * @param owner The address to query the the balance of.
    * @return An uint256 representing the amount owned by the passed address.
