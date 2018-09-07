@@ -9,6 +9,7 @@
 pragma solidity ^0.4.18;
 
 import "./CrowdsaleToken.sol";
+import "./transactionAgent.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 import "zeppelin/contracts/token/ERC20/ERC20.sol";
@@ -23,6 +24,7 @@ contract CheckpointToken is ERC20, ERC827 {
   string public name;
   string public symbol;
   uint256 public decimals;
+  transactionAgent public verifier;
   uint256 public freezedAt = 0;
   uint256 public freezeDuration = 1 days; // Default is one day
 
@@ -304,6 +306,11 @@ contract CheckpointToken is ERC20, ERC827 {
 
   function transferInternal(address from, address to, uint256 value) internal {
     require(now > (freezedAt + freezeDuration));
+
+    if (address(verifier) != address(0)) {
+      value = verifier.verify(from, to, value);
+      require(value > 0);
+    }
 
     uint256 fromBalance;
     uint256 toBalance;
