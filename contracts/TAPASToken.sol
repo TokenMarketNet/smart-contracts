@@ -41,6 +41,7 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   event Forced(address indexed from, address indexed to, uint256 value);
   event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI, uint256 announcementHash);
   event UpdatedTokenInformation(string newName, string newSymbol);
+  event UpdatedTransactionVerifier(address newVerifier);
 
   address[] public announcements;
 
@@ -149,7 +150,17 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
     UpdatedTokenInformation(name, symbol);
   }
 
-  function setTransactionAgent(transactionAgent newAgent) external onlyWhitelisted {
-    verifier = newAgent;
+  /**
+   * @dev Set transaction verifier
+   *
+   * This sets a transactionAgent to be used as a transaction verifier for
+   * each transfer. This is implemented for possible regulatory requirements.
+   *
+   * @param newVerifier Address of the transactionAgent used as verifier
+   */
+  function setTransactionVerifier(transactionAgent newVerifier) external onlyWhitelisted {
+    transactionVerifier = newVerifier;
+
+    UpdatedTransactionVerifier(newVerifier);
   }
 }

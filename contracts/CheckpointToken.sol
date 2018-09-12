@@ -24,7 +24,7 @@ contract CheckpointToken is ERC20, ERC827 {
   string public name;
   string public symbol;
   uint256 public decimals;
-  transactionAgent public verifier;
+  transactionAgent public transactionVerifier;
 
   struct Checkpoint {
     uint256 blockNumber;
@@ -303,8 +303,8 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
-    if (address(verifier) != address(0)) {
-      value = verifier.verify(from, to, value);
+    if (address(transactionVerifier) != address(0)) {
+      value = transactionVerifier.verify(from, to, value);
       require(value > 0);
     }
 
