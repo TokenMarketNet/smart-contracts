@@ -98,6 +98,20 @@ def zero_address() -> str:
 #
 
 @pytest.fixture
+def tapas_verifier(chain, team_multisig) -> Contract:
+    """Create the transaction verifier contract."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash = chain.provider.deploy_contract('MockTransactionAgent', deploy_transaction=tx)
+
+    check_gas(chain, hash)
+
+    return contract
+
+@pytest.fixture
 def tapas_token(chain, team_multisig, tapas_token_name, tapas_token_symbol, tapas_initial_supply) -> Contract:
     """Create the token contract."""
 
@@ -332,3 +346,13 @@ def test_tapas_failsafe(chain, tapas_token, failsafetester, team_multisig, custo
 
     # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
     #tapas_token.transact({"from": team_multisig}).transfer(customer, 1)
+
+
+def test_tapas_transaction_verifier(chain, tapas_token, tapas_verifier, team_multisig, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 10))
+    assert tapas_token.call().balanceOf(customer) == 10
+
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).setTransactionVerifier(tapas_verifier.address))
+
+    check_gas(chain, tapas_token.transact({"from": customer}).transfer(team_multisig, 10))
+    assert tapas_token.call().balanceOf(customer) == 9
