@@ -25,8 +25,6 @@ contract CheckpointToken is ERC20, ERC827 {
   string public symbol;
   uint256 public decimals;
   transactionAgent public verifier;
-  uint256 public freezedAt = 0;
-  uint256 public freezeDuration = 1 days; // Default is one day
 
   struct Checkpoint {
     uint256 blockNumber;
@@ -305,8 +303,6 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
-    require(now > (freezedAt + freezeDuration));
-
     if (address(verifier) != address(0)) {
       value = verifier.verify(from, to, value);
       require(value > 0);

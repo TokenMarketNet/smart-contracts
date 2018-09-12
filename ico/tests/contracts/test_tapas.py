@@ -332,27 +332,3 @@ def test_tapas_failsafe(chain, tapas_token, failsafetester, team_multisig, custo
 
     # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
     #tapas_token.transact({"from": team_multisig}).transfer(customer, 1)
-
-def test_tapas_freeze(chain, tapas_token, team_multisig, testpayload, receiver):
-    """Testing succesful freeze, and unfreeze"""
-    assert tapas_token.call().balanceOf(receiver.address) == 0
-    check_gas(chain, tapas_token.transact({"from": team_multisig}).freeze())
-
-    with pytest.raises(TransactionFailed):
-        check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(receiver.address, 1))
-
-    assert tapas_token.call().balanceOf(receiver.address) == 0
-
-    check_gas(chain, tapas_token.transact({"from": team_multisig}).setFreezeDuration(0))
-
-    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(receiver.address, 1))
-    assert tapas_token.call().balanceOf(receiver.address) == 1
-
-    check_gas(chain, tapas_token.transact({"from": team_multisig}).setFreezeDuration(1000))
-    with pytest.raises(TransactionFailed):
-        check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(receiver.address, 1))
-
-    # We should not be able to re-freeze it in a week
-    # (However we can call setFreezeDuration() again, that's a feature)
-    with pytest.raises(TransactionFailed):
-        check_gas(chain, tapas_token.transact({"from": team_multisig}).freeze())
