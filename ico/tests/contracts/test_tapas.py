@@ -9,7 +9,7 @@ from ethereum.tester import TransactionFailed
 import time
 
 @pytest.fixture
-def testpayload() -> str:
+def testpayload() -> bytes:
     return decode_hex("a3e76c0f") # function receive() returns(bool)
 
 @pytest.fixture
@@ -39,10 +39,10 @@ def announcement(chain, team_multisig, announcement_name, announcement_uri, anno
         "from": team_multisig
     }
 
-    contract, hash = chain.provider.deploy_contract('BogusTAPASAnnouncement', deploy_args=args, deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('BogusTAPASAnnouncement', deploy_args=args, deploy_transaction=tx)
 
 
-    check_gas(chain, hash)
+    check_gas(chain, hash_)
 
     assert removeNonPrintable(contract.call().announcementName()) == announcement_name
     assert removeNonPrintable(contract.call().announcementURI()) == announcement_uri
@@ -59,7 +59,7 @@ def receiver(chain, team_multisig) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash = chain.provider.deploy_contract('ERC827Receiver', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('ERC827Receiver', deploy_transaction=tx)
     return contract
 
 
@@ -71,7 +71,7 @@ def failsafetester(chain, team_multisig) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
     return contract
 
 @pytest.fixture
@@ -105,9 +105,9 @@ def tapas_verifier(chain, team_multisig) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash = chain.provider.deploy_contract('MockTransactionAgent', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('MockTransactionAgent', deploy_transaction=tx)
 
-    check_gas(chain, hash)
+    check_gas(chain, hash_)
 
     return contract
 
@@ -121,9 +121,9 @@ def tapas_token(chain, team_multisig, tapas_token_name, tapas_token_symbol, tapa
         "from": team_multisig
     }
 
-    contract, hash = chain.provider.deploy_contract('TAPASToken', deploy_args=args, deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('TAPASToken', deploy_args=args, deploy_transaction=tx)
 
-    check_gas(chain, hash)
+    check_gas(chain, hash_)
 
     check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
     check_gas(chain, contract.transact(tx).issueTokens(tapas_initial_supply))
