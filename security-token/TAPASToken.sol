@@ -8,9 +8,9 @@
 
 pragma solidity ^0.4.18;
 
-import "./CrowdsaleToken.sol";
+import "../contracts/CrowdsaleToken.sol";
+import "../contracts/Recoverable.sol";
 import "./CheckpointToken.sol";
-import "./Recoverable.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 

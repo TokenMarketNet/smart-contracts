@@ -291,7 +291,8 @@
       }
     },
     "contracts_source_dirs": [
-      "./contracts"
+      "./contracts",
+      "./security-token"
     ],
     "import_remappings": []
   },
