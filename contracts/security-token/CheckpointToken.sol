@@ -13,12 +13,12 @@ import "./SecurityTransferAgent.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 import "zeppelin/contracts/token/ERC20/ERC20.sol";
-import "zeppelin/contracts/token/ERC827/ERC827Token.sol";
+import "./ERC677Token.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract CheckpointToken is ERC20, ERC827 {
+contract CheckpointToken is ERC677Token {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   string public name;
@@ -181,78 +181,11 @@ contract CheckpointToken is ERC20, ERC827 {
     return true;
   }
 
-  /** ERC827 Functions from OpenZeppelin
-   ****************************************/
-
-  /**
-    * @dev Addition to ERC20 token methods. It allows to
-    * approve the transfer of value and execute a call with the sent data.
-    *
-    * Beware that changing an allowance with this method brings the risk that
-    * someone may use both the old and the new allowance by unfortunate
-    * transaction ordering. One possible solution to mitigate this race condition
-    * is to first reduce the spender's allowance to 0 and set the desired value
-    * afterwards:
-    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    *
-    * @param spender The address that will spend the funds.
-    * @param value The amount of tokens to be spent.
-    * @param data ABI-encoded contract call to call `_to` address.
-    *
-    * @return true if the call function was executed successfully
-    */
-  function approve(address spender, uint256 value, bytes data) public returns (bool) {
-    require(spender != address(this));
-
-    approve(spender, value);
-
-    require(spender.call(data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-   * address and execute a call with the sent data on the same transaction
-   *
-   * @param to address The address which you want to transfer to
-   * @param value uint256 the amout of tokens to be transfered
-   * @param data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transfer(address to, uint256 value, bytes data) public returns (bool) {
-    require(to != address(this));
-
-    transfer(to, value);
-
-    require(to.call(data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-   * another and make a contract call on the same transaction
-   *
-   * @param from The address which you want to send tokens from
-   * @param to The address which you want to transfer to
-   * @param value The amout of tokens to be transferred
-   * @param data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferFrom(address from, address to, uint256 value, bytes data) public returns (bool) {
-    require(to != address(this));
-
-    transferFrom(from, to, value);
-
-    require(to.call(data));
-    return true;
-  }
-
   /**
    * @dev Addition to StandardToken methods. Increase the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
+   *
+   * This is originally from OpenZeppelin.
    *
    * approve should be called when allowed[spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
@@ -275,6 +208,8 @@ contract CheckpointToken is ERC20, ERC827 {
   /**
    * @dev Addition to StandardToken methods. Decrease the amount of tokens that
    * an owner allowed to a spender and execute a call with the sent data.
+   *
+   * This is originally from OpenZeppelin.
    *
    * approve should be called when allowed[spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until

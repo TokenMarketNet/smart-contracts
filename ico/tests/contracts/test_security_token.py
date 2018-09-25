@@ -59,7 +59,7 @@ def receiver(chain, team_multisig) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash_ = chain.provider.deploy_contract('ERC827Receiver', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('MockERC677Receiver', deploy_transaction=tx)
     return contract
 
 
@@ -180,7 +180,7 @@ def test_security_token_approve_bad_amount(chain, security_token, security_token
 
 
 def test_security_token_interface(security_token, token_owner: str, zero_address: str):
-    """SecurityToken satisfies ERC-20/ERC-827 interface."""
+    """SecurityToken satisfies the ERC-20 interface."""
 
     # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
 
@@ -258,67 +258,11 @@ def test_security_token_announce(chain, security_token, team_multisig, zero_addr
     assert e["args"]["announcementHash"] == announcement_hash
 
 
-def test_security_token_erc827_allowance(security_token, team_multisig, testpayload, receiver, customer):
-    """Testing succesful approve+transferFrom combination"""
-
-    assert security_token.call().allowance(team_multisig, customer) == 0
-    security_token.transact({"from": team_multisig}).approve(customer, 50, testpayload)
-    assert security_token.call().allowance(team_multisig, customer) == 50
-    security_token.transact({"from": team_multisig}).increaseApproval(customer, 100, testpayload)
-    assert security_token.call().allowance(team_multisig, customer) == 150
-    security_token.transact({"from": team_multisig}).decreaseApproval(customer, 50, testpayload)
-    assert security_token.call().allowance(team_multisig, customer) == 100
-
-    security_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 100, testpayload)
-
-
-def test_security_token_erc827_allowance_bad_amount(security_token, team_multisig, testpayload, receiver, customer):
-    """Testing unsuccesful approve+transferFrom combination with too large amount"""
-
-    assert security_token.call().allowance(team_multisig, customer) == 0
-    security_token.transact({"from": team_multisig}).approve(customer, 50, testpayload)
-    assert security_token.call().allowance(team_multisig, customer) == 50
-
-    with pytest.raises(TransactionFailed):
-        security_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 100, testpayload)
-
-
-def test_security_token_erc827_allowance_bad_claimant(security_token, team_multisig, testpayload, receiver, customer, customer_2):
-    """Testing unsuccesful approve+transferFrom combination by 3rd party"""
-
-    assert security_token.call().allowance(team_multisig, customer) == 0
-    security_token.transact({"from": team_multisig}).approve(customer, 50, testpayload)
-    assert security_token.call().allowance(team_multisig, customer) == 50
-
-    with pytest.raises(TransactionFailed):
-        security_token.transact({"from": customer_2}).transferFrom(team_multisig, receiver.address, 50, testpayload)
-
-
-def test_security_token_erc827_allowance_without_approve(security_token, team_multisig, testpayload, receiver, customer, customer_2):
-    """Testing succesful transferFrom without approve()"""
-
-    assert security_token.call().allowance(team_multisig, customer) == 0
-
-    with pytest.raises(TransactionFailed):
-        security_token.transact({"from": customer}).transferFrom(team_multisig, receiver.address, 50, testpayload)
-
-
-def test_security_token_erc827_transfer(security_token, team_multisig, testpayload, receiver):
+def test_security_token_erc677_transfer(security_token, team_multisig, testpayload, receiver):
     """Testing succesful token transfer"""
     assert security_token.call().balanceOf(receiver.address) == 0
-    security_token.transact({"from": team_multisig}).transfer(receiver.address, 100, testpayload)
+    security_token.transact({"from": team_multisig}).transferAndCall(receiver.address, 100, testpayload)
     assert security_token.call().balanceOf(receiver.address) == 100
-
-
-def test_security_token_erc827_transfer_bad_amount(security_token, team_multisig, testpayload, receiver):
-    """Testing unsuccesful token transfer with too large amount"""
-    original_balance = security_token.call().balanceOf(team_multisig)
-
-    assert security_token.call().balanceOf(receiver.address) == 0
-    with pytest.raises(TransactionFailed):
-        security_token.transact({"from": team_multisig}).transfer(receiver.address, 10000000000000000000000000000000000, testpayload)
-    assert security_token.call().balanceOf(receiver.address) == 0
-    assert security_token.call().balanceOf(team_multisig) == original_balance
 
 
 def test_security_token_failsafe(chain, security_token, failsafetester, team_multisig, customer):
