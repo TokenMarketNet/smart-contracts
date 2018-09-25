@@ -8,7 +8,7 @@
 
 pragma solidity ^0.4.18;
 
-import "../contracts/CrowdsaleToken.sol";
+import "../CrowdsaleToken.sol";
 import "./transactionAgent.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";

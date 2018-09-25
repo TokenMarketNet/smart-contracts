@@ -356,3 +356,16 @@ def test_tapas_transaction_verifier(chain, tapas_token, tapas_verifier, team_mul
 
     check_gas(chain, tapas_token.transact({"from": customer}).transfer(team_multisig, 10))
     assert tapas_token.call().balanceOf(customer) == 9
+
+
+def test_tapas_freeze(chain, tapas_token, tapas_verifier, team_multisig, customer):
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).transfer(customer, 10))
+    assert tapas_token.call().balanceOf(customer) == 10
+
+    check_gas(chain, tapas_verifier.transact({"from": team_multisig}).freeze())
+    check_gas(chain, tapas_token.transact({"from": team_multisig}).setTransactionVerifier(tapas_verifier.address))
+
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, tapas_token.transact({"from": customer}).transfer(team_multisig, 10))
+
+    assert tapas_token.call().balanceOf(customer) == 10

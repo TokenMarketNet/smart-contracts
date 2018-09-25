@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import "./BogusTAPASAnnouncement.sol";
 import "./MockKYC.sol";
 import "../CheckpointToken.sol";
-import "../../zeppelin/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
 contract InvestorInteractionContract is BogusTAPASAnnouncement, StandardToken {
   uint256 public blockNumber;
