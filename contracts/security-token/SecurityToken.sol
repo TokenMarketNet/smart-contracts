@@ -15,12 +15,12 @@ import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 
 /**
- * @dev Interface for general TAPAS announcements.
+ * @dev Interface for general announcements about the security.
  *
- * TAPASAnnouncements can be for instance for dividend sharing, voting, or
+ * Announcements can be for instance for dividend sharing, voting, or
  * just for general announcements.
  */
-interface TAPASAnnouncement {
+interface Announcement {
   function announcementName() public view returns (bytes32);
   function announcementURI() public view returns (bytes32);
   function announcementType() public view returns (uint256);
@@ -30,12 +30,12 @@ interface TAPASAnnouncement {
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
+contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
-  string public version = 'TAPAS 0.1';
+  string public version = 'TM01 0.1';
 
-  /** TAPAS specific events **/
+  /** SecurityToken specific events **/
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
   event Forced(address indexed from, address indexed to, uint256 value);
@@ -46,29 +46,29 @@ contract TAPASToken is CheckpointToken, Whitelist, Recoverable {
   address[] public announcements;
 
   /**
-   * @dev Contructor to create TAPASToken, and subsequent CheckpointToken.
+   * @dev Contructor to create SecurityToken, and subsequent CheckpointToken.
    *
    * CheckpointToken will be created with hardcoded 18 decimals.
    *
    * @param _name Initial name of the token
    * @param _symbol Initial symbol of the token
    */
-  function TAPASToken(string _name, string _symbol) CheckpointToken(_name, _symbol, 18) public {
+  function SecurityToken(string _name, string _symbol) CheckpointToken(_name, _symbol, 18) public {
 
   }
 
   /**
-   * @dev Function to announce TAPASAnnouncements.
+   * @dev Function to announce Announcements.
    *
-   * TAPASAnnouncements can be for instance for dividend sharing, voting, or
+   * Announcements can be for instance for dividend sharing, voting, or
    * just for general announcements.
    *
    * Instead of storing the announcement details, we just broadcast them as an
    * event, and store only the address.
    *
-   * @param announcement Address of TAPASAnnouncement
+   * @param announcement Address of the Announcement
    */
-  function announce(TAPASAnnouncement announcement) external onlyWhitelisted {
+  function announce(Announcement announcement) external onlyWhitelisted {
     announcements.push(announcement);
     Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI(), announcement.announcementHash());
   }
