@@ -9,7 +9,7 @@
 pragma solidity ^0.4.18;
 
 import "../CrowdsaleToken.sol";
-import "./transactionAgent.sol";
+import "./SecurityTransferAgent.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 import "zeppelin/contracts/token/ERC20/ERC20.sol";
@@ -24,7 +24,7 @@ contract CheckpointToken is ERC20, ERC827 {
   string public name;
   string public symbol;
   uint256 public decimals;
-  transactionAgent public transactionVerifier;
+  SecurityTransferAgent public transferVerifier;
 
   struct Checkpoint {
     uint256 blockNumber;
@@ -303,8 +303,8 @@ contract CheckpointToken is ERC20, ERC827 {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
-    if (address(transactionVerifier) != address(0)) {
-      value = transactionVerifier.verify(from, to, value);
+    if (address(transferVerifier) != address(0)) {
+      value = transferVerifier.verify(from, to, value);
       require(value > 0);
     }
 

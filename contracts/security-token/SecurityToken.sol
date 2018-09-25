@@ -153,13 +153,13 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
   /**
    * @dev Set transaction verifier
    *
-   * This sets a transactionAgent to be used as a transaction verifier for
+   * This sets a SecurityTransferAgent to be used as a transaction verifier for
    * each transfer. This is implemented for possible regulatory requirements.
    *
-   * @param newVerifier Address of the transactionAgent used as verifier
+   * @param newVerifier Address of the SecurityTransferAgent used as verifier
    */
-  function setTransactionVerifier(transactionAgent newVerifier) external onlyWhitelisted {
-    transactionVerifier = newVerifier;
+  function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyWhitelisted {
+    transferVerifier = newVerifier;
 
     UpdatedTransactionVerifier(newVerifier);
   }

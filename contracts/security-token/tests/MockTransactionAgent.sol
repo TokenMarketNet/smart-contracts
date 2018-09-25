@@ -1,11 +1,11 @@
 pragma solidity ^0.4.18;
 
-import "../transactionAgent.sol";
+import "../SecurityTransferAgent.sol";
 
-contract MockTransactionAgent is transactionAgent {
+contract MockSecurityTransferAgent is SecurityTransferAgent {
   bool frozen = false;
 
-  function MockTransactionAgent() {
+  function MockSecurityTransferAgent() {
     // This is here for our verification code only
   }
 

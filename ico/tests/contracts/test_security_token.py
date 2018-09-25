@@ -105,7 +105,7 @@ def security_token_verifier(chain, team_multisig) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash_ = chain.provider.deploy_contract('MockTransactionAgent', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
 
     check_gas(chain, hash_)
 
