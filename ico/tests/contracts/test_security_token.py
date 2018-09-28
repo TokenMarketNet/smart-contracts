@@ -97,11 +97,13 @@ def failsafetester(chain, team_multisig) -> Contract:
 def security_token_name() -> str:
     return "SecurityToken"
 
-
 @pytest.fixture
 def security_token_symbol() -> str:
     return "SEC"
 
+@pytest.fixture
+def security_token_url() -> str:
+    return "http://tokenmarket.net/"
 
 @pytest.fixture
 def security_token_initial_supply() -> str:
@@ -118,10 +120,24 @@ def zero_address() -> str:
 #
 
 @pytest.fixture
-def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_initial_supply) -> Contract:
+def security_token_verifier(chain, team_multisig) -> Contract:
+    """Create the transaction verifier contract."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
+@pytest.fixture
+def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_url, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
-    args = [security_token_name, security_token_symbol]  # Owner set
+    args = [security_token_name, security_token_symbol, security_token_url]  # Owner set
 
     tx = {
         "from": team_multisig,
@@ -136,6 +152,7 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
     check_gas(chain, contract.transact(tx).issueTokens(security_token_initial_supply))
 
     assert contract.call().totalSupply() == security_token_initial_supply
+    assert contract.call().url() == security_token_url
     assert contract.call().balanceOf(team_multisig) == security_token_initial_supply
 
     return contract
@@ -165,9 +182,10 @@ def test_security_token_ask_balanceat(chain, security_token, security_token_init
 
 
 def test_security_token_change_name_and_symbol(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTokenInformation("NewToken", "NEW"))
+    check_gas(chain, security_token.transact({"from": team_multisig}).setTokenInformation("NewToken", "NEW", "http://new"))
     assert security_token.call().name() == "NewToken"
     assert security_token.call().symbol() == "NEW"
+    assert security_token.call().url() == "http://new"
 
 
 def test_security_token_approve(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
