@@ -245,12 +245,14 @@ def test_security_token_transfer_stresstest(chain, security_token, team_multisig
 
 def test_security_token_announce(chain, security_token, team_multisig, zero_address, customer, announcement, announcement_name, announcement_uri, announcement_type, announcement_hash):
     """Announce Announcement """
+    assert security_token.call().announcementsByAddress(announcement.address) == 0
     security_token.transact({"from": team_multisig}).announce(announcement.address)
 
     events = security_token.pastEvents("Announced").get()
     assert len(events) == 1
     e = events[0]
 
+    assert security_token.call().announcementsByAddress(announcement.address) == 1
     assert e["args"]["announcement"] == announcement.address
     assert removeNonPrintable(e["args"]["announcementName"]) == announcement_name
     assert removeNonPrintable(e["args"]["announcementURI"]) == announcement_uri
