@@ -44,6 +44,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
   event UpdatedTransactionVerifier(address newVerifier);
 
   address[] public announcements;
+  mapping(address => uint256) public announcementsByAddress;
 
   /**
    * @dev Contructor to create SecurityToken, and subsequent CheckpointToken.
@@ -70,6 +71,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    */
   function announce(Announcement announcement) external onlyWhitelisted {
     announcements.push(announcement);
+    announcementsByAddress[address(announcement)] = announcements.length;
     Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI(), announcement.announcementHash());
   }
 
