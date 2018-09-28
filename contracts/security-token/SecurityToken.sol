@@ -34,13 +34,14 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   string public version = 'TM-01 0.1';
+  string public url;
 
   /** SecurityToken specific events **/
   event Issued(address indexed to, uint256 value);
   event Burned(address indexed burner, uint256 value);
   event Forced(address indexed from, address indexed to, uint256 value);
   event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI, uint256 announcementHash);
-  event UpdatedTokenInformation(string newName, string newSymbol);
+  event UpdatedTokenInformation(string newName, string newSymbol, string newUrl);
   event UpdatedTransactionVerifier(address newVerifier);
 
   address[] public announcements;
@@ -54,8 +55,8 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    * @param _name Initial name of the token
    * @param _symbol Initial symbol of the token
    */
-  function SecurityToken(string _name, string _symbol) CheckpointToken(_name, _symbol, 18) public {
-
+  function SecurityToken(string _name, string _symbol, string _url) CheckpointToken(_name, _symbol, 18) public {
+    url = _url;
   }
 
   /**
@@ -144,12 +145,14 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param _name New name of the token
    * @param _symbol New symbol of the token
+   * @param _url New URL of the token
    */
-  function setTokenInformation(string _name, string _symbol) external onlyWhitelisted {
+  function setTokenInformation(string _name, string _symbol, string _url) external onlyWhitelisted {
     name = _name;
     symbol = _symbol;
+    url = _url;
 
-    UpdatedTokenInformation(name, symbol);
+    UpdatedTokenInformation(name, symbol, url);
   }
 
   /**
