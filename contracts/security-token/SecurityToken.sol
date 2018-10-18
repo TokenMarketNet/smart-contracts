@@ -13,6 +13,7 @@ import "../Recoverable.sol";
 import "./CheckpointToken.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
+import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
 /**
  * @dev Interface for general announcements about the security.
@@ -30,10 +31,18 @@ interface Announcement {
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
+contract SecurityToken is CheckpointToken, RBAC, Recoverable {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   string public version = 'TM-01 0.1';
+
+  string constant ROLE_ANNOUNCE = "announce()";
+  string constant ROLE_FORCE = "forceTransfer()";
+  string constant ROLE_ISSUE = "issueTokens()";
+  string constant ROLE_BURN = "burnTokens()";
+  string constant ROLE_INFO = "setTokenInformation()";
+  string constant ROLE_SETVERIFIER = "setTransactionVerifier()";
+
   string public url;
 
   /** SecurityToken specific events **/
@@ -57,6 +66,13 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    */
   function SecurityToken(string _name, string _symbol, string _url) CheckpointToken(_name, _symbol, 18) public {
     url = _url;
+
+    addRole(msg.sender, ROLE_ANNOUNCE);
+    addRole(msg.sender, ROLE_FORCE);
+    addRole(msg.sender, ROLE_ISSUE);
+    addRole(msg.sender, ROLE_BURN);
+    addRole(msg.sender, ROLE_INFO);
+    addRole(msg.sender, ROLE_SETVERIFIER);
   }
 
   /**
@@ -70,7 +86,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param announcement Address of the Announcement
    */
-  function announce(Announcement announcement) external onlyWhitelisted {
+  function announce(Announcement announcement) external onlyRole(ROLE_ANNOUNCE) {
     announcements.push(announcement);
     announcementsByAddress[address(announcement)] = announcements.length;
     Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI(), announcement.announcementHash());
@@ -88,7 +104,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    * @param to Address to deposit the confisticated token to
    * @param value amount of tokens to be confisticated
    */
-  function forceTransfer(address from, address to, uint256 value) external onlyWhitelisted {
+  function forceTransfer(address from, address to, uint256 value) external onlyRole(ROLE_FORCE) {
     transferInternal(from, to, value);
 
     Forced(from, to, value);
@@ -102,7 +118,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param value Token amount to issue
    */
-  function issueTokens(uint256 value) external onlyWhitelisted {
+  function issueTokens(uint256 value) external onlyRole(ROLE_ISSUE) {
     address issuer = msg.sender;
     uint256 blackHoleBalance = balanceOf(address(0));
     uint256 totalSupplyNow = totalSupply();
@@ -122,7 +138,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param value Token amount to burn from this contract's balance
    */
-  function burnTokens(uint256 value) external onlyWhitelisted {
+  function burnTokens(uint256 value) external onlyRole(ROLE_BURN) {
     address burner = address(this);
     uint256 burnerBalance = balanceOf(burner);
     uint256 totalSupplyNow = totalSupply();
@@ -147,7 +163,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    * @param _symbol New symbol of the token
    * @param _url New URL of the token
    */
-  function setTokenInformation(string _name, string _symbol, string _url) external onlyWhitelisted {
+  function setTokenInformation(string _name, string _symbol, string _url) external onlyRole(ROLE_INFO) {
     name = _name;
     symbol = _symbol;
     url = _url;
@@ -163,7 +179,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param newVerifier Address of the SecurityTransferAgent used as verifier
    */
-  function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyWhitelisted {
+  function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyRole(ROLE_SETVERIFIER) {
     transferVerifier = newVerifier;
 
     UpdatedTransactionVerifier(newVerifier);

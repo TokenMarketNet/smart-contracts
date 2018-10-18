@@ -148,7 +148,6 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
 
     check_gas(chain, hash_)
 
-    check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
     check_gas(chain, contract.transact(tx).issueTokens(security_token_initial_supply))
 
     assert contract.call().totalSupply() == security_token_initial_supply
