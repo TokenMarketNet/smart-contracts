@@ -95,6 +95,23 @@ def zero_address() -> str:
     return "0x0000000000000000000000000000000000000000"
 
 
+@pytest.fixture
+def voting_contract(chain, team_multisig, mock_kyc, security_token, security_token_verifier) -> Contract:
+    """Create the Voting Contract."""
+
+    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    args = [security_token.address, mock_kyc.address, "Voting X", "http://tokenmarket.net", 123, 0, ["Vested for voting"]]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('VotingContract', deploy_args=args, deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
 #
 # ERC-20 fixtures
 #
@@ -110,6 +127,23 @@ def security_token_verifier(chain, team_multisig) -> Contract:
     contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
 
     check_gas(chain, hash_)
+
+    return contract
+
+
+@pytest.fixture
+def mock_kyc(chain, team_multisig, customer) -> Contract:
+    """Create the Mock KYC contract."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('MockKYC', deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    check_gas(chain, contract.transact(tx).whitelistUser(customer, 123))
 
     return contract
 
@@ -318,3 +352,10 @@ def test_security_token_freeze(chain, security_token, security_token_verifier, t
         check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
 
     assert security_token.call().balanceOf(customer) == 10
+
+
+def test_voting_contract(chain, voting_contract, security_token, team_multisig, customer):
+    check_gas(chain, voting_contract.transact({"from": team_multisig}).transferInvestorTokens(customer, 123))
+    check_gas(chain, voting_contract.transact({"from": customer}).importInvestor(customer))
+    check_gas(chain, voting_contract.transact({"from": customer}).vote(122))
+    return
