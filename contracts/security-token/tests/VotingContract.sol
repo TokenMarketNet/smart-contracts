@@ -4,12 +4,12 @@ import "./InvestorInteractionContract.sol";
 
 contract VotingContract is InvestorInteractionContract {
 
-  function VotingContract() {
+  function VotingContract(CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options) InvestorInteractionContract(_token, _KYC, name, URI, _type, _hash, 0, _options) {
 
   }
 
-  function vote(uint16 voteFor, uint256 votes) {
-    //payoutToken.transfer(voteFor, votes);
+  function vote(uint256 votes) external {
+    transferInvestorTokens(address(100), votes);
   }
 
 }
