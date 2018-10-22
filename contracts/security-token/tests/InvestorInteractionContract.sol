@@ -55,11 +55,6 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
     Transfer(address(0), investor, balance);
   }
 
-  function transferInvestorTokens(address to, uint256 amount) {
-    transfer(to, amount);
-  }
-
-
   function transferTrigger(address from, address to, uint256 amount) internal {
     used[to][from] += amount;
   }
@@ -76,5 +71,14 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
 
     // Doing this as msg.sender:
     return super.transfer(_to, _value);
+  }
+
+  function transferInvestorTokens(address to, uint256 amount) {
+    transfer(to, amount);
+  }
+
+  function act(uint256 amount) external {
+    // This is for the default action, address 100 
+    transferInvestorTokens(address(100), amount);
   }
 }

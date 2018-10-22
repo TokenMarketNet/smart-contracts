@@ -132,9 +132,45 @@ def voting_contract(chain, team_multisig, mock_kyc, security_token, security_tok
 
     return contract
 
+
+@pytest.fixture
+def payout_contract(chain, team_multisig, mock_kyc, security_token, test_token, security_token_verifier) -> Contract:
+    """Create the Voting Contract."""
+
+    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    args = [security_token.address, test_token.address, mock_kyc.address, "Pay X", "http://tokenmarket.net", 123, 0, ["Vested for dividend"]]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('PayoutContract', deploy_args=args, deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
 #
 # ERC-20 fixtures
 #
+
+@pytest.fixture
+def test_token(chain, team_multisig, token_name, token_symbol, security_token_initial_supply, release_agent, customer) -> Contract:
+    """Create a Crowdsale token where transfer restrictions have been lifted."""
+
+    args = [token_name, token_symbol, security_token_initial_supply, 18, True]  # Owner set
+
+    tx = {
+        "from": team_multisig
+    }
+
+    token, hash = chain.provider.deploy_contract('CrowdsaleToken', deploy_args=args, deploy_transaction=tx)
+
+    token.transact({"from": team_multisig}).setReleaseAgent(team_multisig)
+    token.transact({"from": team_multisig}).releaseTokenTransfer()
+
+    return token
+
 
 @pytest.fixture
 def security_token_verifier(chain, team_multisig) -> Contract:
@@ -164,6 +200,8 @@ def mock_kyc(chain, team_multisig, customer) -> Contract:
     check_gas(chain, hash_)
 
     check_gas(chain, contract.transact(tx).whitelistUser(customer, 123))
+    check_gas(chain, contract.transact(tx).whitelistUser(team_multisig, 1234))
+
 
     return contract
 
@@ -379,5 +417,18 @@ def test_security_token_freeze(chain, security_token, security_token_verifier, t
 def test_voting_contract(chain, voting_contract, security_token, team_multisig, customer):
     check_gas(chain, voting_contract.transact({"from": team_multisig}).transferInvestorTokens(customer, 123))
     check_gas(chain, voting_contract.transact({"from": customer}).importInvestor(customer))
-    check_gas(chain, voting_contract.transact({"from": customer}).vote(122))
+    check_gas(chain, voting_contract.transact({"from": customer}).act(123))
+    return
+
+
+def test_payout_contract(chain, payout_contract, security_token, test_token, team_multisig, customer):
+    start_balance = test_token.call().balanceOf(team_multisig)
+    assert start_balance > 0
+    check_gas(chain, test_token.transact({"from": team_multisig}).approve(payout_contract.address, start_balance))
+    check_gas(chain, payout_contract.transact({"from": customer}).fetchTokens())
+
+    initial_balance = test_token.call().balanceOf(team_multisig)
+    check_gas(chain, payout_contract.transact({"from": team_multisig}).act(123))
+    assert test_token.call().balanceOf(team_multisig) > initial_balance
+
     return
