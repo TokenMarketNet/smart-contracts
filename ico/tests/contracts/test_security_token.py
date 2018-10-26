@@ -7,6 +7,10 @@ from ico.tests.utils import removeNonPrintable
 from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
 
+from eth_utils import to_checksum_address
+from eth_utils import keccak
+from ico.sign import get_ethereum_address_from_private_key
+from ico.sign import sign
 
 @pytest.fixture
 def monkey_patch_py_evm_gas_limit():
@@ -21,6 +25,14 @@ def chain(monkey_patch_py_evm_gas_limit, request):
     _chain = request.getfixturevalue('chain')
     return _chain
 
+def private_key():
+    """Server side private key."""
+    return "Lehma take over Cancuu tacos"
+
+@pytest.fixture
+def signer_address(private_key):
+    """Server side signer address."""
+    return get_ethereum_address_from_private_key(private_key)
 
 @pytest.fixture
 def testpayload() -> bytes:
@@ -432,3 +444,19 @@ def test_payout_contract(chain, payout_contract, security_token, test_token, tea
     assert test_token.call().balanceOf(team_multisig) > initial_balance
 
     return
+
+
+def test_erc865(chain, security_token, team_multisig, customer, private_key, signer_address):
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(signer_address, 1234))
+
+    token_addr = int(security_token.address, 16).to_bytes(20, byteorder="big")
+    to_addr = int(team_multisig, 16).to_bytes(20, byteorder="big")
+    value = int(123).to_bytes(32, byteorder="big")
+    fee = int(123).to_bytes(32, byteorder="big")
+    nonce = int(123).to_bytes(32, byteorder="big")
+    prefix = int(0x48664c16).to_bytes(4, byteorder="big")
+    payload = prefix + token_addr + to_addr + value + fee + nonce
+    signed_data = sign(payload, private_key, hash_function=keccak)
+    key_raw = signed_data["r_bytes"] + signed_data["s_bytes"] + signed_data["v"].to_bytes(1, byteorder="big")
+
+    security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)

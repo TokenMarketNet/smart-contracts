@@ -11,6 +11,7 @@ pragma solidity ^0.4.18;
 import "../CrowdsaleToken.sol";
 import "../Recoverable.sol";
 import "./CheckpointToken.sol";
+import "./ERC865.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
 import "zeppelin/contracts/ownership/rbac/RBAC.sol";
@@ -31,7 +32,7 @@ interface Announcement {
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract SecurityToken is CheckpointToken, RBAC, Recoverable {
+contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   string public version = 'TM-01 0.1';
