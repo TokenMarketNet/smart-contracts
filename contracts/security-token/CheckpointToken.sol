@@ -238,16 +238,13 @@ contract CheckpointToken is ERC677Token {
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
+    uint256 fromBalance = balanceOf(from);
+    uint256 toBalance = balanceOf(to);
+
     if (address(transferVerifier) != address(0)) {
       value = transferVerifier.verify(from, to, value);
       require(value > 0);
     }
-
-    uint256 fromBalance;
-    uint256 toBalance;
-
-    fromBalance = balanceOf(from);
-    toBalance = balanceOf(to);
 
     setCheckpoint(tokenBalances[from], fromBalance.sub(value));
     setCheckpoint(tokenBalances[to], toBalance.add(value));
