@@ -44,6 +44,8 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   string constant ROLE_INFO = "setTokenInformation()";
   string constant ROLE_SETVERIFIER = "setTransactionVerifier()";
 
+  /// @dev URL where you can get more information about the security
+  ///      (for example company website or investor interface):
   string public url;
 
   /** SecurityToken specific events **/
