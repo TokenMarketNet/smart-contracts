@@ -21,19 +21,27 @@ import "./ERC677Token.sol";
 contract CheckpointToken is ERC677Token {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
+  /// @dev Name of the token, usually the company and/or series (like "TokenMeerkat Ltd. Series A"):
   string public name;
+  /// @dev Ticker symbol, usually bases on the "name" above (like "MEER"):
   string public symbol;
+  /// @dev Decimals are usually set to 18 for EIP-20 tokens:
   uint256 public decimals;
+  /// @dev If transferVerifier is set, that contract will be queried upon every token transaction:
   SecurityTransferAgent public transferVerifier;
 
+  /// @dev Checkpoint is the fundamental unit for our internal accounting
+  ///      (who owns what, and at what moment in time)
   struct Checkpoint {
     uint256 blockNumber;
     uint256 value;
   }
-
+  /// @dev This mapping contains checkpoints for every address:
   mapping (address => Checkpoint[]) public tokenBalances;
+  /// @dev This is a one dimensional Checkpoint mapping of the overall token supply:
   Checkpoint[] public tokensTotal;
 
+  /// @dev This mapping keeps account for approve() -> fransferFrom() pattern:
   mapping (address => mapping (address => uint256)) public allowed;
 
   /**
