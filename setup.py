@@ -18,6 +18,7 @@ requirements = [
     'web3==3.11.1',
     'rlp==0.5.1',
     'populus==1.9.0',
+    'requests==2.20.1',
     'Jinja2',
     'ruamel.yaml',
 ]
