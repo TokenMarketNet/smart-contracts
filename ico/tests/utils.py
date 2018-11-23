@@ -29,4 +29,4 @@ def time_travel(chain, timestamp: float):
 
 
 def removeNonPrintable(s) -> str:
-    return ''.join(list(filter(lambda x: x in string.printable, s)))
+    return ''.join(list(filter(lambda x: x in string.printable, s.decode('utf-8'))))
