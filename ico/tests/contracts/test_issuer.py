@@ -2,7 +2,7 @@
 import pytest
 import datetime
 
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 from web3.contract import Contract
 
 
@@ -18,14 +18,14 @@ def token(chain, team_multisig) -> Contract:
 
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args, deploy_transaction=tx)
 
-    contract.transact({"from": team_multisig}).releaseTokenTransfer()
+    contract.functions.releaseTokenTransfer().transact({"from": team_multisig})
     return contract
 
 
 @pytest.fixture
-def issue_script_owner(accounts):
+def issue_script_owner(web3,  accounts):
     """Ethereum account that interacts with issuer contract."""
-    return accounts[8]
+    return web3.toChecksumAddress(accounts[8])
 
 
 @pytest.fixture
@@ -39,8 +39,8 @@ def issuer(chain, team_multisig, token, issue_script_owner):
     contract, hash = chain.provider.deploy_contract('Issuer', deploy_args=args, deploy_transaction=tx)
 
     # Set issuance allowance
-    assert token.call().balanceOf(team_multisig) > 2000
-    token.transact({"from": team_multisig}).approve(contract.address, 2000)
+    assert token.functions.balanceOf(team_multisig).call() > 2000
+    token.functions.approve(contract.address, 2000).transact({"from": team_multisig})
 
     return contract
 
@@ -48,25 +48,25 @@ def issuer(chain, team_multisig, token, issue_script_owner):
 def test_issue(web3, issuer, issue_script_owner, customer, token, team_multisig):
     """Issue some tokens."""
 
-    team_multisig_begin = token.call().balanceOf(team_multisig)
-    assert token.call().allowance(team_multisig, issuer.address) == 2000
-    assert issuer.call().owner() == issue_script_owner
-    issuer.transact({"from": issue_script_owner}).issue(customer, 1000)
-    assert issuer.call().issuedCount() == 1000
-    assert token.call().balanceOf(customer) == 1000
-    team_multisig_end = token.call().balanceOf(team_multisig)
+    team_multisig_begin = token.functions.balanceOf(team_multisig).call()
+    assert token.functions.allowance(team_multisig, issuer.address).call() == 2000
+    assert issuer.functions.owner().call() == issue_script_owner
+    issuer.functions.issue(customer, 1000).transact({"from": issue_script_owner})
+    assert issuer.functions.issuedCount().call() == 1000
+    assert token.functions.balanceOf(customer).call() == 1000
+    team_multisig_end = token.functions.balanceOf(team_multisig).call()
     assert team_multisig_begin - team_multisig_end == 1000
 
 
 def test_issue_too_many(web3, issuer, issue_script_owner, customer):
     """Issue over allowance."""
     with pytest.raises(TransactionFailed):
-        issuer.transact({"from": issue_script_owner}).issue(customer, 3000)
+        issuer.functions.issue(customer, 3000).transact({"from": issue_script_owner})
 
 
 def test_issue_twice(web3, issuer, issue_script_owner, customer):
     """Issue some tokens."""
-    issuer.transact({"from": issue_script_owner}).issue(customer, 500)
+    issuer.functions.issue(customer, 500).transact({"from": issue_script_owner})
     with pytest.raises(TransactionFailed):
         issuer.transact({"from": issue_script_owner}).issue(customer, 500)
 
@@ -74,4 +74,4 @@ def test_issue_twice(web3, issuer, issue_script_owner, customer):
 def test_issue_not_an_owner(web3, issuer, customer):
     """Somebody tries to issue for themselves."""
     with pytest.raises(TransactionFailed):
-        issuer.transact({"from": customer}).issue(customer, 500)
+        issuer.functions.issue(customer, 500).transact({"from": customer})

@@ -1,10 +1,8 @@
 """Milestone based pricing"""
-import datetime
-
 import pytest
 from decimal import Decimal
 from eth_utils import to_wei
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 from web3.contract import Contract
 
 
@@ -31,13 +29,14 @@ def presale_fund_collector(chain, presale_freeze_ends_at, team_multisig) -> Cont
 
 
 @pytest.fixture
-def start_time() -> int:
-    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
+def start_time(web3) -> int:
+    # 2 minutes from now
+    return web3.eth.getBlock('pending').timestamp + 120
 
 
 @pytest.fixture
 def end_time(start_time) -> int:
-    return int(start_time + 4*7*24*3600)
+    return int(start_time + 4 * 7 * 24 * 3600)
 
 
 @pytest.fixture
@@ -76,12 +75,15 @@ def milestone_pricing(chain, presale_fund_collector, start_time, end_time, team_
     ]
 
     tx = {
-        "gas": 4000000,
+        "gas": 3141592,
         "from": team_multisig
     }
     contract, hash = chain.provider.deploy_contract('MilestonePricing', deploy_args=args, deploy_transaction=tx)
 
-    contract.transact({"from": team_multisig}).setPreicoAddress(presale_fund_collector.address, to_wei("0.05", "ether"))
+    contract.functions.setPreicoAddress(
+        presale_fund_collector.address,
+        to_wei("0.05", "ether")
+    ).transact({"from": team_multisig})
     return contract
 
 
@@ -104,12 +106,12 @@ def milestone_ico(chain, team_multisig, start_time, milestone_pricing, preico_ca
 
     contract, hash = chain.provider.deploy_contract('UncappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
 
     # Allow crowdsale contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     return contract
 
@@ -125,16 +127,15 @@ def finalizer(chain, token, milestone_ico, team_multisig) -> Contract:
     ]
     contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
 
-    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    milestone_ico.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    milestone_ico.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
 def test_milestone_getter(chain, milestone_pricing, start_time):
     """Milestone data is exposed to the world."""
 
-    time, price = milestone_pricing.call().getMilestone(0)
-    assert time == 1492272000
+    time, price = milestone_pricing.functions.getMilestone(0).call()
     assert price == 100000000000000000
 
 
@@ -142,7 +143,7 @@ def test_milestone_data(chain, milestone_pricing, start_time):
     """Milestone data can be read."""
 
     for i in range(0, 4):
-        time, price = milestone_pricing.call().getMilestone(i)
+        time, price = milestone_pricing.functions.getMilestone(i).call()
         print("-", time)
         print("-", price)
 
@@ -153,98 +154,100 @@ def test_milestone_prices(chain, milestone_pricing, start_time, end_time, custom
     time_travel(chain, start_time - 1)
     with pytest.raises(TransactionFailed):
         # Div by zero, crowdsale has not begin yet
-        assert milestone_pricing.call().getCurrentPrice()
+        assert milestone_pricing.functions.getCurrentPrice().call()
 
     time_travel(chain, start_time)
-    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.10", "ether")
+    assert milestone_pricing.functions.getCurrentPrice().call() == to_wei("0.10", "ether")
 
     time_travel(chain, start_time + 1)
-    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.10", "ether")
+    assert milestone_pricing.functions.getCurrentPrice().call() == to_wei("0.10", "ether")
 
     # 1 week forward
-    time_travel(chain, int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds()))
-    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.12", "ether")
+    time_travel(chain, chain.web3.eth.getBlock('pending').timestamp + 7 * 24 * 60 * 60)
+    assert milestone_pricing.functions.getCurrentPrice().call() == to_wei("0.12", "ether")
 
     # 2 week forward
-    time_travel(chain, int((datetime.datetime(2017, 4, 29, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds()))
-    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.13", "ether")
+    time_travel(chain, chain.web3.eth.getBlock('pending').timestamp + 7 * 24 * 60 * 60)
+    assert milestone_pricing.functions.getCurrentPrice().call() == to_wei("0.13", "ether")
 
     # 3 week forward + last second
     time_travel(chain, end_time - 1)
-    assert milestone_pricing.call().getCurrentPrice() == to_wei("0.14", "ether")
+    assert milestone_pricing.functions.getCurrentPrice().call() == to_wei("0.14", "ether")
 
 
 def test_non_fractional_price(chain, milestone_pricing, customer, end_time):
     """We divide price correctly for integer only amount."""
-    time_travel(chain, end_time - 1)
+    # FIXME: figure out a better way to time_travel
+    # such that the time lies in the expected milestone range
+    time_travel(chain, end_time - 5)
 
-    assert milestone_pricing.call().calculatePrice(
+    assert milestone_pricing.functions.calculatePrice(
         to_wei("0.28", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert milestone_pricing.call().calculatePrice(
+    assert milestone_pricing.functions.calculatePrice(
         to_wei("0.281", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert milestone_pricing.call().calculatePrice(
+    assert milestone_pricing.functions.calculatePrice(
         to_wei("0.4199", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 2
+    ).call() == 2
 
-    assert milestone_pricing.call().calculatePrice(
+    assert milestone_pricing.functions.calculatePrice(
         to_wei("0.42", "ether"),
         0,
         0,
         customer,
         0,
-    ) == 3
+    ).call() == 3
 
 
 def test_milestone_calculate_preico_price(chain, milestone_pricing, start_time, presale_fund_collector):
     """Preico contributors get their special price."""
 
     # 1 week forward
-    time_travel(chain, int((datetime.datetime(2017, 4, 22, 16, 0) - datetime.datetime(1970, 1, 1)).total_seconds()))
+    time_travel(chain, start_time + 7 * 24 * 60 * 60)
 
     # Pre-ico address always buys at the fixed price
-    assert milestone_pricing.call().calculatePrice(
+    assert milestone_pricing.functions.calculatePrice(
         to_wei("0.05", "ether"),
         0,
         0,
         presale_fund_collector.address,
         0
-    ) == 1
+    ).call() == 1
 
 
 def test_presale_move_to_milestone_based_crowdsale(chain, presale_fund_collector, milestone_ico, finalizer, token, start_time, team_multisig, customer, customer_2):
     """When pre-ico contract funds are moved to the crowdsale, the pre-sale investors gets tokens with a preferred price and not the current milestone price."""
 
     value = to_wei(50, "ether")
-    presale_fund_collector.transact({"from": customer, "value": value}).invest()
+    presale_fund_collector.functions.invest().transact({"from": customer, "value": value})
 
     # ICO begins, Link presale to an actual ICO
-    presale_fund_collector.transact({"from": team_multisig}).setCrowdsale(milestone_ico.address)
+    presale_fund_collector.functions.setCrowdsale(milestone_ico.address).transact({"from": team_multisig})
     time_travel(chain, start_time)
 
-    assert milestone_ico.call().getState() == CrowdsaleState.Funding
+    assert milestone_ico.functions.getState().call() == CrowdsaleState.Funding
 
     # Load funds to ICO
-    presale_fund_collector.transact().participateCrowdsaleAll()
+    presale_fund_collector.functions.participateCrowdsaleAll().transact()
 
     # Tokens received, paid by preico price
-    milestone_ico.call().investedAmountOf(customer) == to_wei(50, "ether")
-    token.call().balanceOf(customer) == 50 / 0.050
+    assert milestone_ico.functions.investedAmountOf(customer).call() == to_wei(50, "ether")
+    assert token.functions.balanceOf(customer).call() == 50 / 0.050
 
 
 def test_fractional_preico_pricing(presale_fund_collector, milestone_pricing, fractional_token):
@@ -252,13 +255,13 @@ def test_fractional_preico_pricing(presale_fund_collector, milestone_pricing, fr
 
     """
 
-    amount = milestone_pricing.call().calculatePrice(
+    amount = milestone_pricing.functions.calculatePrice(
         to_wei("0.05", "ether"),
         0,
         0,
         presale_fund_collector.address,
-        fractional_token.call().decimals()
-    )
+        fractional_token.functions.decimals().call()
+    ).call()
 
     assert amount == 100000000
     d = decimalize_token_amount(fractional_token, amount)
@@ -272,15 +275,15 @@ def test_fractional_preico_pricing(presale_fund_collector, milestone_pricing, fr
 def test_fractional_milestone_pricing(chain, presale_fund_collector, milestone_pricing, fractional_token, customer):
     """Milestone amount is calculated correctly for a token having fractions."""
 
-    time_travel(chain, milestone_pricing.call().getPricingStartsAt() + 1)
+    time_travel(chain, milestone_pricing.functions.getPricingStartsAt().call() + 1)
 
-    amount = milestone_pricing.call().calculatePrice(
+    amount = milestone_pricing.functions.calculatePrice(
         to_wei("0.512345678", "ether"),
         0,
         0,
         customer,
         fractional_token.call().decimals()
-    )
+    ).call()
 
     assert amount == 512345678
     d = decimalize_token_amount(fractional_token, amount)

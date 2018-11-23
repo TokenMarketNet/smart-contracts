@@ -9,15 +9,15 @@ from ico.state import CrowdsaleState
 
 
 @pytest.fixture
-def preico_starts_at() -> int:
-    """When pre-ico opens"""
-    return int(datetime.datetime(2017, 1, 1).timestamp())
+def preico_starts_at(web3) -> int:
+    # 2 minutes from now
+    return web3.eth.getBlock('pending').timestamp + 120
 
 
 @pytest.fixture
-def preico_ends_at() -> int:
+def preico_ends_at(preico_starts_at) -> int:
     """When pre-ico closes"""
-    return int(datetime.datetime(2017, 1, 3).timestamp())
+    return preico_starts_at + 4 * 7 * 24 * 3600
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def preico_cap() -> int:
 @pytest.fixture
 def preico_token_allocation(token) -> int:
     """How many tokens we have allocated to be sold in pre-ico."""
-    return int(token.call().totalSupply() * 0.1)
+    return int(token.functions.totalSupply().call() * 0.1)
 
 
 @pytest.fixture
@@ -80,12 +80,12 @@ def uncapped_flatprice(chain, team_multisig, preico_starts_at, preico_ends_at, f
 
     contract, hash = chain.provider.deploy_contract('UncappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
 
     # Allow pre-ico contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     return contract
 
@@ -95,7 +95,7 @@ def uncapped_flatprice_goal_reached(chain, uncapped_flatprice, uncapped_flatpric
     """A ICO contract where the minimum funding goal has been reached."""
     time_travel(chain, preico_starts_at + 1)
     wei_value = preico_funding_goal
-    uncapped_flatprice.transact({"from": customer, "value": wei_value}).buy()
+    uncapped_flatprice.functions.buy().transact({"from": customer, "value": wei_value})
     return uncapped_flatprice
 
 
@@ -110,7 +110,7 @@ def uncapped_flatprice_finalizer(chain, presale_crowdsale, uncapped_token, team_
         presale_crowdsale.address,
     ]
     contract, hash = chain.provider.deploy_contract('DefaultFinalizeAgent', deploy_args=args)
-    uncapped_token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    presale_crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
-    assert presale_crowdsale.call().getState() == CrowdsaleState.PreFunding
+    uncapped_token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    presale_crowdsale.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
+    assert presale_crowdsale.functions.getState().call() == CrowdsaleState.PreFunding
     return contract

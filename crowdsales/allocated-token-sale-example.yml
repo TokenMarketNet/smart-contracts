@@ -67,7 +67,7 @@ kovan:
         team_multisig:
             contract_name: MultiSigWallet
             contract_file: GnosisWallet.sol
-            address: "0x40a05d4ce308bf600cb275d7a3e9113518f59c54"
+            address: "0x40a05D4CE308BF600cb275d7a3e9113518f59C54"
         #
         # Token contract
         #
@@ -160,50 +160,50 @@ kovan:
     post_actions: |
 
         # Allow crowdsale contract to sell its token
-        token.transact({"from": deploy_address}).approve(crowdsale.address, 70000000000*10**18)
+        token.functions.approve(crowdsale.address, 70000000000*10**18).transact({"from": deploy_address})
 
         # Make sure crowdsale contract and these accounts
         # can transfer tokens despite transfer lock up
-        token.transact({"from": deploy_address}).setTransferAgent(team_multisig.address, True)
-        token.transact({"from": deploy_address}).setTransferAgent(crowdsale.address, True)
-        token.transact({"from": deploy_address}).setTransferAgent(finalize_agent.address, True)
-        token.transact({"from": deploy_address}).setTransferAgent(deploy_address, True)
+        token.functions.setTransferAgent(team_multisig.address, True).transact({"from": deploy_address})
+        token.functions.setTransferAgent(crowdsale.address, True).transact({"from": deploy_address})
+        token.functions.setTransferAgent(finalize_agent.address, True).transact({"from": deploy_address})
+        token.functions.setTransferAgent(deploy_address, True).transact({"from": deploy_address})
 
         # Do not do nothing at the end of the crowdsale
-        confirm_tx(crowdsale.transact({"from": deploy_address}).setFinalizeAgent(finalize_agent.address))
+        confirm_tx(crowdsale.functions.setFinalizeAgent(finalize_agent.address).transact({"from": deploy_address}))
 
         # Owner can release the token transfer when they fel its the time
-        confirm_tx(token.transact({"from": deploy_address}).setReleaseAgent(deploy_address))
+        confirm_tx(token.functions.setReleaseAgent(deploy_address).transact({"from": deploy_address}))
 
         # Set token upgrade master to team multisig to give the new token path
-        confirm_tx(token.transact({"from": deploy_address}).setUpgradeMaster(team_multisig.address))
+        confirm_tx(token.functions.setUpgradeMaster(team_multisig.address).transact({"from": deploy_address}))
 
         # Allow test buys from these accounts before token sale begins.
         # The latter one is a presale contract address.
         # Presale contract (PreICOProxyBuyer) can move in funds
         # and get tokens before the actual start time.
         confirm_multiple_txs( \
-          crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist(deploy_address, True), \
-          crowdsale.transact({"from": deploy_address}).setEarlyParicipantWhitelist("0x6d997eDcA04282950416FA380d834f360fC36eBb", True) \
+          crowdsale.functions.setEarlyParicipantWhitelist(deploy_address, True).transact({"from": deploy_address}), \
+          crowdsale.functions.setEarlyParicipantWhitelist("0x6d997eDcA04282950416FA380d834f360fC36eBb", True).transact({"from": deploy_address}) \
         )
 
         # We set a special price, outside ETH tranches, for a presale contract
-        confirm_tx(pricing_strategy.transact({"from": deploy_address}).setPreicoAddress("0x6d997eDcA04282950416FA380d834f360fC36eBb", 2083333333333))
+        confirm_tx(pricing_strategy.functions.setPreicoAddress("0x6d997eDcA04282950416FA380d834f360fC36eBb", 2083333333333).transact({"from": deploy_address}))
 
     # Sanity check
     verify_actions: |
-        assert token.call().owner().lower() == deploy_address.lower()
-        assert token.call().released() == False
-        assert crowdsale.call().owner().lower() == deploy_address.lower()
-        assert crowdsale.call().multisigWallet().lower() == team_multisig.address.lower()
-        assert finalize_agent.call().isSane()
-        assert crowdsale.call().getState() == CrowdsaleState.PreFunding   # PreFunding for the final, as it is deployed pre-opening
+        assert token.functions.owner().call() == deploy_address
+        assert token.functions.released().call() == False
+        assert crowdsale.functions.owner().call() == deploy_address
+        assert crowdsale.functions.multisigWallet().call() == team_multisig.address
+        assert finalize_agent.functions.isSane().call()
+        assert crowdsale.functions.getState() .call()== CrowdsaleState.PreFunding   # PreFunding for the final, as it is deployed pre-opening
 
         # Do a test buy using a test address.
         # This ensures are variables are set and the
         # funds flow in the multisig wallet.
-        confirm_tx(crowdsale.transact({"from": deploy_address, "value": to_wei("0.01", "ether")}).buy())
+        confirm_tx(crowdsale.functions.buy().transact({"from": deploy_address, "value": to_wei("0.01", "ether")}))
 
         # As the last action, after successful deployment, set the right token symbol and name so that it shows in a blockchain explorer
-        confirm_tx(token.transact({"from": deploy_address}).setTokenInformation("MooToken", "MOO"))
+        confirm_tx(token.functions.setTokenInformation("MooToken", "MOO").transact({"from": deploy_address}))
 

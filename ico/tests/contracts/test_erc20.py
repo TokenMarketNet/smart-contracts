@@ -8,8 +8,8 @@ def test_erc20_interface(token: Contract, token_owner: str, empty_address: str):
 
     # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
 
-    assert token.call().balanceOf(empty_address) == 0
-    assert token.call().allowance(token_owner, empty_address) == 0
+    assert token.functions.balanceOf(empty_address).call() == 0
+    assert token.functions.allowance(token_owner, empty_address).call() == 0
 
     # Event
     # We follow OpenZeppelin - in the ERO20 issue names are _from, _to, _value

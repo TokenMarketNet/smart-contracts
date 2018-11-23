@@ -7,16 +7,23 @@
       "contracts": {
         "backends": {
           "JSONFile": {
-            "$ref": "contracts.backends.JSONFile"
+            "class": "populus.contracts.backends.filesystem.JSONFileBackend",
+            "priority": 10,
+            "settings": {
+              "file_path": "./registrar.json"
+            }
           },
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
@@ -32,7 +39,6 @@
         }
       }
     },
-
     "kovan": {
       "chain": {
         "class": "populus.chain.external.ExternalChain"
@@ -40,16 +46,11 @@
       "contracts": {
         "backends": {
           "JSONFile": {
-            "$ref": "contracts.backends.JSONFile"
-          },
-          "Memory": {
-            "$ref": "contracts.backends.Memory"
-          },
-          "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
-          },
-          "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.filesystem.JSONFileBackend",
+            "priority": 10,
+            "settings": {
+              "file_path": "./registrar.json"
+            }
           }
         }
       },
@@ -65,7 +66,6 @@
         }
       }
     },
-
     "local": {
       "chain": {
         "class": "populus.chain.geth.LocalGethChain",
@@ -75,17 +75,17 @@
       },
       "contracts": {
         "backends": {
-          "JSONFile": {
-            "$ref": "contracts.backends.JSONFile"
-          },
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
@@ -101,24 +101,23 @@
         }
       }
     },
-
     "ganache": {
       "chain": {
         "class": "populus.chain.external.ExternalChain"
       },
       "contracts": {
         "backends": {
-          "JSONFile": {
-            "$ref": "contracts.backends.JSONFile"
-          },
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
@@ -140,17 +139,17 @@
       },
       "contracts": {
         "backends": {
-          "JSONFile": {
-            "$ref": "contracts.backends.JSONFile"
-          },
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
@@ -168,21 +167,21 @@
     },
     "temp": {
       "chain": {
-        "class": "populus.chain.geth.TemporaryGethChain",
-        "settings": {
-          "rpc_port": "8548"
-        }
+        "class": "populus.chain.geth.TemporaryGethChain"
       },
       "contracts": {
         "backends": {
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
@@ -197,68 +196,80 @@
     },
     "tester": {
       "chain": {
-        "class": "populus.chain.tester.TesterChain"
+        "class": "populus.chain.tester.TesterChain",
+         "wait": {
+           "settings": {
+              "timeout": 10000
+           }
+         }
       },
       "contracts": {
         "backends": {
           "Memory": {
-            "$ref": "contracts.backends.Memory"
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
           },
           "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
           },
           "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },
       "web3": {
-        "$ref": "web3.Tester"
-      }
-    },
-    "testrpc": {
-      "chain": {
-        "class": "populus.chain.testrpc.TestRPCChain"
-      },
-      "contracts": {
-        "backends": {
-          "Memory": {
-            "$ref": "contracts.backends.Memory"
-          },
-          "ProjectContracts": {
-            "$ref": "contracts.backends.ProjectContracts"
-          },
-          "TestContracts": {
-            "$ref": "contracts.backends.TestContracts"
-          }
+        "provider": {
+          "class": "web3.providers.tester.EthereumTesterProvider"
         }
-      },
-      "web3": {
-        "$ref": "web3.TestRPC"
       }
     }
   },
   "compilation": {
     "backend": {
-      "$ref": "compilation.backends.SolcAutoBackend"
+      "class": "populus.compilation.backends.SolcStandardJSONBackend",
+      "settings": {
+         "command_line_options": {
+            "allow_paths": "/"
+         },
+        "optimize": true,
+        "output_values": [
+          "abi",
+          "bin",
+          "bin-runtime",
+          "metadata"
+        ]
+      }
     },
     "backends": {
       "SolcAutoBackend": {
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
+          "command_line_options": {
+            "allow_paths": "/"
+          },
           "stdin": {
+            "output_values": [
+              "abi",
+              "bin",
+              "bin-runtime",
+              "metadata"
+            ],
+            "evmVersion": "homestead",
             "optimizer": {
               "enabled": true,
               "runs": 500
             },
             "outputSelection": {
               "*": {
-                "*": ["abi", "metadata"]
+                "*": [
+                  "abi",
+                  "metadata",
+                  "evm"
+                 ]
               }
             }
-          },
-          "command_line_options": {
-            "allow_paths": "/"
           }
         }
       },
@@ -277,24 +288,38 @@
       "SolcStandardJSON": {
         "class": "populus.compilation.backends.SolcStandardJSONBackend",
         "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 500
-          },
-          "outputSelection": {
-            "*": {
-              "*": ["abi", "metadata"]
+          "optimize": true,
+          "output_values": [
+            "abi",
+            "bin",
+            "bin-runtime",
+            "metadata"
+          ],
+          "stdin": {
+            "optimizer": {
+              "enabled": true,
+              "runs": 500
+            },
+            "outputSelection": {
+              "*": {
+                "*": [
+                  "abi",
+                  "metadata",
+                  "evm"
+                ]
+              }
             }
           },
-          "allow_paths": ["/"]
+          "command_line_options": {
+            "allow_paths": "/"
+          }
         }
       }
     },
-    "contracts_source_dirs": [
-      "./contracts",
-      "./security-token"
+    "contract_source_dirs": [
+      "./contracts"
     ],
-    "import_remappings": []
+    "import_remappings": ["zeppelin=zeppelin"]
   },
   "contracts": {
     "backends": {
@@ -319,7 +344,7 @@
       }
     }
   },
-  "version": "6",
+  "version": "9",
   "web3": {
     "GethIPC": {
       "provider": {
@@ -348,14 +373,9 @@
         }
       }
     },
-    "TestRPC": {
-      "provider": {
-        "class": "web3.providers.tester.TestRPCProvider"
-      }
-    },
     "Ganache": {
       "provider": {
-        "class": "web3.providers.tester.TestRPCProvider",
+        "class": "web3.providers.tester.TesterChain",
         "settings": {
           "endpoint_uri": "http://172.21.0.2:8545"
         }
@@ -363,7 +383,7 @@
     },
     "Tester": {
       "provider": {
-        "class": "web3.providers.tester.EthereumTesterProvider"
+        "class": "web3.providers.eth_tester.EthereumTesterProvider"
       }
     }
   }

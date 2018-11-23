@@ -15,10 +15,10 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'web3==3.11.1',
-    'rlp==0.5.1',
-    'populus==1.9.0',
-    'requests==2.20.1',
+    # 'web3==3.11.1',
+    # 'rlp==0.5.1',
+    # 'populus==1.9.0',
+    # 'requests==2.20.1',
     'Jinja2',
     'ruamel.yaml',
 ]
@@ -55,7 +55,7 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
     setup_requires=["pytest-runner"],

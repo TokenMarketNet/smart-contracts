@@ -1,4 +1,3 @@
-from populus.chain import TestRPCChain
 from web3.testing import Testing
 from populus.utils.wait import wait_for_transaction_receipt
 import warnings
@@ -20,11 +19,14 @@ def check_gas(chain, txid: str, gaslimit=5000000, timeout=180, tag="") -> int:
 
     return receipt["gasUsed"]
 
-def time_travel(chain: TestRPCChain, timestamp: float):
+
+def time_travel(chain, timestamp: float):
     """Travel to a certain block in the future in chain."""
     web3 = chain.web3
     testing = Testing(web3)
     testing.timeTravel(timestamp)
+    testing.mine()
+
 
 def removeNonPrintable(s) -> str:
-    return ''.join(list(filter(lambda x: x in string.printable, s)))
+    return ''.join(list(filter(lambda x: x in string.printable, s.decode('utf-8'))))

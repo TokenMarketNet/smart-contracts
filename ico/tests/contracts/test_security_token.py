@@ -4,9 +4,10 @@ from random import randint
 from web3.contract import Contract
 from ico.tests.utils import check_gas
 from ico.tests.utils import removeNonPrintable
-from rlp.utils import decode_hex
-from ethereum.tester import TransactionFailed
-import time
+from eth_utils import decode_hex, to_bytes
+from eth_tester.exceptions import TransactionFailed
+
+
 
 @pytest.fixture
 def testpayload() -> bytes:
@@ -33,7 +34,7 @@ def announcement_hash() -> int:
 def announcement(chain, team_multisig, announcement_name, announcement_uri, announcement_type, announcement_hash) -> Contract:
     """Create a bogus announcement for testing"""
 
-    args = [announcement_name, announcement_uri, announcement_type, announcement_hash]
+    args = [to_bytes(text=announcement_name), to_bytes(text=announcement_uri), announcement_type, announcement_hash]
 
     tx = {
         "from": team_multisig
@@ -247,7 +248,7 @@ def test_security_token_announce(chain, security_token, team_multisig, zero_addr
     """Announce Announcement """
     security_token.transact({"from": team_multisig}).announce(announcement.address)
 
-    events = security_token.pastEvents("Announced").get()
+    events = security_token.events.Announced().createFilter(fromBlock=0).get_all_entries()
     assert len(events) == 1
     e = events[0]
 

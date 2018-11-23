@@ -30,9 +30,10 @@ def token(chain, team_multisig):
 
 
 @pytest.fixture
-def start_time() -> int:
+def start_time(web3) -> int:
     """Start Apr 15th"""
-    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
+    # 2 minutes from now
+    return web3.eth.getBlock('pending').timestamp + 120
 
 
 @pytest.fixture
@@ -87,22 +88,22 @@ def crowdsale(chain, team_multisig, start_time, end_time, pricing_strategy, toke
 
     contract, hash = chain.provider.deploy_contract('AllocatedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
 
     multiplier = 10**8
 
     # Allow crowdsale contract to sell its token
     # 30,500,000 is the sellable tokens in our case
-    token.transact({"from": team_multisig}).approve(contract.address, 33588888*multiplier)
-    token.transact({"from": team_multisig}).setTransferAgent(team_multisig, True)
+    token.functions.approve(contract.address, 33588888*multiplier).transact({"from": team_multisig})
+    token.functions.setTransferAgent(team_multisig, True).transact({"from": team_multisig})
 
     # Presell tokens, almost all are sold out
-    assert contract.transact({"from": team_multisig}).preallocate(early_investor_pool, 3088888, 0)
-    assert contract.transact({"from": team_multisig}).preallocate(early_investor_pool, 5500000, 1)
-    assert contract.transact({"from": team_multisig}).preallocate(early_investor_pool, 5500000, 2)
-    assert contract.transact({"from": team_multisig}).preallocate(early_investor_pool, 5500000, 3)
-    assert contract.transact({"from": team_multisig}).preallocate(early_investor_pool, 14000000 - 100000, 4)
+    assert contract.functions.preallocate(early_investor_pool, 3088888, 0).transact({"from": team_multisig})
+    assert contract.functions.preallocate(early_investor_pool, 5500000, 1).transact({"from": team_multisig})
+    assert contract.functions.preallocate(early_investor_pool, 5500000, 2).transact({"from": team_multisig})
+    assert contract.functions.preallocate(early_investor_pool, 5500000, 3).transact({"from": team_multisig})
+    assert contract.functions.preallocate(early_investor_pool, 14000000 - 100000, 4).transact({"from": team_multisig})
 
     return contract
 
@@ -120,8 +121,8 @@ def finalizer(chain, token, crowdsale, team_multisig, founder_allocation) -> Con
     # Set crowdsale finalizer
 
     # Allow finalzier to do mint()
-    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    crowdsale.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
@@ -130,52 +131,52 @@ def test_buy_some(chain, crowdsale, token, finalizer, start_time, end_time, team
 
     # Buy on first week
     time_travel(chain, start_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Funding
-    initial_sold = crowdsale.call().tokensSold()
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Funding
+    initial_sold = crowdsale.functions.tokensSold().call()
 
     # Buy minimum funding goal
     wei_value = 1000
-    crowdsale.transact({"from": customer, "value": wei_value}).buy()
-    assert crowdsale.call().isMinimumGoalReached()
+    crowdsale.functions.buy().transact({"from": customer, "value": wei_value})
+    assert crowdsale.functions.isMinimumGoalReached().call()
 
     # Close the deal
     time_travel(chain, end_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Success
-    crowdsale.transact({"from": team_multisig}).finalize()
-    assert crowdsale.call().getState() == CrowdsaleState.Finalized
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Success
+    crowdsale.functions.finalize().transact({"from": team_multisig})
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Finalized
 
     customer_tokens = 1000 * 10**8
 
     # See that bounty tokens do not count against tokens sold
-    assert crowdsale.call().tokensSold() == customer_tokens + initial_sold
+    assert crowdsale.functions.tokensSold().call() == customer_tokens + initial_sold
 
     # See that customers get their tokens
-    assert token.call().balanceOf(customer) == customer_tokens
+    assert token.functions.balanceOf(customer).call() == customer_tokens
 
     # Token is transferable
-    assert token.call().released()
+    assert token.functions.released().call()
 
 
 def test_buy_all(chain, crowdsale, token, finalizer, start_time, end_time, team_multisig, customer, early_investor_pool):
     """Buy all tokens and finalize crowdsale."""
 
     multiplier = 10**8
-    assert crowdsale.call().getTokensLeft() == 100000 * multiplier
-    assert token.call().balanceOf(early_investor_pool) == (33588888 - 100000) * multiplier
-    assert crowdsale.call().weiRaised() == 88600000
-    assert crowdsale.call().tokensSold() == (33588888 - 100000) * multiplier
+    assert crowdsale.functions.getTokensLeft().call() == 100000 * multiplier
+    assert token.functions.balanceOf(early_investor_pool).call() == (33588888 - 100000) * multiplier
+    assert crowdsale.functions.weiRaised().call() == 88600000
+    assert crowdsale.functions.tokensSold().call() == (33588888 - 100000) * multiplier
 
     # Buy on first week
     time_travel(chain, start_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Funding
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Funding
 
     # Buy all cap
-    wei_value = int(crowdsale.call().getTokensLeft() / 10**8)
-    crowdsale.transact({"from": customer, "value": wei_value}).buy()
-    assert crowdsale.call().isCrowdsaleFull()
+    wei_value = int(crowdsale.functions.getTokensLeft().call() / 10**8)
+    crowdsale.functions.buy().transact({"from": customer, "value": wei_value})
+    assert crowdsale.functions.isCrowdsaleFull().call()
 
     # Close the deal
     time_travel(chain, end_time + 1)
-    assert crowdsale.call().getState() == CrowdsaleState.Success
-    crowdsale.transact({"from": team_multisig}).finalize()
-    assert crowdsale.call().getState() == CrowdsaleState.Finalized
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Success
+    crowdsale.functions.finalize().transact({"from": team_multisig})
+    assert crowdsale.functions.getState().call() == CrowdsaleState.Finalized

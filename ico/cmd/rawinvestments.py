@@ -34,17 +34,17 @@ def main(chain, address, csv_file):
         crowdsale = Crowdsale(address=address)
 
         Token = c.provider.get_base_contract_factory('CrowdsaleToken')
-        token = Token(address=crowdsale.call().token())
+        token = Token(address=crowdsale.functions.token().call())
 
-        decimals = token.call().decimals()
+        decimals = token.functions.decimals().call()
         decimal_multiplier = 10**decimals
 
         print("We have", decimals, "decimals, multiplier is", decimal_multiplier)
 
-        print("Total amount raised is", from_wei(crowdsale.call().weiRaised(), "ether"), "ether")
+        print("Total amount raised is", from_wei(crowdsale.functions.weiRaised().call(), "ether"), "ether")
 
         print("Getting events")
-        events = crowdsale.pastEvents("Invested").get(only_changes=False)
+        events = crowdsale.events.Invested().createFilter(fromBlock=0).get_all_entries()
 
         print("Writing results to", csv_file)
 

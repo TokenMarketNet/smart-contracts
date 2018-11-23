@@ -1,11 +1,10 @@
 """Rebuilding broken crowdsale contracts using the old token contract."""
 import csv
-import datetime
 from io import StringIO
 
 import pytest
 from eth_utils import to_wei
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
@@ -19,9 +18,9 @@ def token(empty_token):
 
 
 @pytest.fixture
-def start_time() -> int:
-    """Start Apr 15th"""
-    return int((datetime.datetime(2017, 4, 15, 16, 00) - datetime.datetime(1970, 1, 1)).total_seconds())
+def start_time(web3) -> int:
+    # 1 day ahead from now
+    return web3.eth.getBlock('pending').timestamp + 24 * 60 * 60
 
 
 @pytest.fixture
@@ -69,11 +68,11 @@ def set_finalizer(chain, token, crowdsale, team_multisig, founder_allocation) ->
     contract, hash = chain.provider.deploy_contract('BonusFinalizeAgent', deploy_args=args)
 
     # Allow finalzier to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
-    token.transact({"from": team_multisig}).setReleaseAgent(contract.address)
-    crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    token.functions.setReleaseAgent(contract.address).transact({"from": team_multisig})
+    crowdsale.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
@@ -89,10 +88,10 @@ def set_extra_finalizer(chain, token, crowdsale, team_multisig, founder_allocati
     contract, hash = chain.provider.deploy_contract('ExtraFinalizeAgent', deploy_args=args)
 
     # Allow finalzier to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
-    crowdsale.transact({"from": team_multisig}).setFinalizeAgent(contract.address)
+    crowdsale.functions.setFinalizeAgent(contract.address).transact({"from": team_multisig})
     return contract
 
 
@@ -111,7 +110,7 @@ def milestone_pricing(chain, start_time, end_time):
     ]
 
     tx = {
-        "gas": 4000000
+        "gas": 3141592
     }
     contract, hash = chain.provider.deploy_contract('MilestonePricing', deploy_args=args, deploy_transaction=tx)
     return contract
@@ -140,13 +139,13 @@ def original_crowdsale(chain, team_multisig, start_time, end_time, milestone_pri
 
     contract, hash = chain.provider.deploy_contract('MintedTokenCappedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
-    assert contract.call().maximumSellableTokens() == cap
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
+    assert contract.functions.maximumSellableTokens().call() == cap
 
     # Allow crowdsale contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     set_finalizer(chain, token, contract, team_multisig, founder_allocation)
 
@@ -173,13 +172,13 @@ def relaunched_crowdsale(chain, team_multisig, start_time, end_time, milestone_p
 
     contract, hash = chain.provider.deploy_contract('RelaunchedCrowdsale', deploy_args=args, deploy_transaction=tx)
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
-    assert contract.call().maximumSellableTokens() == cap
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
+    assert contract.functions.maximumSellableTokens().call() == cap
 
     # Allow crowdsale contract to do mint()
-    token.transact({"from": team_multisig}).setMintAgent(contract.address, True)
-    assert token.call().mintAgents(contract.address) == True
+    token.functions.setMintAgent(contract.address, True).transact({"from": team_multisig})
+    assert token.functions.mintAgents(contract.address).call() == True
 
     # TODO: Use dummy finalizer here
     founder_allocation = 0
@@ -191,17 +190,17 @@ def relaunched_crowdsale(chain, team_multisig, start_time, end_time, milestone_p
 def test_rebuild_failed_crowdsale(chain, original_crowdsale, token, relaunched_crowdsale, sample_data, team_multisig, customer, customer_2):
     """Rebuild a crowdsale that is not going to reach its minimum goal."""
 
-    time_travel(chain, original_crowdsale.call().startsAt() + 1)
-    assert original_crowdsale.call().getState() == CrowdsaleState.Funding
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Funding
+    time_travel(chain, original_crowdsale.functions.startsAt().call() + 1)
+    assert original_crowdsale.functions.getState().call() == CrowdsaleState.Funding
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Funding
 
     for data in sample_data:
         addr = data["Address"]
         wei = to_wei(data["Invested ETH"], "ether")
-        original_crowdsale.transact({"from": addr, "value": wei}).buy()
+        original_crowdsale.functions.buy().transact({"from": addr, "value": wei})
 
     # We have a confirmation hash
-    events = original_crowdsale.pastEvents("Invested").get()
+    events = original_crowdsale.events.Invested().createFilter(fromBlock=0).get_all_entries()
     assert len(events) == 2
     e = events[-1]
 
@@ -210,28 +209,31 @@ def test_rebuild_failed_crowdsale(chain, original_crowdsale, token, relaunched_c
         wei = to_wei(data["Invested ETH"], "ether")
         tokens = int(data["Received tokens"])
         txid = int(data["Txid"], 16)
-        relaunched_crowdsale.transact({"from": team_multisig}).setInvestorData(addr, wei, tokens, txid)
+        relaunched_crowdsale.functions.setInvestorData(addr, wei, tokens, txid).transact({"from": team_multisig})
 
-    assert original_crowdsale.call().tokensSold() == relaunched_crowdsale.call().tokensSold()
-    assert original_crowdsale.call().investedAmountOf(customer) == relaunched_crowdsale.call().investedAmountOf(customer)
-    assert original_crowdsale.call().investedAmountOf(customer_2) == relaunched_crowdsale.call().investedAmountOf(customer_2)
+    assert original_crowdsale.functions.tokensSold().call() == relaunched_crowdsale.functions.tokensSold().call()
+    assert original_crowdsale.functions.investedAmountOf(
+        customer).call() == relaunched_crowdsale.functions.investedAmountOf(customer).call()
+    assert original_crowdsale.functions.investedAmountOf(
+        customer_2).call() == relaunched_crowdsale.functions.investedAmountOf(customer_2).call()
 
-    assert token.call().balanceOf(customer) == relaunched_crowdsale.call().tokenAmountOf(customer)
-    assert token.call().balanceOf(customer_2) == relaunched_crowdsale.call().tokenAmountOf(customer_2)
+    assert token.functions.balanceOf(customer).call() == relaunched_crowdsale.functions.tokenAmountOf(customer).call()
+    assert token.functions.balanceOf(
+        customer_2).call() == relaunched_crowdsale.functions.tokenAmountOf(customer_2).call()
 
-    time_travel(chain, original_crowdsale.call().endsAt() + 1)
+    time_travel(chain, original_crowdsale.functions.endsAt().call() + 1)
 
-    assert original_crowdsale.call().getState() == CrowdsaleState.Failure
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Failure
-    relaunched_crowdsale.transact({"from": team_multisig, "value": to_wei(30, "ether")}).loadRefund()
-    assert relaunched_crowdsale.call().getState() == CrowdsaleState.Refunding
+    assert original_crowdsale.functions.getState().call() == CrowdsaleState.Failure
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Failure
+    relaunched_crowdsale.functions.loadRefund().transact({"from": team_multisig, "value": to_wei(30, "ether")})
+    assert relaunched_crowdsale.functions.getState().call() == CrowdsaleState.Refunding
 
-    relaunched_crowdsale.transact({"from": customer}).refund()
-    relaunched_crowdsale.transact({"from": customer_2}).refund()
+    relaunched_crowdsale.functions.refund().transact({"from": customer})
+    relaunched_crowdsale.functions.refund().transact({"from": customer_2})
 
     # No double refund
     with pytest.raises(TransactionFailed):
-        relaunched_crowdsale.transact({"from": customer}).refund()
+        relaunched_crowdsale.functions.refund().transact({"from": customer})
 
     with pytest.raises(TransactionFailed):
-        original_crowdsale.transact({"from": customer}).refund()
+        original_crowdsale.functions.refund().transact({"from": customer})
