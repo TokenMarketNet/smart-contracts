@@ -247,7 +247,7 @@
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
           "command_line_options": {
-            "allow_paths": ["/", "zeppelin"]
+            "allow_paths": "/"
           },
           "stdin": {
             "output_values": [
@@ -317,7 +317,7 @@
       }
     },
     "contracts_source_dirs": [
-      "./contracts",
+      "./contracts"
     ],
     "import_remappings": ["zeppelin=zeppelin"]
   },
