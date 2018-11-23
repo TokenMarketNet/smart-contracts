@@ -4,9 +4,10 @@ from random import randint
 from web3.contract import Contract
 from ico.tests.utils import check_gas
 from ico.tests.utils import removeNonPrintable
-from rlp.utils import decode_hex
-from ethereum.tester import TransactionFailed
-import time
+from eth_utils import decode_hex
+from eth_tester.exceptions import TransactionFailed
+
+
 
 @pytest.fixture
 def testpayload() -> bytes:
