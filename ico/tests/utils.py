@@ -26,6 +26,7 @@ def time_travel(chain, timestamp: float):
     web3 = chain.web3
     testing = Testing(web3)
     testing.timeTravel(timestamp)
+    testing.mine(1)
 
 
 def removeNonPrintable(s) -> str:
