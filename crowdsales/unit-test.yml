@@ -197,5 +197,5 @@ unit_test:
         assert crowdsale.functions.getState().call() == CrowdsaleState.Preparing
 
         # To be used with the deposit instructions for contributors
-        sig_data = crowdsale._prepare_transaction("buy")
+        sig_data = crowdsale._prepare_transaction("buy", transaction={})
         print("Crowdsale.buy() data payload is", sig_data["data"])
