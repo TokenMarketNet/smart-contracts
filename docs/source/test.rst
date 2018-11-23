@@ -42,3 +42,15 @@ Running tests in the current virtual environemtn::
 Run a specific test::
 
     py.test tests -k test_get_price_tiers
+
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+
+Seeing how it looks like inside Dockerized solc environment:
+
+.. code-block:: shell
+
+    docker run -it -v `pwd`:`pwd` -v `pwd`/zeppelin:`pwd`/zeppelin -w `pwd` --entrypoint /bin/sh ethereum/solc:$SOLC_VERSION
+
+This lands you to in shell in Docker mounted volume.

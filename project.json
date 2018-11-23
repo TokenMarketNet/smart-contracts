@@ -230,6 +230,9 @@
     "backend": {
       "class": "populus.compilation.backends.SolcStandardJSONBackend",
       "settings": {
+         "command_line_options": {
+            "allow_paths": "/"
+         },
         "optimize": true,
         "output_values": [
           "abi",
@@ -244,7 +247,7 @@
         "class": "populus.compilation.backends.SolcAutoBackend",
         "settings": {
           "command_line_options": {
-            "allow_paths": "/"
+            "allow_paths": ["/", "zeppelin"]
           },
           "stdin": {
             "output_values": [
