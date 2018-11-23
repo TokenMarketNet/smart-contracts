@@ -248,6 +248,6 @@ def test_invest_signature(chain, web3, presale_fund_collector, presale_crowdsale
     """Check we get invest() signature for data payload."""
 
     value = to_wei(1, "ether")
-    sig = presale_fund_collector._prepare_transaction("invest")
+    sig = presale_fund_collector._prepare_transaction("invest", transaction={})
     assert sig["data"] == "0xe8b5e51f"
 
