@@ -44,7 +44,7 @@ pysha3==1.0.2
 pytest==3.2.0
 PyYAML==3.12
 repoze.lru==0.6
-requests==2.20.1
+requests==2.18.3
 rlp==1.0.3
 ruamel.yaml==0.15.23
 scrypt==0.8.0
