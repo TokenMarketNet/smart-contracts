@@ -21,10 +21,36 @@ About Populus
 Running tests
 ^^^^^^^^^^^^^
 
-Running tests::
+Install first as given in the instructions.
+
+Running tests using tox
+
+    export SOLC_BINARY=$(pwd)/script/travis-dockerized-solc.sh
+    export SOLC_VERSION=0.4.18
+    tox
+
+If ``solc`` fails, create a local virtual environment and test populus command locally::
+
+    populus compile
+
+Reasons could include: Docker not running.
+
+Running tests in the current virtual environemtn::
 
     py.test tests
 
 Run a specific test::
 
     py.test tests -k test_get_price_tiers
+
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+
+Seeing how it looks like inside Dockerized solc environment:
+
+.. code-block:: shell
+
+    docker run -it -v `pwd`:`pwd` -v `pwd`/zeppelin:`pwd`/zeppelin -w `pwd` --entrypoint /bin/sh ethereum/solc:$SOLC_VERSION
+
+This lands you to in shell in Docker mounted volume.

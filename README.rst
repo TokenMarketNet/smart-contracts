@@ -3,7 +3,7 @@ TokenMarket 2018 conference, Gibraltar, June 28th - 29th
 
 Our conference TokenMarket 2018: Insights into the Token Economy is held June 28th in Gibraltar. Tokenisation has created new financial markets. Join the industry leaders to discuss where those markets are heading.
 
-`View conference and buy the tickets now <https://tokenmarket.net/conference-2018>`_ 
+`View conference and buy the tickets now <https://tokenmarket.net/conference-2018>`_
 
 About
 =====
@@ -82,7 +82,7 @@ Features and design goals
 
 * **KYC**: Know your customer processes are support enabled to minimize legal risks associated with anonymous payments - `see KYCCrowdsale <https://github.com/TokenMarketNet/ico/blob/master/contracts/KYCCrowdsale.sol>`_
 
-* **AML**: Anti-money laundering processes are supported through offloaded chain analysis - often a requirement to open a bank account - `see AMLToken <https://github.com/TokenMarketNet/ico/blob/master/contracts/AMLToken.sol>`_ 
+* **AML**: Anti-money laundering processes are supported through offloaded chain analysis - often a requirement to open a bank account - `see AMLToken <https://github.com/TokenMarketNet/ico/blob/master/contracts/AMLToken.sol>`_
 
 * **Separation of concerns**: Crowdsale, token and other logic lies in separate contracts that can be assembled together like lego bricks
 
@@ -109,6 +109,18 @@ TokenMarket can be a launch and hosting partner for your token sale. We offer ad
 
 Community support is available on the best effort basis - your mileage may vary. To get the most of the community support we expect you to be on a senior level of Solidity, Python and open source development. `Meet us at the Gitter support chat <https://gitter.im/TokenMarketNet/ico>`_.
 
+
+Running tests locally
+=====================
+
+Quick tutorial (see docs for more information)::
+
+    export SOLC_BINARY=$(pwd)/dockerized-solc.sh
+    export SOLC_VERSION=0.4.24
+    tox
+
+
+
 Audit reports
 =============
 
@@ -116,9 +128,9 @@ Some public audit reports available for some revisions of this codebase:
 
 * `For Atonomi by LevelK, May 2018 <https://drive.google.com/file/d/0B6r9uCgN_xpJeUdRaGxaQ3VrTVBiekg5V25aUEUycDVZWlhn/view?usp=sharing>`_
 
-* `For Dala by Iosiro, October 2017 <https://www.iosiro.com/dala-token-sale-audit>`_ 
+* `For Dala by Iosiro, October 2017 <https://www.iosiro.com/dala-token-sale-audit>`_
 
-* `For Civic by Zeppelin, June 2017 <https://medium.com/@ZeppelinOrg/a91754ab6e4b>`_ 
+* `For Civic by Zeppelin, June 2017 <https://medium.com/@ZeppelinOrg/a91754ab6e4b>`_
 
 More audit reports available on a request.
 
