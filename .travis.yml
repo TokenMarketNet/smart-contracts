@@ -1,6 +1,6 @@
 language: python
 python: 3.6
-dist: trust
+dist: trusty
 sudo: true
 
 env:
@@ -24,7 +24,7 @@ install:
 
 before_script:
   - if [ -n "$SOLC_BINARY" ]; then $SOLC_BINARY --version; fi
-  - export PATH=$PATH:`dirname $SOLC_BINARY`
+  - export PATH=$PATH:`dirname $SOLC_BINARY`pip install click-config-file
 
 # command to run tests, e.g. python setup.py test
 script: tox -e ${TOXENV}
