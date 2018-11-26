@@ -3,9 +3,10 @@ pragma solidity ^0.4.18;
 import "./BogusAnnouncement.sol";
 import "../KYCInterface.sol";
 import "../CheckpointToken.sol";
+import "../ERC865.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
-contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
+contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC865 {
   uint256 public blockNumber;
   CheckpointToken public token;
   mapping(address => bool) public balanceImported;
@@ -21,7 +22,7 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
   event OptionAdded(address option, bytes32 description);
   event IICCreated(address token, address KYC, uint256 blockNumber, uint256 maximumSupply);
 
-  function InvestorInteractionContract(CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _blockNumber, bytes32[] _options) BogusAnnouncement(name, URI, _type, _hash) public {
+  function InvestorInteractionContract(CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _blockNumber, bytes32[] _options) CheckpointToken("", "", 18) BogusAnnouncement(name, URI, _type, _hash) public {
     token = _token;
     if (_blockNumber > 0) {
       blockNumber = _blockNumber;
@@ -47,12 +48,16 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
 
     require(balanceImported[investor] == false);
 
-    uint256 balance = token.balanceAt(investor, blockNumber);
-    totalSupply_ += balance;
-    balances[investor] += balance;
+    uint256 value = token.balanceAt(investor, blockNumber);
+    uint256 blackHoleBalance = balanceOf(address(0));
+    uint256 totalSupplyNow = totalSupply();
+
+    setCheckpoint(tokenBalances[address(0)], blackHoleBalance.add(value));
+    transferInternal(address(0), investor, value);
+    setCheckpoint(tokensTotal, totalSupplyNow.add(value));
 
     balanceImported[investor] = true;
-    Transfer(address(0), investor, balance);
+    Transfer(address(0), investor, value);
   }
 
   function transferTrigger(address from, address to, uint256 amount) internal {
@@ -78,7 +83,7 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
   }
 
   function act(uint256 amount) external {
-    // This is for the default action, address 100 
+    // This is for the default action, address 100
     transferInvestorTokens(address(100), amount);
   }
 }
