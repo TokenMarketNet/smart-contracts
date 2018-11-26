@@ -35,8 +35,6 @@ interface Announcement {
 contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
-  string public version = 'TM-01 0.1';
-
   string constant ROLE_ANNOUNCE = "announce()";
   string constant ROLE_FORCE = "forceTransfer()";
   string constant ROLE_ISSUE = "issueTokens()";
@@ -44,19 +42,33 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   string constant ROLE_INFO = "setTokenInformation()";
   string constant ROLE_SETVERIFIER = "setTransactionVerifier()";
 
+  /// @dev Version string telling the token is TM-01, and its version:
+  string public version = 'TM-01 0.1';
+
   /// @dev URL where you can get more information about the security
   ///      (for example company website or investor interface):
   string public url;
 
   /** SecurityToken specific events **/
+  /// @dev This is emitted when new tokens are created:
   event Issued(address indexed to, uint256 value);
+  /// @dev This is emitted when tokens are burned from token's own stash:
   event Burned(address indexed burner, uint256 value);
+  /// @dev This is emitted upon forceful transfer of tokens by the Board:
   event Forced(address indexed from, address indexed to, uint256 value);
+  /// @dev This is emitted when new announcements (like dividends, voting, etc.) are issued by the Board:
   event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI, uint256 announcementHash);
+  /// @dev This is emitted when token information is changed:
   event UpdatedTokenInformation(string newName, string newSymbol, string newUrl);
+  /// @dev This is emitted when transaction verifier (the contract which would check KYC, etc.):
   event UpdatedTransactionVerifier(address newVerifier);
 
+  /// @dev Address list of Announcements (see "interface Announcement").
+  ///      Announcements are things like votings, dividends, or any kind of
+  ///      smart contract:
   address[] public announcements;
+  /// @dev For performance reasons, we also maintain address based mapping of
+  ///      Announcements:
   mapping(address => uint256) public announcementsByAddress;
 
   /**
