@@ -27,9 +27,13 @@ contract PaymentSplitter is Recoverable {
     uint256 slices;
   }
 
+  /// @dev This is just a failsafe, so we can't initialize a contract where
+  ///      splitting would not be succesful in the future (for example because
+  ///      of decreased block gas limit):
+  uint256 constant MAX_PARTIES = 100;
   /// @dev How many slices there are in total:
   uint256 public totalSlices;
-  /// @dev Array of "Party"s for each party and amount of slices:
+  /// @dev Array of "Party"s for each party's address and amount of slices:
   Party[] public parties;
 
   /// @dev This event is emitted when someone makes a payment:
@@ -38,12 +42,16 @@ contract PaymentSplitter is Recoverable {
   /// @dev This event is emitted when someone splits the ethers between parties:
   ///      (emitted once per call)
   event Split(address indexed who, uint256 value);
+  /// @dev This event is emitted for every party we send ethers to:
   event SplitTo(address indexed to, uint256 value);
 
   /// @dev Constructor: takes list of parties and their slices.
   /// @param addresses List of addresses of the parties
   /// @param slices Slices of the parties. Will be added to totalSlices.
   function PaymentSplitter(address[] addresses, uint[] slices) public {
+    require(addresses.length == slices.length);
+    require(addresses.length > 0 && addresses.length < MAX_PARTIES);
+
     for(uint i=0; i<addresses.length; i++) {
       parties.push(Party(addresses[i], slices[i]));
       totalSlices = totalSlices.add(slices[i]);
