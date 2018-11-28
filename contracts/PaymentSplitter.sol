@@ -68,7 +68,7 @@ contract PaymentSplitter is Recoverable {
     for(uint i=0; i<parties.length; i++) {
       uint256 amount = slice.mul(parties[i].slices);
 
-      parties[i].addr.transfer(amount);
+      parties[i].addr.send(amount);
       emit SplitTo(parties[i].addr, amount);
     }
 
