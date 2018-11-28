@@ -49,8 +49,8 @@ contract PaymentSplitter is Recoverable {
   /// @param addresses List of addresses of the parties
   /// @param slices Slices of the parties. Will be added to totalSlices.
   function PaymentSplitter(address[] addresses, uint[] slices) public {
-    require(addresses.length == slices.length);
-    require(addresses.length > 0 && addresses.length < MAX_PARTIES);
+    require(addresses.length == slices.length, "addresses and slices must be equal length.");
+    require(addresses.length > 0 && addresses.length < MAX_PARTIES, "Amount of parties is either too many, or zero.");
 
     for(uint i=0; i<addresses.length; i++) {
       parties.push(Party(addresses[i], slices[i]));
