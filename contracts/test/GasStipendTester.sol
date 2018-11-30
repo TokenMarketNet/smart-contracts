@@ -7,12 +7,11 @@
 pragma solidity ^0.4.18;
 
 /**
- * @dev Split ether between parties.
+ * @dev Send ethers with transfer()
  * @author TokenMarket Ltd. /  Ville Sundell <ville at tokenmarket.net>
  *
- * Allows splitting payments between parties.
- * Ethers are split to parties, each party has slices they are entitled to.
- * Ethers of this smart contract are divided into slices upon split().
+ * This is for testing will the fallback function of "target" fit to the
+ * gas stipend.
  */
 
 contract GasStipendTester {
