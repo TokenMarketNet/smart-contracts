@@ -33,7 +33,7 @@ interface Announcement {
 contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
-  string public version = 'TM01 0.1';
+  string public version = 'TM-01 0.1';
 
   /** SecurityToken specific events **/
   event Issued(address indexed to, uint256 value);
