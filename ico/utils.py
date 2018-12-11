@@ -4,10 +4,12 @@ from decimal import Decimal
 
 import time
 import web3
-from eth_utils import is_hex_address, is_checksum_address
+from eth_utils import is_hex_address, is_checksum_address, add_0x_prefix
 from populus.utils.contracts import CONTRACT_FACTORY_FIELDS
 from web3 import Web3
 from web3.contract import Contract
+from web3.utils.abi import get_constructor_abi, merge_args_and_kwargs
+from web3.utils.contracts import encode_abi
 from web3.utils.transactions import wait_for_transaction_receipt
 
 from populus.chain.base import BaseChain
@@ -79,7 +81,24 @@ def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwa
 
     https://etherscanio.freshdesk.com/support/solutions/articles/16000053599-contract-verification-constructor-arguments
     """
-    return contract._encode_constructor_data(args=args, kwargs=kwargs)
+
+    # return contract._encode_constructor_data(args=args, kwargs=kwargs)
+
+    constructor_abi = get_constructor_abi(contract.abi)
+
+    if args is not None:
+        return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
+    else:
+        constructor_abi = get_constructor_abi(contract.abi)
+        kwargs = kwargs or {}
+        arguments = merge_args_and_kwargs(constructor_abi, [], kwargs)
+        # deploy_data = add_0x_prefix(
+        #    contract._encode_abi(constructor_abi, arguments)
+        #)
+
+        # TODO: Looks like recent Web3.py ABI change
+        deploy_data = encode_abi(contract.web3, constructor_abi, arguments)
+        return deploy_data
 
 
 def get_libraries(chain: BaseChain, contract_name: str, contract: Contract) -> dict:
