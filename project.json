@@ -256,7 +256,7 @@
               "bin-runtime",
               "metadata"
             ],
-            "evmVersion": "homestead",
+
             "optimizer": {
               "enabled": true,
               "runs": 500

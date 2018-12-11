@@ -62,6 +62,8 @@ def deploy_contract(project: Project, chain, deploy_address, contract_def: dict,
         del chain.registrar.registrar_backends["JSONFile"]
     chain.registrar.registrar_backends["Memory"].contract_addresses = defaultdict(set)
 
+    deploy_address = deploy_address.lower()
+
     try:
         contract, txhash = chain.provider.deploy_contract(contract_name, deploy_transaction=transaction, deploy_kwargs=kwargs)
     except Exception as e:
