@@ -17,10 +17,10 @@ More information
 
 * http://ethereum.stackexchange.com/a/10020/620
 
-Flatting source code for ABI files
-==================================
+Flattening source code for verification
+=======================================
 
-Here is a snippet that will expand the source code of all contracts for the generated ``build/contracts.json`` file. This will allow easier verification (reproducible builds) when using ABI data.
+Here is a snippet that will expand the source code of all contracts for the generated ``build/contracts.json`` file and embed the source inside the file. This will allow easier verification (reproducible builds) when using ABI data.
 
 You can run from Python shell:
 
