@@ -9,6 +9,6 @@ contract UnrestrictedTransferAgent is SecurityTransferAgent {
   }
 
   function verify(address from, address to, uint256 value) public returns (uint256 newValue) {
-    return 1;
+    return value;
   }
 }
