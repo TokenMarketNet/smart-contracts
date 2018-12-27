@@ -8,7 +8,7 @@ contract ERC677Token is ERC20, ERC677 {
   function transferAndCall(ERC677Receiver receiver, uint amount, bytes data) returns (bool success) {
     require(transfer(address(receiver), amount));
 
-    Transfer(msg.sender, address(receiver), amount, data);
+    ERC677Transfer(msg.sender, address(receiver), amount, data);
 
     require(receiver.tokenFallback(msg.sender, amount, data));
   }
