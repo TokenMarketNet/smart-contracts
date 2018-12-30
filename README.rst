@@ -1,10 +1,3 @@
-TokenMarket 2018 conference, Gibraltar, June 28th - 29th
-========================================================
-
-Our conference TokenMarket 2018: Insights into the Token Economy is held June 28th in Gibraltar. Tokenisation has created new financial markets. Join the industry leaders to discuss where those markets are heading.
-
-`View conference and buy the tickets now <https://tokenmarket.net/conference-2018>`_
-
 About
 =====
 
@@ -23,6 +16,10 @@ This package contains Ethereum smart contracts and command line toolchain for la
 
 Links
 =====
+
+`STO - security token tool chain <https://docs.tokenmarketnet>`_ - please note that this project is being phased out in the favor of the upgraded STO tool
+
+`TokenMarket website <https://tokenmarketnet>`_
 
 `Github issue tracker and source code <https://github.com/tokenmarketnet/ico>`_
 
