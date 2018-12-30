@@ -19,7 +19,7 @@ Links
 
 `STO - security token tool chain <https://docs.tokenmarketnet>`_ - please note that this project is being phased out in the favor of the upgraded STO tool
 
-`TokenMarket website <https://tokenmarketnet>`_
+`TokenMarket website <https://tokenmarket.net>`_
 
 `Github issue tracker and source code <https://github.com/tokenmarketnet/ico>`_
 
