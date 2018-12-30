@@ -17,7 +17,7 @@ This package contains Ethereum smart contracts and command line toolchain for la
 Links
 =====
 
-`STO - security token tool chain <https://docs.tokenmarketnet>`_ - please note that this project is being phased out in the favor of the upgraded STO tool
+`STO - security token tool chain <https://docs.tokenmarket.net>`_ - please note that this project is being phased out in the favor of the upgraded STO tool
 
 `TokenMarket website <https://tokenmarket.net>`_
 
