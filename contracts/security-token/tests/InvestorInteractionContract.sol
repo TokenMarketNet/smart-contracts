@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./BogusAnnouncement.sol";
-import "./MockKYC.sol";
+import "../KYCInterface.sol";
 import "../CheckpointToken.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
@@ -10,9 +10,9 @@ contract InvestorInteractionContract is BogusAnnouncement, StandardToken {
   CheckpointToken token;
   mapping(address => bool) public balanceImported;
   uint256 maximumSupply;
-  MockKYC KYC;
+  KYCInterface KYC;
 
-  function InvestorInteractionContract(CheckpointToken _token, MockKYC _KYC, uint256 _blockNumber) public {
+  function InvestorInteractionContract(CheckpointToken _token, KYCInterface _KYC, uint256 _blockNumber) public {
     token = _token;
     blockNumber = _blockNumber;
     KYC = _KYC;

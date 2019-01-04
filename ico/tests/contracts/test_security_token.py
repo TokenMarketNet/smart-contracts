@@ -99,20 +99,6 @@ def zero_address() -> str:
 #
 
 @pytest.fixture
-def security_token_verifier(chain, team_multisig) -> Contract:
-    """Create the transaction verifier contract."""
-
-    tx = {
-        "from": team_multisig
-    }
-
-    contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
-
-    check_gas(chain, hash_)
-
-    return contract
-
-@pytest.fixture
 def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
@@ -291,26 +277,3 @@ def test_security_token_failsafe(chain, security_token, failsafetester, team_mul
 
     # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
     #security_token.transact({"from": team_multisig}).transfer(customer, 1)
-
-
-def test_security_token_transaction_verifier(chain, security_token, security_token_verifier, team_multisig, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
-    assert security_token.call().balanceOf(customer) == 10
-
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
-
-    check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
-    assert security_token.call().balanceOf(customer) == 9
-
-
-def test_security_token_freeze(chain, security_token, security_token_verifier, team_multisig, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
-    assert security_token.call().balanceOf(customer) == 10
-
-    check_gas(chain, security_token_verifier.transact({"from": team_multisig}).freeze())
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
-
-    with pytest.raises(TransactionFailed):
-        check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
-
-    assert security_token.call().balanceOf(customer) == 10

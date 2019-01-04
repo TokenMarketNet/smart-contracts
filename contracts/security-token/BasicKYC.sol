@@ -1,13 +1,14 @@
 pragma solidity ^0.4.18;
 
+import "./KYCInterface.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
-contract MockKYC is Ownable {
+contract BasicKYC is Ownable, KYCInterface {
     mapping (address => uint128) whitelist;
 
     event Whitelisted(address who, uint128 nonce);
 
-    function MockKYC() Ownable() {
+    function BasicKYC() Ownable() {
       // This is here for our verification code only
     }
 
