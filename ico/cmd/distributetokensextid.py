@@ -94,11 +94,11 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
         token = Token(address=token)
 
         print("Token is", token.address)
-        print("Total supply is", token.call().totalSupply())
-        print("Upgrade master is", token.call().upgradeMaster())
-        print("Deployer account token balance is", token.call().balanceOf(address))
+        print("Total supply is", token.functions.totalSupply().call())
+        print("Upgrade master is", token.functions.upgradeMaster().call())
+        print("Deployer account token balance is", token.functions.balanceOf(address).call())
 
-        decimals = token.call().decimals()
+        decimals = token.functions.decimals().call()
         print("Token decimal places is", decimals)
         assert decimals >= 0
 
@@ -155,12 +155,12 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
             issuer = IssuerWithId(address=issuer_address)
 
         print("Issuer contract is", issuer.address)
-        print("Currently issued", issuer.call().issuedCount())
+        print("Currently issued", issuer.functions.issuedCount().call())
 
         if not master_address:
             sys.exit("Please use Token.approve() to give some allowance for the issuer contract by master address")
 
-        allowance = token.call().allowance(master_address, issuer.address)
+        allowance = token.functions.allowance(master_address, issuer.address).call()
         print("Issuer allowance", allowance)
 
         if allowance == 0 or not master_address:
@@ -231,11 +231,11 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
 
             print("Row", i,  "giving", tokens, "to", addr, "issuer", issuer.address, "time passed", time.time() - start_time, "ETH passed", spent, "gas price", transaction["gasPrice"] / (10**9))
 
-            if issuer.call().issued(external_id):
+            if issuer.functions.issued(external_id).call():
                 print("Already issued, skipping")
                 continue
 
-            txid = issuer.transact(transaction).issue(addr, tokens, external_id)
+            txid = issuer.functions.issue(addr, tokens, external_id).transact(transaction)
             tx_to_confirm.append(txid)
 
             # Confirm N transactions when batch max size is reached

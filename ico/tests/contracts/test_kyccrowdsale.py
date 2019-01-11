@@ -3,8 +3,8 @@
 import uuid
 
 import pytest
-from eth_utils import to_checksum_address
-from ethereum.tester import TransactionFailed
+
+from eth_tester.exceptions import TransactionFailed
 from eth_utils import to_wei
 from web3.contract import Contract
 
@@ -93,28 +93,28 @@ def kyc_crowdsale(chain, team_multisig, preico_starts_at, preico_ends_at, pricin
         contract.address
     ]
     finalizer_contract, hash = chain.provider.deploy_contract('NullFinalizeAgent', deploy_args=args)
-    contract.transact({"from": team_multisig}).setFinalizeAgent(finalizer_contract.address)
+    contract.functions.setFinalizeAgent(finalizer_contract.address).transact({"from": team_multisig})
 
-    assert contract.call().owner() == team_multisig
-    assert not token.call().released()
+    assert contract.functions.owner().call() == team_multisig
+    assert not token.functions.released().call()
 
     # Allow the token sale contract to distribute unreleased tokens
     # token.transact({"from": team_multisig}).setTransferAgent(contract.address, True)
-    token.transact({"from": team_multisig}).setTransferAgent(team_multisig, True)
-    token.transact({"from": team_multisig}).approve(contract.address, initial_supply)
-    token.transact({"from": team_multisig}).setReleaseAgent(team_multisig)
-    contract.transact({"from": team_multisig}).setSignerAddress(signer_address)
+    token.functions.setTransferAgent(team_multisig, True).transact({"from": team_multisig})
+    token.functions.approve(contract.address, initial_supply).transact({"from": team_multisig})
+    token.functions.setReleaseAgent(team_multisig).transact({"from": team_multisig})
+    contract.functions.setSignerAddress(signer_address).transact({"from": team_multisig})
     return contract
 
 
 @pytest.fixture
 def customer(accounts) -> str:
     """Get a customer address."""
-    return to_checksum_address(accounts[1])
+    return accounts[1]
 
 
 @pytest.fixture
-def customer_id(uncapped_flatprice, uncapped_flatprice_finalizer, team_multisig) -> int:
+def customer_id(uncapped_flatprice, uncapped_flatprice_finalizer, team_multisig) -> uuid.uuid4:
     """Generate UUID v4 customer id as a hex string."""
     customer_id = uuid.uuid4()
     return customer_id
@@ -132,37 +132,38 @@ def test_kyc_participate_with_signed_address(chain, kyc_crowdsale, customer, cus
 
     # Check KYC crowdsale is good to go
     time_travel(chain, kyc_crowdsale.call().startsAt() + 1)
-
+    event_filter = kyc_crowdsale.events.Invested().createFilter(fromBlock=0)
     # Check the setup looks good
-    assert kyc_crowdsale.call().getState() == CrowdsaleState.Funding
-    assert kyc_crowdsale.call().isFinalizerSane()
-    assert kyc_crowdsale.call().isPricingSane()
-    assert kyc_crowdsale.call().beneficiary() == team_multisig
-    assert kyc_token.call().transferAgents(team_multisig) == True
+    assert kyc_crowdsale.functions.getState().call() == CrowdsaleState.Funding
+    assert kyc_crowdsale.functions.isFinalizerSane().call()
+    assert kyc_crowdsale.functions.isPricingSane().call()
+    assert kyc_crowdsale.functions.beneficiary().call() == team_multisig
+    assert kyc_token.functions.transferAgents(team_multisig).call() == True
 
     # Do a test buy for 1 ETH and check it is good token wise
     wei_value = to_wei(1, "ether")
-    tokens_per_eth = pricing.call().calculatePrice(wei_value, wei_value, 0, customer, 18)
+    tokens_per_eth = pricing.functions.calculatePrice(wei_value, wei_value, 0, customer, 18).call()
     assert tokens_per_eth == 10**18
-    assert kyc_crowdsale.call().getTokensLeft() >= tokens_per_eth
-    assert kyc_token.call().balanceOf(team_multisig) >= tokens_per_eth
-    assert not kyc_crowdsale.call().isBreakingCap(wei_value, tokens_per_eth, wei_value, tokens_per_eth)
+    assert kyc_crowdsale.functions.getTokensLeft().call() >= tokens_per_eth
+    assert kyc_token.functions.balanceOf(team_multisig).call() >= tokens_per_eth
+    assert not kyc_crowdsale.functions.isBreakingCap(wei_value, tokens_per_eth, wei_value, tokens_per_eth).call()
 
     # KYC limits for this participant: 0...1 ETH
     kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 1*10000, 1*10**18)
     signed_data = sign(kyc_payload, private_key)
 
-    kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
-
+    kyc_crowdsale.functions.buyWithKYCData(
+        kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+    ).transact({"from": customer, "value": wei_value})
     # We got credited
-    assert kyc_token.call().balanceOf(customer) > 0
-    assert kyc_crowdsale.call().investedAmountOf(customer) == 1 * 10**18
+    assert kyc_token.functions.balanceOf(customer).call() > 0
+    assert kyc_crowdsale.functions.investedAmountOf(customer).call() == 1 * 10**18
 
     # We have tracked the investor id
-    events = kyc_crowdsale.pastEvents("Invested").get()
+    events = event_filter.get_all_entries()
     assert len(events) == 1
     e = events[0]
-    assert e["args"]["investor"].lower() == customer.lower()
+    assert e["args"]["investor"] == customer
     assert e["args"]["weiAmount"] == wei_value
     assert e["args"]["customerId"] == customer_id.int
 
@@ -181,7 +182,9 @@ def test_kyc_participate_bad_signature(chain, kyc_crowdsale, customer, customer_
     signed_data = sign(kyc_payload, private_key + "x")  # Use bad private key
 
     with pytest.raises(TransactionFailed):
-        kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+        kyc_crowdsale.functions.buyWithKYCData(
+            kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+        ).transact({"from": customer, "value": wei_value})
 
 
 def test_kyc_participate_under_payment(chain, kyc_crowdsale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig):
@@ -198,7 +201,9 @@ def test_kyc_participate_under_payment(chain, kyc_crowdsale, customer, customer_
     signed_data = sign(kyc_payload, private_key)  # Use bad private key
 
     with pytest.raises(TransactionFailed):
-        kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+        kyc_crowdsale.functions.buyWithKYCData(
+            kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+        ).transact({"from": customer, "value": wei_value})
 
 
 def test_kyc_participate_over_payment(chain, kyc_crowdsale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig):
@@ -213,18 +218,22 @@ def test_kyc_participate_over_payment(chain, kyc_crowdsale, customer, customer_i
     kyc_payload = pack_kyc_pricing_dataframe(customer, customer_id, 0, 10*10000, 1*10**18)
     signed_data = sign(kyc_payload, private_key)  # Use bad private key
 
-    kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+    kyc_crowdsale.functions.buyWithKYCData(
+        kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+    ).transact({"from": customer, "value": wei_value})
 
     with pytest.raises(TransactionFailed):
         wei_value = to_wei(10, "ether")
-        kyc_crowdsale.transact({"from": customer, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+        kyc_crowdsale.functions.buyWithKYCData(
+            kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+        ).transact({"from": customer, "value": wei_value})
 
 
 def test_kyc_participate_set_signer_only_owner(chain, kyc_crowdsale, malicious_address, signer_address):
     """Only owner can set the KYC signing key."""
 
     with pytest.raises(TransactionFailed):
-        kyc_crowdsale.transact({"from": malicious_address}).setSignerAddress(signer_address)
+        kyc_crowdsale.functions.setSignerAddress(signer_address).transact({"from": malicious_address})
 
 
 def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, customer, customer_id, kyc_token, private_key, preico_starts_at, pricing, team_multisig):
@@ -234,14 +243,14 @@ def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, custom
     whitelisted_address = customer
     time_travel(chain, kyc_crowdsale.call().startsAt() + 1)
     start_multisig_total = web3.eth.getBalance(team_multisig)
-
+    events_filter = kyc_crowdsale.events.Invested().createFilter(fromBlock=0)
     # Check the setup looks good
-    assert kyc_crowdsale.call().getState() == CrowdsaleState.Funding
-    assert kyc_crowdsale.call().isFinalizerSane()
-    assert kyc_crowdsale.call().isPricingSane()
-    assert kyc_crowdsale.call().beneficiary() == team_multisig
-    assert kyc_token.call().transferAgents(team_multisig) == True
-    assert kyc_crowdsale.call().investedAmountOf(whitelisted_address) == 0
+    assert kyc_crowdsale.functions.getState().call() == CrowdsaleState.Funding
+    assert kyc_crowdsale.functions.isFinalizerSane().call()
+    assert kyc_crowdsale.functions.isPricingSane().call()
+    assert kyc_crowdsale.functions.beneficiary().call() == team_multisig
+    assert kyc_token.functions.transferAgents(team_multisig).call() == True
+    assert kyc_crowdsale.functions.investedAmountOf(whitelisted_address).call() == 0
 
     # Do a test buy for 1 ETH
     wei_value = to_wei(1, "ether")
@@ -256,17 +265,19 @@ def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, custom
     unpacked = unpack_kyc_pricing_dataframe(kyc_payload)
     assert unpacked["pricing_data"] == price
 
-    kyc_crowdsale.transact({"from": whitelisted_address, "value": wei_value, "gas": 2222333}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+    kyc_crowdsale.functions.buyWithKYCData(
+        kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+    ).transact({"from": whitelisted_address, "value": wei_value})
 
     # We got credited
-    assert kyc_token.call().balanceOf(whitelisted_address) == excepted_token_value
-    assert kyc_crowdsale.call().investedAmountOf(whitelisted_address) == wei_value
+    assert kyc_token.functions.balanceOf(whitelisted_address).call() == excepted_token_value
+    assert kyc_crowdsale.functions.investedAmountOf(whitelisted_address).call() == wei_value
 
     # We have tracked the investor id
-    events = kyc_crowdsale.pastEvents("Invested").get()
+    events = events_filter.get_new_entries()
     assert len(events) == 1
     e = events[0]
-    assert e["args"]["investor"].lower() == whitelisted_address.lower()
+    assert e["args"]["investor"] == whitelisted_address
     assert e["args"]["weiAmount"] == wei_value
     assert e["args"]["customerId"] == customer_id.int
     assert e["args"]["tokenAmount"] == excepted_token_value
@@ -279,19 +290,21 @@ def test_kyc_participate_with_different_price(chain, web3, kyc_crowdsale, custom
     # New transaction, increased per person cap to 2 ETH
     kyc_payload = pack_kyc_pricing_dataframe(whitelisted_address, customer_id, 0, 2*10000, price)
     signed_data = sign(kyc_payload, private_key)
-    kyc_crowdsale.transact({"from": whitelisted_address, "value": wei_value, "gas": 333444}).buyWithKYCData(kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"])
+    kyc_crowdsale.functions.buyWithKYCData(
+        kyc_payload, signed_data["v"], signed_data["r_bytes"], signed_data["s_bytes"]
+    ).transact({"from": whitelisted_address, "value": wei_value})
 
     # We got credited
     total = wei_value * 2
-    assert kyc_token.call().balanceOf(whitelisted_address) == excepted_token_value + new_excepted_token_value
-    assert kyc_crowdsale.call().investedAmountOf(whitelisted_address) == total
+    assert kyc_token.functions.balanceOf(whitelisted_address).call() == excepted_token_value + new_excepted_token_value
+    assert kyc_crowdsale.functions.investedAmountOf(whitelisted_address).call() == total
     assert web3.eth.getBalance(team_multisig) == start_multisig_total + total
 
     # We have another event, this time with new price
-    events = kyc_crowdsale.pastEvents("Invested").get()
-    assert len(events) == 2
+    events = events_filter.get_new_entries()
+    assert len(events) == 1
     e = events[-1]
-    assert e["args"]["investor"].lower() == whitelisted_address.lower()
+    assert e["args"]["investor"] == whitelisted_address
     assert e["args"]["weiAmount"] == wei_value
     assert e["args"]["customerId"] == customer_id.int
     assert e["args"]["tokenAmount"] == new_excepted_token_value

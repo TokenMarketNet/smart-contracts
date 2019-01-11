@@ -67,7 +67,7 @@ def deploy(project: Project, chain, chain_name, web3: Web3, address: str, token:
 
 def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, address_column: str, amount_column: str, vault_address: str):
 
-    decimals = token.call().decimals()
+    decimals = token.functions.decimals().call()
     decimal_multiplier = 10 ** decimals
     transaction = {"from": address}
 
@@ -75,7 +75,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
     token_vault = TokenVault(address=vault_address)
 
     # Check that our tokens are the same
-    assert token_vault.call().token().lower() == token.address.lower()
+    assert token_vault.functions.token().call() == token.address
 
     print("Starting to import investor data to ", token_vault.address)
 
@@ -98,8 +98,8 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
         if amount <= 0:
             raise RuntimeError("Invalid amount:".format(amount))
 
-    if token_vault.call().tokensToBeAllocated() != total * decimal_multiplier:
-        raise RuntimeError("Expected total amount {}, CSV sum is {}".format(token_vault.call().tokensToBeAllocated(), total))
+    if token_vault.functions.tokensToBeAllocated().call() != total * decimal_multiplier:
+        raise RuntimeError("Expected total amount {}, CSV sum is {}".format(token_vault.functions.tokensToBeAllocated().call(), total))
 
     # Start distribution
     start_time = time.time()
@@ -128,11 +128,11 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
 
         print("Row", i, "giving", tokens, "to", addr, "vault", token_vault.address, "time passed", time.time() - start_time, "ETH spent", spent)
 
-        if token_vault.call().balances(addr) > 0:
+        if token_vault.functions.balances(addr).call() > 0:
             print("Already issued, skipping")
             continue
 
-        txid = token_vault.transact(transaction).setInvestor(addr, tokens)
+        txid = token_vault.functions.setInvestor(addr, tokens).transact(transaction)
 
         tx_to_confirm.append(txid)
 
@@ -153,11 +153,11 @@ def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
     token_vault = TokenVault(address=vault_address)
 
     print("Locking vault ", token_vault.address)
-    print("Tokens expected", token_vault.call().tokensToBeAllocated())
-    print("Tokens allocated", token_vault.call().tokensAllocatedTotal())
-    print("Tokens hold", token_vault.call().getBalance())
+    print("Tokens expected", token_vault.functions.tokensToBeAllocated().call())
+    print("Tokens allocated", token_vault.functions.tokensAllocatedTotal().call())
+    print("Tokens hold", token_vault.functions.getBalance().call())
 
-    if not(token_vault.call().tokensToBeAllocated() == token_vault.call().tokensAllocatedTotal() == token_vault.call().getBalance()):
+    if not(token_vault.functions.tokensToBeAllocated().call() == token_vault.functions.tokensAllocatedTotal().call() == token_vault.functions.getBalance().call()):
         sys.exit("Vault token balances mismatch")
 
     transaction = {
@@ -209,10 +209,10 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
         Token = c.contract_factories.FractionalERC20
         token = Token(address=token_address)
 
-        print("Total supply is", token.call().totalSupply())
+        print("Total supply is", token.functions.totalSupply().call())
 
         try:
-            decimals = token.call().decimals()
+            decimals = token.functions.decimals().call()
         except ValueError:
             sys.exit("Token contract does not have support for decimal places, cannot work with it")
 

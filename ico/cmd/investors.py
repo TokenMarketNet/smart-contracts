@@ -27,10 +27,10 @@ def main(chain, address, csv_file):
         Crowdsale = c.provider.get_contract_factory('MintedTokenCappedCrowdsale')
         crowdsale = Crowdsale(address=address)
 
-        print("Total amount raised is", from_wei(crowdsale.call().weiRaised(), "ether"), "ether")
+        print("Total amount raised is", from_wei(crowdsale.functions.weiRaised().call(), "ether"), "ether")
 
         print("Getting events")
-        events = crowdsale.pastEvents("Invested").get(only_changes=False)
+        events = crowdsale.events.Invested().createFilter(fromBlock=0).get_all_entries()
 
         # Merge several transactions from the same address to one
         print("Analysing", len(events), "raw events")

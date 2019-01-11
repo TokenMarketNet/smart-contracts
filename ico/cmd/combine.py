@@ -7,7 +7,6 @@ from typing import List
 
 import click
 import decimal
-from eth_utils import is_address
 from eth_utils import is_checksum_address
 from eth_utils import to_checksum_address
 from eth_utils import is_hex_address
@@ -84,9 +83,6 @@ def read_file(combined: dict, all_errors: List[tuple], book_keeping: collections
 
             sum += amount
             rounded_sum += rounded_amount
-
-            # Make sure we use the same format for the addresses everywehre
-            address = address.lower()
 
             entry = combined.get(address)
             if not entry:

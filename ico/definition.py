@@ -52,7 +52,7 @@ def load_investor_data(contract: Contract, deploy_address: str, fname: str):
             amount = amount.strip()
             assert address.startswith("0x")
             amount = int(float(amount) * 10000)  # Use this precision
-            txs.append(contract.transact({"from": deploy_address}).addInvestor(address, amount))
+            txs.append(contract.functions.addInvestor(address, amount).transact({"from": deploy_address}))
 
     return txs
 

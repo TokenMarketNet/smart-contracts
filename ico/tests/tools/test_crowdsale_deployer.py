@@ -13,6 +13,7 @@ def test_deploy_crowdsale(project, chain, accounts, example_yaml_filename):
     chain_data = load_crowdsale_definitions(example_yaml_filename, "unit_test")
     # Not needed for testrpc
     chain_data["unlock_deploy_address"] = False
+    chain_data['pending_block_timestamp'] = chain.web3.eth.getBlock('latest').timestamp
 
     runtime_data, statistics, contracts = deploy_crowdsale(project, chain, example_yaml_filename, chain_data, accounts[7])
 

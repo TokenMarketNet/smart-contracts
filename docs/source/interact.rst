@@ -999,3 +999,30 @@ Example:
         sig_data = contract._prepare_transaction(function)
         print("Data payload for {}() is {}".format(function, sig_data["data"]))
 
+
+
+Splitting a payment
+===================
+
+Call ``PaymentSplitter`` contract to split the money amount the participants.
+
+Example:
+
+.. code-block:: python
+
+    import populus
+    import binascii
+    from ico.utils import check_succesful_tx
+    from ico.utils import get_contract_by_name
+
+    p = populus.Project()
+
+    with p.get_chain("mainnet") as chain:
+
+        PaymentSplitter = get_contract_by_name(chain, "PaymentSplitter")
+        web3 = chain.web3
+
+        splitter = PaymentSplitter(address="...")
+        txid = splitter.transact({"from": "..."}).split()
+        print("TXID", binascii.hexlify(txid))
+        check_succesful_tx(web3, txid)

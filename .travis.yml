@@ -1,10 +1,10 @@
 language: python
-python: 3.5
+python: 3.6
 dist: trusty
 sudo: true
 
 env:
-  - TOXENV=py35 SOLC_VERSION=0.4.18
+  - TOXENV=py36 SOLC_VERSION=0.4.24
 
 cache:
   - pip: true
@@ -16,8 +16,6 @@ before_install:
   - if [ -n "$SOLC_VERSION" ]; then export SOLC_BINARY="$TRAVIS_BUILD_DIR/solc-versions/solc-$SOLC_VERSION/solc"; fi
   - if [ -n "$SOLC_VERSION" ]; then export LD_LIBRARY_PATH="$TRAVIS_BUILD_DIR/solc-versions/solc-$SOLC_VERSION"; fi
   - if [ -n "$SOLC_VERSION" ]; then sudo apt-get install -y tree unzip; fi
-  - sudo add-apt-repository -y ppa:ethereum/ethereum
-  - sudo apt-get update
 
 install:
   - if [ ! -e "$SOLC_BINARY" ]; then /.$TRAVIS_BUILD_DIR/install_solc.sh; fi

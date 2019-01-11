@@ -1,0 +1,2 @@
+# Dummy for readthedocs.org
+anyconfig==0.9.3

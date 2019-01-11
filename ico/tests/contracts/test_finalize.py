@@ -1,15 +1,15 @@
 """Finalize crowdsale."""
 import pytest
-from ethereum.tester import TransactionFailed
+from eth_tester.exceptions import TransactionFailed
 
-from populus.chain import TestRPCChain
+from populus.chain import TesterChain
 from web3.contract import Contract
 
 from ico.tests.utils import time_travel
 from ico.state import CrowdsaleState
 
 
-def test_finalize_fail_goal(chain: TestRPCChain, uncapped_flatprice_final: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
+def test_finalize_fail_goal(chain: TesterChain, uncapped_flatprice_final: Contract, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
     """Finalize can be done only for successful crowdsales."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -24,7 +24,7 @@ def test_finalize_fail_goal(chain: TestRPCChain, uncapped_flatprice_final: Contr
         uncapped_flatprice_final.transact().finalize()
 
 
-def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
+def test_finalize_success(chain: TesterChain, uncapped_flatprice_final: Contract, uncapped_token: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
     """Finalize releases the token."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -34,7 +34,8 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
 
     time_travel(chain, preico_ends_at + 1)
     assert uncapped_flatprice_final.call().getState() == CrowdsaleState.Success
-    assert uncapped_flatprice_final.call().finalizeAgent() == default_finalize_agent.address
+    assert uncapped_flatprice_final.call().finalizeAgent() == chain.web3.toChecksumAddress(
+        default_finalize_agent.address)
 
     # Release the tokens
     uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
@@ -45,7 +46,7 @@ def test_finalize_success(chain: TestRPCChain, uncapped_flatprice_final: Contrac
     assert uncapped_token.call().mintingFinished()
 
 
-def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
+def test_finalize_fail_again(chain: TesterChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal):
     """Finalize cannot be done again."""
 
     time_travel(chain, preico_starts_at + 1)
@@ -61,7 +62,7 @@ def test_finalize_fail_again(chain: TestRPCChain, uncapped_flatprice_final: Cont
         uncapped_flatprice_final.transact({"from": team_multisig}).finalize()
 
 
-def test_finalize_only_by_crowdsale(chain: TestRPCChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
+def test_finalize_only_by_crowdsale(chain: TesterChain, uncapped_flatprice_final: Contract, team_multisig: str, customer: str, preico_starts_at, preico_ends_at, preico_funding_goal, default_finalize_agent):
     """Finalizer can be only triggered by crowdsale."""
 
     time_travel(chain, preico_starts_at + 1)

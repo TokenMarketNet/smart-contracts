@@ -93,3 +93,6 @@ csvs
 
 # Created by pytest
 .pytest_cache
+
+# pycharm
+.idea/

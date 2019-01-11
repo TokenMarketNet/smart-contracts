@@ -34,11 +34,11 @@ def reclaim_address(token: Contract, entry: Entry, tx_params: dict) -> Tuple[int
     # Make sure we are not fed bad input, raises
     validate_ethereum_address(entry.address)
 
-    if token.call().balanceOf(entry.address) == 0:
+    if token.functions.balanceOf(entry.address).call() == 0:
         logger.info("%s: looks like already reclaimed %s", entry.address, entry.label)
         return 0, None
 
-    txid = token.transact(tx_params).transferToOwner(entry.address)
+    txid = token.functions.transferToOwner(entry.address).transact(tx_params)
     logger.info("%s: reclaiming %s in txid %s", entry.address, entry.label, txid)
     return 1, txid
 
@@ -116,8 +116,6 @@ def prepare_csv(stream, address_key, label_key) -> List[Entry]:
             logger.error("Invalid Ethereum address on row:%d address:%s label:%s reason:%s", idx+1, addr, label, str(e))
             continue
 
-        addr = addr.lower()
-
         if addr in uniq:
             logger.warn("Address has duplicates: %s", addr)
             continue
@@ -136,7 +134,7 @@ def count_tokens_to_reclaim(token, rows: List[Entry]):
     total = 0
 
     for idx, entry in enumerate(rows):
-        total += token.call().balanceOf(entry.address)
+        total += token.functions.balanceOf(entry.address).call()
 
         if idx % 20 == 0:
             logger.info("Prechecking balances %d / %d", idx, len(rows))

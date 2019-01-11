@@ -83,20 +83,23 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
 
         if release_agent:
             print("Setting release agent to", release_agent)
-            txid = contract.transact(transaction).setReleaseAgent(release_agent)
+            txid = contract.functions.setReleaseAgent(release_agent).transact(transaction)
             check_succesful_tx(web3, txid)
 
         if minting_agent:
             print("Setting minting agent")
-            txid = contract.transact(transaction).setMintAgent(minting_agent, True)
+            txid = contract.functions.setMintAgent(minting_agent, True).transact(transaction)
             check_succesful_tx(web3, txid)
 
         if master_address:
             print("Moving upgrade master to a team multisig wallet", master_address)
-            txid = contract.transact({"from": address}).setUpgradeMaster(master_address)
+            txid = contract.functions.setUpgradeMaster(master_address).transact({"from": address})
             check_succesful_tx(web3, txid)
             print("Moving total supply a team multisig wallet", master_address)
-            contract.transact({"from": address}).transfer(master_address, contract.call().totalSupply())
+            contract.functions.transfer(
+                master_address,
+                contract.functions.totalSupply().call()
+            ).transact({"from": address})
             check_succesful_tx(web3, txid)
 
         if verify:
@@ -117,27 +120,27 @@ def main(chain, address, contract_name, name, symbol, supply, decimals, minting_
 
             print("Verified contract is", link)
 
-        print("Token supply:", contract.call().totalSupply())
+        print("Token supply:", contract.functions.totalSupply().call())
 
         # Do some contract reads to see everything looks ok
         try:
-            print("Token owner:", contract.call().owner())
+            print("Token owner:", contract.functions.owner().call())
         except ValueError:
             pass  # No owner
 
         try:
-            print("Token upgradeMaster:", contract.call().upgradeMaster())
+            print("Token upgradeMaster:", contract.functions.upgradeMaster().call())
         except ValueError:
             pass
 
         try:
-            print("Token minting finished:", contract.call().mintingFinished())
+            print("Token minting finished:", contract.functions.mintingFinished().call())
         except ValueError:
             pass
 
         try:
-            print("Token released:", contract.call().released())
-            print("Token release agent:", contract.call().releaseAgent())
+            print("Token released:", contract.functions.released().call())
+            print("Token release agent:", contract.functions.releaseAgent().call())
         except ValueError:
             pass
 
