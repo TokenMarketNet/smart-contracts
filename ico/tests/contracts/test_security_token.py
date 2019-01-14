@@ -11,30 +11,49 @@ from ico.sign import get_ethereum_address_from_private_key
 from ico.sign import sign
 
 @pytest.fixture
+def monkey_patch_py_evm_gas_limit():
+    from eth_tester.backends.pyevm import main
+    main.GENESIS_GAS_LIMIT = 999999999
+
+
+
+@pytest.fixture
+def chain(monkey_patch_py_evm_gas_limit, request):
+    _chain = request.getfixturevalue('chain')
+    return _chain
+
+
+@pytest.fixture
 def private_key():
     """Server side private key."""
     return "Lehma take over Cancuu tacos"
+
 
 @pytest.fixture
 def signer_address(private_key):
     """Server side signer address."""
     return get_ethereum_address_from_private_key(private_key)
 
+
 @pytest.fixture
 def testpayload() -> bytes:
     return decode_hex("a3e76c0f") # function receive() returns(bool)
+
 
 @pytest.fixture
 def announcement_name() -> str:
     return "Announcement 1"
 
+
 @pytest.fixture
 def announcement_uri() -> str:
     return "https://tokenmarket.net/"
 
+
 @pytest.fixture
 def announcement_type() -> int:
     return 123
+
 
 @pytest.fixture
 def announcement_hash() -> int:
@@ -112,7 +131,15 @@ def voting_contract(chain, team_multisig, mock_kyc, security_token, security_tok
     """Create the Voting Contract."""
 
     # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
-    args = [security_token.address, mock_kyc.address, "Voting X", "http://tokenmarket.net", 123, 0, ["Vested for voting"]]
+    args = [
+        security_token.address,
+        mock_kyc.address,
+        to_bytes(text="Voting X"),
+        to_bytes(text="http://tokenmarket.net"),
+        123,
+        0,
+        [to_bytes(text="Vested for voting")]
+    ]
 
     tx = {
         "from": team_multisig
@@ -130,7 +157,17 @@ def payout_contract(chain, team_multisig, mock_kyc, security_token, test_token, 
     """Create the Voting Contract."""
 
     # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
-    args = [security_token.address, test_token.address, mock_kyc.address, "Pay X", "http://tokenmarket.net", 123, 0, ["Vested for dividend"]]
+    # address, address, address, bytes32, bytes32, uint256, uint256, bytes32[]
+    args = [
+        security_token.address,
+        test_token.address,
+        mock_kyc.address,
+        to_bytes(text="Pay X"),
+        to_bytes(text="http://tokenmarket.net"),
+        123,
+        0,
+        [to_bytes(text="Vested for dividend")]
+    ]
 
     tx = {
         "from": team_multisig
@@ -197,14 +234,16 @@ def mock_kyc(chain, team_multisig, customer) -> Contract:
 
     return contract
 
+
 @pytest.fixture
-def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_url, security_token_initial_supply) -> Contract:
+def security_token(monkey_patch_py_evm_gas_limit, chain, team_multisig, security_token_name, security_token_symbol, security_token_url, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
     args = [security_token_name, security_token_symbol, security_token_url]  # Owner set
 
     tx = {
-        "from": team_multisig
+        "from": team_multisig,
+        "gas": 9999999,
     }
 
     contract, hash_ = chain.provider.deploy_contract('SecurityToken', deploy_args=args, deploy_transaction=tx)
