@@ -5,13 +5,22 @@ import "./RestrictedTransferAgent.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 contract AdvancedTransferAgent is RestrictedTransferAgent, Ownable {
+  /** @dev Mapping of addresses which are permitted to make a transfer in any situation: */
   mapping(address => bool) whitelist;
+  /** @dev Mapping of addresses which are prohibited to make a transfer in any situation: */
   mapping(address => bool) blacklist;
 
+  /** @dev This event is emitted when whitelisting status (true/false) of an address changes: */
   event Whitelisted(address who, bool status);
+  /** @dev This event is emitted when blackilisting status (true/false) of an address changes: */
   event Blacklisted(address who, bool status);
+  /** @dev This event is emitted when KYC verifier contract address is changed: */
   event ChangedKYC(address newKYC);
 
+  /**
+   * @dev Constructor taking a contract implementing KYCInterface as the argument
+   * @param _KYC a contract implementing KYCInterface for KYC checking
+  */
   function AdvancedTransferAgent(KYCInterface _KYC) RestrictedTransferAgent(_KYC) {
   }
 
