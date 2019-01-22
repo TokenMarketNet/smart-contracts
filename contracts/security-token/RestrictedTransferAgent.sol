@@ -1,9 +1,9 @@
 pragma solidity ^0.4.18;
 
 import "./KYCInterface.sol";
-import "./UnrestrictedTransferAgent.sol";
+import "./SecurityTransferAgent.sol";
 
-contract RestrictedTransferAgent is UnrestrictedTransferAgent {
+contract RestrictedTransferAgent is SecurityTransferAgent {
 
   KYCInterface KYC;
 
@@ -19,15 +19,13 @@ contract RestrictedTransferAgent is UnrestrictedTransferAgent {
    * @param value The indended amount
    * @return The actual amount permitted
    */
-  function verify(address from, address to, uint256 value) public returns (uint256 newValue) {
+  function verify(address from, address to, uint256 value) public view returns (uint256 newValue) {
     if (address(KYC) == address(0)) {
       return value;
     }
 
     if (KYC.isWhitelisted(to)) {
-      /* We invoke UnrestrictedTransferAgent here, because whatever it wants to do
-         (like emit an event), we want to do too. */
-      return super.verify(from, to, value);
+      return value;
     } else {
       return 0;
     }

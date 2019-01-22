@@ -13,7 +13,7 @@ contract MockSecurityTransferAgent is SecurityTransferAgent {
     frozen = true;
   }
 
-  function verify(address from, address to, uint256 value) public returns (uint256 newValue) {
+  function verify(address from, address to, uint256 value) public view returns (uint256 newValue) {
     require(frozen == false);
 
     return 1;

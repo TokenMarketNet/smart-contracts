@@ -11,7 +11,6 @@ contract AdvancedTransferAgent is RestrictedTransferAgent, Ownable {
   event Whitelisted(address who, bool status);
   event Blacklisted(address who, bool status);
   event ChangedKYC(address newKYC);
-  event BlacklistedAddress();
 
   function AdvancedTransferAgent(KYCInterface _KYC) RestrictedTransferAgent(_KYC) {
   }
@@ -57,15 +56,14 @@ contract AdvancedTransferAgent is RestrictedTransferAgent, Ownable {
    * @param value The indended amount
    * @return The actual amount permitted
    */
-  function verify(address from, address to, uint256 value) public returns (uint256 newValue) {
+  function verify(address from, address to, uint256 value) public view returns (uint256 newValue) {
     /* We invoke RestrictedTransferAgent here, because whatever it wants to do
-       (like emit an event, KYC checks if KYC is specified), we want to do too. */
+       (like KYC checks if KYC is specified), we want to do too. */
     if (blacklist[from] || blacklist[to]) {
-      BlacklistedAddress();
       return 0;
     } else {
       if (whitelist[from] || whitelist[to]) {
-        return UnrestrictedTransferAgent.verify(from, to, value);
+        return value;
       } else {
         return RestrictedTransferAgent.verify(from, to, value);
       }
