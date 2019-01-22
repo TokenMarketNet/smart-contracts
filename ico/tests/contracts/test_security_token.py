@@ -8,22 +8,39 @@ from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
 
 
+@pytest.fixture
+def monkey_patch_py_evm_gas_limit():
+    # https://github.com/ethereum/eth - tester/issues/88
+    # TODO: remove this once populus has been updated with latest eth-tester
+    from eth_tester.backends.pyevm import main
+    main.GENESIS_GAS_LIMIT = 999999999
+
+
+@pytest.fixture
+def chain(monkey_patch_py_evm_gas_limit, request):
+    _chain = request.getfixturevalue('chain')
+    return _chain
+
 
 @pytest.fixture
 def testpayload() -> bytes:
     return decode_hex("a3e76c0f") # function receive() returns(bool)
 
+
 @pytest.fixture
 def announcement_name() -> str:
     return "Announcement 1"
+
 
 @pytest.fixture
 def announcement_uri() -> str:
     return "https://tokenmarket.net/"
 
+
 @pytest.fixture
 def announcement_type() -> int:
     return 123
+
 
 @pytest.fixture
 def announcement_hash() -> int:
@@ -75,6 +92,7 @@ def failsafetester(chain, team_multisig) -> Contract:
     contract, hash_ = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
     return contract
 
+
 @pytest.fixture
 def security_token_name() -> str:
     return "SecurityToken"
@@ -88,6 +106,7 @@ def security_token_symbol() -> str:
 @pytest.fixture
 def security_token_initial_supply() -> str:
     return 999999999000000000000000000
+
 
 @pytest.fixture
 def zero_address() -> str:
@@ -105,7 +124,8 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
     args = [security_token_name, security_token_symbol]  # Owner set
 
     tx = {
-        "from": team_multisig
+        "from": team_multisig,
+        "gas": 9999999,
     }
 
     contract, hash_ = chain.provider.deploy_contract('SecurityToken', deploy_args=args, deploy_transaction=tx)
@@ -119,6 +139,7 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
     assert contract.call().balanceOf(team_multisig) == security_token_initial_supply
 
     return contract
+
 
 def test_security_token_issue(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
     check_gas(chain, security_token.transact({"from": team_multisig}).issueTokens(security_token_initial_supply))
