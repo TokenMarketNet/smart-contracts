@@ -1,4 +1,4 @@
-"""SecurityToken tests"""
+"""SecurityToken Transfer agent tests"""
 import pytest
 from random import randint
 from web3.contract import Contract
