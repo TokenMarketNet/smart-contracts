@@ -8,22 +8,39 @@ from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
 
 
+@pytest.fixture
+def monkey_patch_py_evm_gas_limit():
+    # https://github.com/ethereum/eth - tester/issues/88
+    # TODO: remove this once populus has been updated with latest eth-tester
+    from eth_tester.backends.pyevm import main
+    main.GENESIS_GAS_LIMIT = 999999999
+
+
+@pytest.fixture
+def chain(monkey_patch_py_evm_gas_limit, request):
+    _chain = request.getfixturevalue('chain')
+    return _chain
+
 
 @pytest.fixture
 def testpayload() -> bytes:
     return decode_hex("a3e76c0f") # function receive() returns(bool)
 
+
 @pytest.fixture
 def announcement_name() -> str:
     return "Announcement 1"
+
 
 @pytest.fixture
 def announcement_uri() -> str:
     return "https://tokenmarket.net/"
 
+
 @pytest.fixture
 def announcement_type() -> int:
     return 123
+
 
 @pytest.fixture
 def announcement_hash() -> int:
@@ -75,6 +92,7 @@ def failsafetester(chain, team_multisig) -> Contract:
     contract, hash_ = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
     return contract
 
+
 @pytest.fixture
 def security_token_name() -> str:
     return "SecurityToken"
@@ -89,6 +107,7 @@ def security_token_symbol() -> str:
 def security_token_initial_supply() -> str:
     return 999999999000000000000000000
 
+
 @pytest.fixture
 def zero_address() -> str:
     return "0x0000000000000000000000000000000000000000"
@@ -99,27 +118,14 @@ def zero_address() -> str:
 #
 
 @pytest.fixture
-def security_token_verifier(chain, team_multisig) -> Contract:
-    """Create the transaction verifier contract."""
-
-    tx = {
-        "from": team_multisig
-    }
-
-    contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
-
-    check_gas(chain, hash_)
-
-    return contract
-
-@pytest.fixture
 def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
     args = [security_token_name, security_token_symbol]  # Owner set
 
     tx = {
-        "from": team_multisig
+        "from": team_multisig,
+        "gas": 9999999,
     }
 
     contract, hash_ = chain.provider.deploy_contract('SecurityToken', deploy_args=args, deploy_transaction=tx)
@@ -133,6 +139,7 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
     assert contract.call().balanceOf(team_multisig) == security_token_initial_supply
 
     return contract
+
 
 def test_security_token_issue(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
     check_gas(chain, security_token.transact({"from": team_multisig}).issueTokens(security_token_initial_supply))
@@ -291,26 +298,3 @@ def test_security_token_failsafe(chain, security_token, failsafetester, team_mul
 
     # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
     #security_token.transact({"from": team_multisig}).transfer(customer, 1)
-
-
-def test_security_token_transaction_verifier(chain, security_token, security_token_verifier, team_multisig, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
-    assert security_token.call().balanceOf(customer) == 10
-
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
-
-    check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
-    assert security_token.call().balanceOf(customer) == 9
-
-
-def test_security_token_freeze(chain, security_token, security_token_verifier, team_multisig, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
-    assert security_token.call().balanceOf(customer) == 10
-
-    check_gas(chain, security_token_verifier.transact({"from": team_multisig}).freeze())
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
-
-    with pytest.raises(TransactionFailed):
-        check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
-
-    assert security_token.call().balanceOf(customer) == 10

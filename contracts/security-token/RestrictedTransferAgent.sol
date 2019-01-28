@@ -1,11 +1,14 @@
 pragma solidity ^0.4.18;
 
+import "./KYCInterface.sol";
 import "./SecurityTransferAgent.sol";
 
-/** Transfer agent for a security token that does not limit transfers any way */
-contract UnrestrictedTransferAgent is SecurityTransferAgent {
+contract RestrictedTransferAgent is SecurityTransferAgent {
 
-  function UnrestrictedTransferAgent() {
+  KYCInterface KYC;
+
+  function RestrictedTransferAgent(KYCInterface _KYC) {
+    KYC = _KYC;
   }
 
   /**
@@ -17,6 +20,14 @@ contract UnrestrictedTransferAgent is SecurityTransferAgent {
    * @return The actual amount permitted
    */
   function verify(address from, address to, uint256 value) public view returns (uint256 newValue) {
-    return value;
+    if (address(KYC) == address(0)) {
+      return value;
+    }
+
+    if (KYC.isWhitelisted(to)) {
+      return value;
+    } else {
+      return 0;
+    }
   }
 }
