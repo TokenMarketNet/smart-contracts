@@ -5,6 +5,7 @@ import "./CheckpointToken.sol";
 /* Largely copied from https://github.com/OpenZeppelin/openzeppelin-solidity/pull/741/files */
 
 contract ERC865 is CheckpointToken {
+  /** @dev This is used to prevent nonce reuse: */
   mapping(bytes => bool) signatures;
 
   event TransferPreSigned(address indexed from, address indexed to, address indexed delegate, uint256 amount, uint256 fee);
@@ -15,7 +16,7 @@ contract ERC865 is CheckpointToken {
     * @param _signature bytes The signature, issued by the owner.
     * @param _to address The address which you want to transfer to.
     * @param _value uint256 The amount of tokens to be transferred.
-    * @param _fee uint256 The amount of tokens paid to msg.sender, by the owner.
+    * @param _fee uint256 The amount of tokens paid to msg.sender, by the person who used to own the tokens.
     * @param _nonce uint256 Presigned transaction number
     */
   function transferPreSigned(
@@ -39,6 +40,8 @@ contract ERC865 is CheckpointToken {
 
     signatures[_signature] = true;
     TransferPreSigned(from, _to, msg.sender, _value, _fee);
+    Transfer(from, _to, _value);
+    Transfer(from, msg.sender, _fee);
     return true;
   }
 
@@ -66,7 +69,9 @@ contract ERC865 is CheckpointToken {
   }
 
   /**
-    * @notice Recover signer address from a message by using his signature
+    * @notice Recover signer address from a message by using his signature.
+    *         Signature is delivered as a byte array, hence need for this
+    *         implementation.
     * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
     * @param sig bytes signature, the signature is generated using web3.eth.sign()
     */
