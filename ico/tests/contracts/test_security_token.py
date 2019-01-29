@@ -24,11 +24,8 @@ def chain(monkey_patch_py_evm_gas_limit, request):
     _chain = request.getfixturevalue('chain')
     return _chain
 
-<<<<<<< HEAD
-=======
 
 @pytest.fixture
->>>>>>> fixed tests: Monkey patch eth-tester
 def private_key():
     """Server side private key."""
     return "Lehma take over Cancuu tacos"
@@ -231,12 +228,12 @@ def mock_kyc(chain, team_multisig, customer) -> Contract:
         "from": team_multisig
     }
 
-    contract, hash_ = chain.provider.deploy_contract('MockKYC', deploy_transaction=tx)
+    contract, hash_ = chain.provider.deploy_contract('BasicKYC', deploy_transaction=tx)
 
     check_gas(chain, hash_)
 
-    check_gas(chain, contract.transact(tx).whitelistUser(customer, 123))
-    check_gas(chain, contract.transact(tx).whitelistUser(team_multisig, 1234))
+    check_gas(chain, contract.transact(tx).whitelistUser(customer, True))
+    check_gas(chain, contract.transact(tx).whitelistUser(team_multisig, True))
 
 
     return contract

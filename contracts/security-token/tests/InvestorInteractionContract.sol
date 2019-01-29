@@ -11,8 +11,7 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   CheckpointToken public token;
   mapping(address => bool) public balanceImported;
 
-  uint256 maximumSupply;
-  KYCInterface KYC;
+  KYCInterface public KYC;
 
   mapping(address => bytes32) public options;
   mapping(address => mapping(address => uint256)) public used;

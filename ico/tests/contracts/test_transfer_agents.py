@@ -7,6 +7,20 @@ from ico.tests.utils import removeNonPrintable
 from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
 
+@pytest.fixture
+def monkey_patch_py_evm_gas_limit():
+    # https://github.com/ethereum/eth - tester/issues/88
+    # TODO: remove this once populus has been updated with latest eth-tester
+
+    from eth_tester.backends.pyevm import main
+    main.GENESIS_GAS_LIMIT = 999999999
+
+
+@pytest.fixture
+def chain(monkey_patch_py_evm_gas_limit, request):
+    _chain = request.getfixturevalue('chain')
+    return _chain
+
 
 @pytest.fixture
 def zero_address() -> str:
@@ -22,6 +36,10 @@ def security_token_name() -> str:
 def security_token_symbol() -> str:
     return "SEC"
 
+
+@pytest.fixture
+def security_token_url() -> str:
+    return "http://tokenmarket.net"
 
 @pytest.fixture
 def security_token_initial_supply() -> str:
@@ -93,20 +111,20 @@ def advanced_transfer_agent(chain, team_multisig, basic_kyc) -> Contract:
     return contract
 
 @pytest.fixture
-def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_initial_supply) -> Contract:
+def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_url, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
-    args = [security_token_name, security_token_symbol]  # Owner set
+    args = [security_token_name, security_token_symbol, security_token_url]  # Owner set
 
     tx = {
-        "from": team_multisig
+        "from": team_multisig,
+        "gas": 9999999
     }
 
     contract, hash_ = chain.provider.deploy_contract('SecurityToken', deploy_args=args, deploy_transaction=tx)
 
     check_gas(chain, hash_)
 
-    check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
     check_gas(chain, contract.transact(tx).issueTokens(security_token_initial_supply))
 
     assert contract.call().totalSupply() == security_token_initial_supply
