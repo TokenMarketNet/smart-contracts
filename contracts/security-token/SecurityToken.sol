@@ -48,6 +48,10 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   ///      (for example company website or investor interface):
   string public url;
 
+  /// @dev URL where you can get more information about the security
+  ///      (for example company website or investor interface):
+  string public url;
+
   /** SecurityToken specific events **/
   /// @dev This is emitted when new tokens are created:
   event Issued(address indexed to, uint256 value);

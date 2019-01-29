@@ -4,9 +4,9 @@ from random import randint
 from web3.contract import Contract
 from ico.tests.utils import check_gas
 from ico.tests.utils import removeNonPrintable
-from eth_utils import keccak
 from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
+from eth_utils import keccak
 from ico.sign import get_ethereum_address_from_private_key
 from ico.sign import sign
 
