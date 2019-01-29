@@ -4,6 +4,7 @@ import "./BogusAnnouncement.sol";
 import "../KYCInterface.sol";
 import "../CheckpointToken.sol";
 import "../ERC865.sol";
+import "../BasicKYC.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
 contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC865 {
@@ -14,12 +15,12 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   mapping(address => mapping(address => uint256)) public used;
   uint256 public optionsTotal;
   uint256 public maximumSupply;
-  MockKYC public KYC;
+  BasicKYC public KYC;
 
   event OptionAdded(address option, bytes32 description);
   event IICCreated(address token, address KYC, uint256 blockNumber, uint256 maximumSupply);
 
-  function InvestorInteractionContract(CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _blockNumber, bytes32[] _options) CheckpointToken("", "", 18) BogusAnnouncement(name, URI, _type, _hash) public {
+  function InvestorInteractionContract(CheckpointToken _token, BasicKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _blockNumber, bytes32[] _options) CheckpointToken("", "", 18) BogusAnnouncement(name, URI, _type, _hash) public {
     token = _token;
     if (_blockNumber > 0) {
       blockNumber = _blockNumber;

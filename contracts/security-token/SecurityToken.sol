@@ -44,9 +44,6 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
 
   /// @dev Version string telling the token is TM-01, and its version:
   string public version = 'TM-01 0.1';
-  /// @dev URL where you can get more information about the security
-  ///      (for example company website or investor interface):
-  string public url;
 
   /// @dev URL where you can get more information about the security
   ///      (for example company website or investor interface):
