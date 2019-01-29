@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./BogusAnnouncement.sol";
-import "./MockKYC.sol";
+import "../KYCInterface.sol";
 import "../CheckpointToken.sol";
 import "../ERC865.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";

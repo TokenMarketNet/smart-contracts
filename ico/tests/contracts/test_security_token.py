@@ -34,6 +34,19 @@ def signer_address(private_key):
     """Server side signer address."""
     return get_ethereum_address_from_private_key(private_key)
 
+@pytest.fixture
+def monkey_patch_py_evm_gas_limit():
+    # https://github.com/ethereum/eth - tester/issues/88
+    # TODO: remove this once populus has been updated with latest eth-tester
+    from eth_tester.backends.pyevm import main
+    main.GENESIS_GAS_LIMIT = 999999999
+
+
+@pytest.fixture
+def chain(monkey_patch_py_evm_gas_limit, request):
+    _chain = request.getfixturevalue('chain')
+    return _chain
+
 
 @pytest.fixture
 def testpayload() -> bytes:
@@ -105,6 +118,7 @@ def failsafetester(chain, team_multisig) -> Contract:
     contract, hash_ = chain.provider.deploy_contract('TestCheckpointFailsafe', deploy_transaction=tx)
     return contract
 
+
 @pytest.fixture
 def security_token_name() -> str:
     return "SecurityToken"
@@ -120,6 +134,7 @@ def security_token_url() -> str:
 @pytest.fixture
 def security_token_initial_supply() -> str:
     return 999999999000000000000000000
+
 
 @pytest.fixture
 def zero_address() -> str:
@@ -257,6 +272,7 @@ def security_token(monkey_patch_py_evm_gas_limit, chain, team_multisig, security
     assert contract.call().balanceOf(team_multisig) == security_token_initial_supply
 
     return contract
+
 
 def test_security_token_issue(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
     check_gas(chain, security_token.transact({"from": team_multisig}).issueTokens(security_token_initial_supply))
@@ -477,3 +493,4 @@ def test_erc865(chain, security_token, team_multisig, customer, private_key, sig
     key_raw = signed_data["r_bytes"] + signed_data["s_bytes"] + signed_data["v"].to_bytes(1, byteorder="big")
 
     security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)
+
