@@ -11,8 +11,10 @@ pragma solidity ^0.4.18;
 import "../CrowdsaleToken.sol";
 import "../Recoverable.sol";
 import "./CheckpointToken.sol";
+import "./ERC865.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/Whitelist.sol";
+import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
 /**
  * @dev Interface for general announcements about the security.
@@ -30,20 +32,44 @@ interface Announcement {
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
+contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
+  string constant ROLE_ANNOUNCE = "announce()";
+  string constant ROLE_FORCE = "forceTransfer()";
+  string constant ROLE_ISSUE = "issueTokens()";
+  string constant ROLE_BURN = "burnTokens()";
+  string constant ROLE_INFO = "setTokenInformation()";
+  string constant ROLE_SETVERIFIER = "setTransactionVerifier()";
+
+  /// @dev Version string telling the token is TM-01, and its version:
   string public version = 'TM-01 0.1';
 
+  /// @dev URL where you can get more information about the security
+  ///      (for example company website or investor interface):
+  string public url;
+
   /** SecurityToken specific events **/
+  /// @dev This is emitted when new tokens are created:
   event Issued(address indexed to, uint256 value);
+  /// @dev This is emitted when tokens are burned from token's own stash:
   event Burned(address indexed burner, uint256 value);
+  /// @dev This is emitted upon forceful transfer of tokens by the Board:
   event Forced(address indexed from, address indexed to, uint256 value);
+  /// @dev This is emitted when new announcements (like dividends, voting, etc.) are issued by the Board:
   event Announced(address indexed announcement, uint256 indexed announcementType, bytes32 indexed announcementName, bytes32 announcementURI, uint256 announcementHash);
-  event UpdatedTokenInformation(string newName, string newSymbol);
+  /// @dev This is emitted when token information is changed:
+  event UpdatedTokenInformation(string newName, string newSymbol, string newUrl);
+  /// @dev This is emitted when transaction verifier (the contract which would check KYC, etc.):
   event UpdatedTransactionVerifier(address newVerifier);
 
+  /// @dev Address list of Announcements (see "interface Announcement").
+  ///      Announcements are things like votings, dividends, or any kind of
+  ///      smart contract:
   address[] public announcements;
+  /// @dev For performance reasons, we also maintain address based mapping of
+  ///      Announcements:
+  mapping(address => uint256) public announcementsByAddress;
 
   /**
    * @dev Contructor to create SecurityToken, and subsequent CheckpointToken.
@@ -53,8 +79,15 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    * @param _name Initial name of the token
    * @param _symbol Initial symbol of the token
    */
-  function SecurityToken(string _name, string _symbol) CheckpointToken(_name, _symbol, 18) public {
+  function SecurityToken(string _name, string _symbol, string _url) CheckpointToken(_name, _symbol, 18) public {
+    url = _url;
 
+    addRole(msg.sender, ROLE_ANNOUNCE);
+    addRole(msg.sender, ROLE_FORCE);
+    addRole(msg.sender, ROLE_ISSUE);
+    addRole(msg.sender, ROLE_BURN);
+    addRole(msg.sender, ROLE_INFO);
+    addRole(msg.sender, ROLE_SETVERIFIER);
   }
 
   /**
@@ -68,8 +101,9 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param announcement Address of the Announcement
    */
-  function announce(Announcement announcement) external onlyWhitelisted {
+  function announce(Announcement announcement) external onlyRole(ROLE_ANNOUNCE) {
     announcements.push(announcement);
+    announcementsByAddress[address(announcement)] = announcements.length;
     Announced(address(announcement), announcement.announcementType(), announcement.announcementName(), announcement.announcementURI(), announcement.announcementHash());
   }
 
@@ -85,7 +119,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    * @param to Address to deposit the confisticated token to
    * @param value amount of tokens to be confisticated
    */
-  function forceTransfer(address from, address to, uint256 value) external onlyWhitelisted {
+  function forceTransfer(address from, address to, uint256 value) external onlyRole(ROLE_FORCE) {
     transferInternal(from, to, value);
 
     Forced(from, to, value);
@@ -99,7 +133,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param value Token amount to issue
    */
-  function issueTokens(uint256 value) external onlyWhitelisted {
+  function issueTokens(uint256 value) external onlyRole(ROLE_ISSUE) {
     address issuer = msg.sender;
     uint256 blackHoleBalance = balanceOf(address(0));
     uint256 totalSupplyNow = totalSupply();
@@ -119,7 +153,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param value Token amount to burn from this contract's balance
    */
-  function burnTokens(uint256 value) external onlyWhitelisted {
+  function burnTokens(uint256 value) external onlyRole(ROLE_BURN) {
     address burner = address(this);
     uint256 burnerBalance = balanceOf(burner);
     uint256 totalSupplyNow = totalSupply();
@@ -142,12 +176,14 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param _name New name of the token
    * @param _symbol New symbol of the token
+   * @param _url New URL of the token
    */
-  function setTokenInformation(string _name, string _symbol) external onlyWhitelisted {
+  function setTokenInformation(string _name, string _symbol, string _url) external onlyRole(ROLE_INFO) {
     name = _name;
     symbol = _symbol;
+    url = _url;
 
-    UpdatedTokenInformation(name, symbol);
+    UpdatedTokenInformation(name, symbol, url);
   }
 
   /**
@@ -158,7 +194,7 @@ contract SecurityToken is CheckpointToken, Whitelist, Recoverable {
    *
    * @param newVerifier Address of the SecurityTransferAgent used as verifier
    */
-  function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyWhitelisted {
+  function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyRole(ROLE_SETVERIFIER) {
     transferVerifier = newVerifier;
 
     UpdatedTransactionVerifier(newVerifier);

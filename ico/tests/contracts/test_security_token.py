@@ -6,12 +6,15 @@ from ico.tests.utils import check_gas
 from ico.tests.utils import removeNonPrintable
 from eth_utils import decode_hex, to_bytes
 from eth_tester.exceptions import TransactionFailed
-
+from eth_utils import keccak
+from ico.sign import get_ethereum_address_from_private_key
+from ico.sign import sign
 
 @pytest.fixture
 def monkey_patch_py_evm_gas_limit():
     # https://github.com/ethereum/eth - tester/issues/88
     # TODO: remove this once populus has been updated with latest eth-tester
+
     from eth_tester.backends.pyevm import main
     main.GENESIS_GAS_LIMIT = 999999999
 
@@ -20,6 +23,18 @@ def monkey_patch_py_evm_gas_limit():
 def chain(monkey_patch_py_evm_gas_limit, request):
     _chain = request.getfixturevalue('chain')
     return _chain
+
+
+@pytest.fixture
+def private_key():
+    """Server side private key."""
+    return "Lehma take over Cancuu tacos"
+
+
+@pytest.fixture
+def signer_address(private_key):
+    """Server side signer address."""
+    return get_ethereum_address_from_private_key(private_key)
 
 
 @pytest.fixture
@@ -97,11 +112,13 @@ def failsafetester(chain, team_multisig) -> Contract:
 def security_token_name() -> str:
     return "SecurityToken"
 
-
 @pytest.fixture
 def security_token_symbol() -> str:
     return "SEC"
 
+@pytest.fixture
+def security_token_url() -> str:
+    return "http://tokenmarket.net/"
 
 @pytest.fixture
 def security_token_initial_supply() -> str:
@@ -113,15 +130,120 @@ def zero_address() -> str:
     return "0x0000000000000000000000000000000000000000"
 
 
+@pytest.fixture
+def voting_contract(chain, team_multisig, mock_kyc, security_token, security_token_verifier) -> Contract:
+    """Create the Voting Contract."""
+
+    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    args = [
+        security_token.address,
+        mock_kyc.address,
+        to_bytes(text="Voting X"),
+        to_bytes(text="http://tokenmarket.net"),
+        123,
+        0,
+        [to_bytes(text="Vested for voting")]
+    ]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('VotingContract', deploy_args=args, deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
+
+@pytest.fixture
+def payout_contract(chain, team_multisig, mock_kyc, security_token, test_token, security_token_verifier) -> Contract:
+    """Create the Voting Contract."""
+
+    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    # address, address, address, bytes32, bytes32, uint256, uint256, bytes32[]
+    args = [
+        security_token.address,
+        test_token.address,
+        mock_kyc.address,
+        to_bytes(text="Pay X"),
+        to_bytes(text="http://tokenmarket.net"),
+        123,
+        0,
+        [to_bytes(text="Vested for dividend")]
+    ]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('PayoutContract', deploy_args=args, deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
 #
 # ERC-20 fixtures
 #
 
 @pytest.fixture
-def security_token(chain, team_multisig, security_token_name, security_token_symbol, security_token_initial_supply) -> Contract:
+def test_token(chain, team_multisig, token_name, token_symbol, security_token_initial_supply, release_agent, customer) -> Contract:
+    """Create a Crowdsale token where transfer restrictions have been lifted."""
+
+    args = [token_name, token_symbol, security_token_initial_supply, 18, True]  # Owner set
+
+    tx = {
+        "from": team_multisig
+    }
+
+    token, hash = chain.provider.deploy_contract('CrowdsaleToken', deploy_args=args, deploy_transaction=tx)
+
+    token.transact({"from": team_multisig}).setReleaseAgent(team_multisig)
+    token.transact({"from": team_multisig}).releaseTokenTransfer()
+
+    return token
+
+
+@pytest.fixture
+def security_token_verifier(chain, team_multisig) -> Contract:
+    """Create the transaction verifier contract."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('MockSecurityTransferAgent', deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    return contract
+
+
+@pytest.fixture
+def mock_kyc(chain, team_multisig, customer) -> Contract:
+    """Create the Mock KYC contract."""
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('BasicKYC', deploy_transaction=tx)
+
+    check_gas(chain, hash_)
+
+    check_gas(chain, contract.transact(tx).whitelistUser(customer, True))
+    check_gas(chain, contract.transact(tx).whitelistUser(team_multisig, True))
+
+
+    return contract
+
+
+@pytest.fixture
+def security_token(monkey_patch_py_evm_gas_limit, chain, team_multisig, security_token_name, security_token_symbol, security_token_url, security_token_initial_supply) -> Contract:
     """Create the token contract."""
 
-    args = [security_token_name, security_token_symbol]  # Owner set
+    args = [security_token_name, security_token_symbol, security_token_url]  # Owner set
 
     tx = {
         "from": team_multisig,
@@ -132,10 +254,10 @@ def security_token(chain, team_multisig, security_token_name, security_token_sym
 
     check_gas(chain, hash_)
 
-    check_gas(chain, contract.transact(tx).addAddressToWhitelist(team_multisig))
     check_gas(chain, contract.transact(tx).issueTokens(security_token_initial_supply))
 
     assert contract.call().totalSupply() == security_token_initial_supply
+    assert contract.call().url() == security_token_url
     assert contract.call().balanceOf(team_multisig) == security_token_initial_supply
 
     return contract
@@ -165,9 +287,10 @@ def test_security_token_ask_balanceat(chain, security_token, security_token_init
 
 
 def test_security_token_change_name_and_symbol(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
-    check_gas(chain, security_token.transact({"from": team_multisig}).setTokenInformation("NewToken", "NEW"))
+    check_gas(chain, security_token.transact({"from": team_multisig}).setTokenInformation("NewToken", "NEW", "http://new"))
     assert security_token.call().name() == "NewToken"
     assert security_token.call().symbol() == "NEW"
+    assert security_token.call().url() == "http://new"
 
 
 def test_security_token_approve(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
@@ -253,12 +376,14 @@ def test_security_token_transfer_stresstest(chain, security_token, team_multisig
 
 def test_security_token_announce(chain, security_token, team_multisig, zero_address, customer, announcement, announcement_name, announcement_uri, announcement_type, announcement_hash):
     """Announce Announcement """
+    assert security_token.call().announcementsByAddress(announcement.address) == 0
     security_token.transact({"from": team_multisig}).announce(announcement.address)
 
     events = security_token.events.Announced().createFilter(fromBlock=0).get_all_entries()
     assert len(events) == 1
     e = events[0]
 
+    assert security_token.call().announcementsByAddress(announcement.address) == 1
     assert e["args"]["announcement"] == announcement.address
     assert removeNonPrintable(e["args"]["announcementName"]) == announcement_name
     assert removeNonPrintable(e["args"]["announcementURI"]) == announcement_uri
@@ -298,3 +423,62 @@ def test_security_token_failsafe(chain, security_token, failsafetester, team_mul
 
     # TODO: Report this bug to Populus when the source is public- The problem is the throw above, but happens only with this transaction:
     #security_token.transact({"from": team_multisig}).transfer(customer, 1)
+
+
+def test_security_token_transaction_verifier(chain, security_token, security_token_verifier, team_multisig, customer):
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
+    assert security_token.call().balanceOf(customer) == 10
+
+    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
+
+    check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
+    assert security_token.call().balanceOf(customer) == 9
+
+
+def test_security_token_freeze(chain, security_token, security_token_verifier, team_multisig, customer):
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
+    assert security_token.call().balanceOf(customer) == 10
+
+    check_gas(chain, security_token_verifier.transact({"from": team_multisig}).freeze())
+    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(security_token_verifier.address))
+
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
+
+    assert security_token.call().balanceOf(customer) == 10
+
+
+def test_voting_contract(chain, voting_contract, security_token, team_multisig, customer):
+    check_gas(chain, voting_contract.transact({"from": team_multisig}).transferInvestorTokens(customer, 123))
+    check_gas(chain, voting_contract.transact({"from": customer}).importInvestor(customer))
+    check_gas(chain, voting_contract.transact({"from": customer}).act(123))
+    return
+
+
+def test_payout_contract(chain, payout_contract, security_token, test_token, team_multisig, customer):
+    start_balance = test_token.call().balanceOf(team_multisig)
+    assert start_balance > 0
+    check_gas(chain, test_token.transact({"from": team_multisig}).approve(payout_contract.address, start_balance))
+    check_gas(chain, payout_contract.transact({"from": customer}).fetchTokens())
+
+    initial_balance = test_token.call().balanceOf(team_multisig)
+    check_gas(chain, payout_contract.transact({"from": team_multisig}).act(123))
+    assert test_token.call().balanceOf(team_multisig) > initial_balance
+
+    return
+
+
+def test_erc865(chain, security_token, team_multisig, customer, private_key, signer_address):
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(signer_address, 1234))
+
+    token_addr = int(security_token.address, 16).to_bytes(20, byteorder="big")
+    to_addr = int(team_multisig, 16).to_bytes(20, byteorder="big")
+    value = int(123).to_bytes(32, byteorder="big")
+    fee = int(123).to_bytes(32, byteorder="big")
+    nonce = int(123).to_bytes(32, byteorder="big")
+    prefix = int(0x48664c16).to_bytes(4, byteorder="big")
+    payload = prefix + token_addr + to_addr + value + fee + nonce
+    signed_data = sign(payload, private_key, hash_function=keccak)
+    key_raw = signed_data["r_bytes"] + signed_data["s_bytes"] + signed_data["v"].to_bytes(1, byteorder="big")
+
+    security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)
