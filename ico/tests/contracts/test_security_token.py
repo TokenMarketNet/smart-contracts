@@ -131,13 +131,13 @@ def zero_address() -> str:
 
 
 @pytest.fixture
-def voting_contract(chain, team_multisig, mock_kyc, security_token, security_token_verifier) -> Contract:
+def voting_contract(chain, team_multisig, basic_kyc, security_token, security_token_verifier) -> Contract:
     """Create the Voting Contract."""
 
-    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    # CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
     args = [
         security_token.address,
-        mock_kyc.address,
+        basic_kyc.address,
         to_bytes(text="Voting X"),
         to_bytes(text="http://tokenmarket.net"),
         123,
@@ -157,15 +157,15 @@ def voting_contract(chain, team_multisig, mock_kyc, security_token, security_tok
 
 
 @pytest.fixture
-def payout_contract(chain, team_multisig, mock_kyc, security_token, test_token, security_token_verifier) -> Contract:
+def payout_contract(chain, team_multisig, basic_kyc, security_token, test_token, security_token_verifier) -> Contract:
     """Create the Voting Contract."""
 
-    # CheckpointToken _token, MockKYC _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
+    # CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, bytes32[] _options
     # address, address, address, bytes32, bytes32, uint256, uint256, bytes32[]
     args = [
         security_token.address,
         test_token.address,
-        mock_kyc.address,
+        basic_kyc.address,
         to_bytes(text="Pay X"),
         to_bytes(text="http://tokenmarket.net"),
         123,
@@ -221,8 +221,8 @@ def security_token_verifier(chain, team_multisig) -> Contract:
 
 
 @pytest.fixture
-def mock_kyc(chain, team_multisig, customer) -> Contract:
-    """Create the Mock KYC contract."""
+def basic_kyc(chain, team_multisig, customer) -> Contract:
+    """Create the BasicKYC contract."""
 
     tx = {
         "from": team_multisig
@@ -469,7 +469,7 @@ def test_payout_contract(chain, payout_contract, security_token, test_token, tea
 
 
 def test_erc865(chain, security_token, team_multisig, customer, private_key, signer_address):
-    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(signer_address, 1234))
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(signer_address, 12345))
 
     token_addr = int(security_token.address, 16).to_bytes(20, byteorder="big")
     to_addr = int(team_multisig, 16).to_bytes(20, byteorder="big")
@@ -482,3 +482,7 @@ def test_erc865(chain, security_token, team_multisig, customer, private_key, sig
     key_raw = signed_data["r_bytes"] + signed_data["s_bytes"] + signed_data["v"].to_bytes(1, byteorder="big")
 
     security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)
+
+    #Nonce reuse, should fail:
+    with pytest.raises(TransactionFailed):
+        security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)
