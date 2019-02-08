@@ -63,11 +63,6 @@ We also have third party token sales using these smart contracts
 
 * `Dala <https://github.com/GetDala/dala-smart-contracts>`_
 
-Quick token sale walkthrough
-============================
-
-.. image:: https://ico.readthedocs.io/en/latest/_images/walkthrough.png
-
 Support
 =======
 
