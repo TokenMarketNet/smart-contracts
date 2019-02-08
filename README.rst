@@ -7,13 +7,6 @@ This package contains Ethereum smart contracts and command line toolchain for la
    :alt: Join the chat at https://gitter.im/TokenMarketNet/ico
    :target: https://gitter.im/TokenMarketNet/ico?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-.. image:: https://img.shields.io/travis/TokenMarketNet/ico.svg
-        :target: https://travis-ci.org/TokenMarketNet/ico
-
-.. image:: https://readthedocs.org/projects/ico/badge/?version=latest
-    :alt: Documentation Status
-    :target: https://ico.readthedocs.io/en/latest/?badge=latest
-
 Quick links
 ===========
 
