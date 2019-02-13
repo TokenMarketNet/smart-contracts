@@ -460,11 +460,16 @@ def test_payout_contract(chain, payout_contract, security_token, test_token, tea
     assert start_balance > 0
     check_gas(chain, test_token.transact({"from": team_multisig}).approve(payout_contract.address, start_balance))
     check_gas(chain, payout_contract.transact({"from": customer}).fetchTokens())
+    # check if tokens have been fetched
+    assert test_token.functions.balanceOf(payout_contract.address).call() == start_balance
 
+    # check tranfers
     initial_balance = test_token.call().balanceOf(team_multisig)
     check_gas(chain, payout_contract.transact({"from": team_multisig}).act(123))
     assert test_token.call().balanceOf(team_multisig) > initial_balance
-
+    # check balance in payout contract
+    # 0x0000000000000000000000000000000000000064 is default address(100)
+    assert payout_contract.functions.balanceOf('0x0000000000000000000000000000000000000064').call()
     return
 
 
