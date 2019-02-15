@@ -9,7 +9,7 @@ pragma solidity ^0.4.8;
 
 import "./Recoverable.sol";
 import "./SafeMathLib.sol";
-import "./StandardTokenExt.sol";
+import "zeppelin/contracts/token/ERC20/ERC20.sol";
 import "zeppelin/contracts/ownership/Ownable.sol";
 
 /**
@@ -62,7 +62,7 @@ contract TokenVault is Ownable, Recoverable {
   uint public tokensPerSecond;
 
   /** We can also define our own token, which will override the ICO one ***/
-  StandardTokenExt public token;
+  ERC20 public token;
 
   /** What is our current state.
    *
@@ -89,7 +89,7 @@ contract TokenVault is Ownable, Recoverable {
    * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplication
    * @param _tokensPerSecond Define the tap: how many tokens we permit an user to withdraw per second, 0 to disable
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated, uint _tokensPerSecond) {
+  function TokenVault(address _owner, uint _freezeEndsAt, ERC20 _token, uint _tokensToBeAllocated, uint _tokensPerSecond) {
 
     owner = _owner;
 
@@ -101,9 +101,8 @@ contract TokenVault is Ownable, Recoverable {
     token = _token;
 
     // Check the address looks like a token contract
-    if(!token.isToken()) {
-      throw;
-    }
+    // ">=" is intentional: 0 is fine, we just want to check if the function is there
+    require(token.totalSupply() >= 0);
 
     // Give argument
     if(_freezeEndsAt == 0) {

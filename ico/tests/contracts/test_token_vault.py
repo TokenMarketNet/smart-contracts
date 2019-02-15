@@ -15,6 +15,11 @@ class TokenVaultState(enum.IntEnum):
 
 
 @pytest.fixture
+def zero_address() -> str:
+    return "0x0000000000000000000000000000000000000000"
+
+
+@pytest.fixture
 def token(chain, team_multisig):
     args = [
         team_multisig,
@@ -60,6 +65,13 @@ def token_vault_balances(chain, customer, customer_2) -> list:
        (customer_2, 2000),
     ]
 
+
+@pytest.fixture
+def non_token(chain, team_multisig, token, freeze_ends_at, token_vault_balances) -> Contract:
+    """A test fixture to deploy a non-token."""
+
+    contract, hash = chain.provider.deploy_contract('GasStipendTester')
+    return contract
 
 @pytest.fixture
 def token_vault(chain, team_multisig, token, freeze_ends_at, token_vault_balances) -> Contract:
@@ -339,3 +351,54 @@ def test_tapped_claim(chain, token_vault_tapped, team_multisig, token, customer,
     assert token.functions.balanceOf(customer_2).call() == 2000
 
     assert token_vault_tapped.functions.totalClaimed().call() == 2400
+
+
+def test_vault_nontoken(chain, team_multisig, non_token, freeze_ends_at, token_vault_balances) -> Contract:
+    """Testing how a non-token vault works."""
+
+    total = 1000 + 2000
+
+    args = [
+        team_multisig,
+        freeze_ends_at,
+        non_token.address,
+        total,
+        0 # Disable the tap
+    ]
+
+    with pytest.raises(TransactionFailed):
+        contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
+
+
+def test_vault_external_account(chain, team_multisig, customer_2, freeze_ends_at, token_vault_balances) -> Contract:
+    """Testing how a non-token vault works."""
+
+    total = 1000 + 2000
+
+    args = [
+        team_multisig,
+        freeze_ends_at,
+        customer_2,
+        total,
+        0 # Disable the tap
+    ]
+
+    with pytest.raises(TransactionFailed):
+        contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
+
+
+def test_vault_zero_address(chain, team_multisig, zero_address, freeze_ends_at, token_vault_balances) -> Contract:
+    """Testing how a non-token vault works."""
+
+    total = 1000 + 2000
+
+    args = [
+        team_multisig,
+        freeze_ends_at,
+        zero_address,
+        total,
+        0 # Disable the tap
+    ]
+
+    with pytest.raises(TransactionFailed):
+        contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
