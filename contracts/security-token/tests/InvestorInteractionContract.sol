@@ -64,17 +64,26 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   }
 
   function transfer(address _to, uint256 _value) public returns (bool) {
-    if (balanceImported[msg.sender] == false) {
-      importInvestor(msg.sender);
-    }
-
-    if (options[_to] != 0) {
-      require(KYC.isWhitelisted(msg.sender));
-      transferTrigger(msg.sender, _to, _value);
-    }
+    _initiate_transfer(msg.sender, _to, amount);
 
     // Doing this as msg.sender:
     return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address investor, address _to, uint256 amount) public returns (bool) {
+    _initiate_transfer(investor, _to, amount);
+    return super.transferFrom(investor, _to, _value);
+  }
+
+  function _initiate_transfer(address investor, address _to, uint256 amount) {
+    if (balanceImported[investor] == false) {
+      importInvestor(investor);
+    }
+
+    if (options[_to] != 0) {
+      require(KYC.isWhitelisted(investor));
+      transferTrigger(investor, _to, _value);
+    }
   }
 
   function transferInvestorTokens(address to, uint256 amount) {
@@ -84,5 +93,10 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   function act(uint256 amount) external {
     // This is for the default action, address 100
     transferInvestorTokens(address(100), amount);
+  }
+
+  function actOnBehalfOfInvestor(address investor, uint256 amount) external {
+    // This is for the default action, address 100
+    transferFrom(investor, address(100), amount);
   }
 }
