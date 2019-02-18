@@ -64,18 +64,18 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   }
 
   function transfer(address _to, uint256 _value) public returns (bool) {
-    _initiate_transfer(msg.sender, _to, amount);
+    _initiate_transfer(msg.sender, _to, _value);
 
     // Doing this as msg.sender:
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address investor, address _to, uint256 amount) public returns (bool) {
-    _initiate_transfer(investor, _to, amount);
+  function transferFrom(address investor, address _to, uint256 _value) public returns (bool) {
+    _initiate_transfer(investor, _to, _value);
     return super.transferFrom(investor, _to, _value);
   }
 
-  function _initiate_transfer(address investor, address _to, uint256 amount) {
+  function _initiate_transfer(address investor, address _to, uint256 _value) {
     if (balanceImported[investor] == false) {
       importInvestor(investor);
     }
