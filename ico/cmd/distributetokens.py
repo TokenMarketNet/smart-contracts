@@ -10,6 +10,7 @@ from eth_utils import from_wei, to_wei
 from populus.utils.accounts import is_account_locked
 from populus import Project
 from populus.utils.cli import request_account_unlock
+from web3.middleware.signing import construct_sign_and_send_raw_middleware
 
 from ico.utils import check_succesful_tx
 from ico.utils import check_multiple_succesful_txs
@@ -32,7 +33,8 @@ from ico.utils import get_constructor_arguments
 @click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
 @click.option('--solc-version', nargs=1, help='Menu item for the solc compiler verification on EtherScan', required=False, default="v0.4.24+commit.e67f0147")
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
-def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address, gas_price, solc_version):
+@click.option('--private-key',  default=None, help='private-key used for making transactions')
+def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address, gas_price, solc_version, private_key):
     """Distribute tokens to centrally issued crowdsale participant or bounty program participants.
 
     Reads in distribution data as CSV. Then uses Issuer contract to distribute tokens.
@@ -56,6 +58,10 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
     with project.get_chain(chain) as c:
 
         web3 = c.web3
+
+        if private_key:
+            web3.middleware_stack.add(construct_sign_and_send_raw_middleware(private_key))
+
         print("Web3 provider is", web3.providers[0])
         print("Deployer account address is", address)
         print("Deployer account balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
