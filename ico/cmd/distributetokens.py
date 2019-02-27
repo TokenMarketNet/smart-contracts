@@ -56,7 +56,7 @@ def main(chain, address, token, csv_file, limit, start_from, issuer_address, add
     with project.get_chain(chain) as c:
 
         web3 = c.web3
-        print("Web3 provider is", web3.currentProvider)
+        print("Web3 provider is", web3.providers[0])
         print("Deployer account address is", address)
         print("Deployer account balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
 
