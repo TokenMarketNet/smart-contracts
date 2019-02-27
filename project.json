@@ -31,7 +31,7 @@
         "provider": {
           "class": "web3.providers.rpc.HTTPProvider",
           "settings": {
-            "endpoint_uri": "http://127.0.0.1:8545",
+            "endpoint_uri": "https://mainnet.infura.io/v3/6b70887f1b0d4ce5bb41514e3b494936",
             "request_kwargs": {
                 "timeout": 180
             }

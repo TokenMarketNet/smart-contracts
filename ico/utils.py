@@ -87,7 +87,7 @@ def get_constructor_arguments(contract: Contract, args: Optional[list]=None, kwa
     constructor_abi = get_constructor_abi(contract.abi)
 
     if args is not None:
-        return contract._encode_abi(constructor_abi, args)[2:]  # No 0x
+        return contract._encode_constructor_data(args=args, kwargs=kwargs)
     else:
         constructor_abi = get_constructor_abi(contract.abi)
         kwargs = kwargs or {}
