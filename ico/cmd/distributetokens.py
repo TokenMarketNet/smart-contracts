@@ -30,7 +30,7 @@ from ico.utils import get_constructor_arguments
 @click.option('--issuer-address', nargs=1, help='The address of the issuer contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
 @click.option('--gas-price', nargs=1, help='Override gas price. If not set use the default * 2.0. Specify in Gwei e.g. 50.', required=False, default=None)
 @click.option('--master-address', nargs=1, help='The team multisig wallet address that does StandardToken.approve() for the issuer contract', required=False, default=None)
-@click.option('--solc-version', nargs=1, help='Menu item for the solc compiler verification on EtherScan', required=False, default="v0.4.16+commit.d7661dd9")
+@click.option('--solc-version', nargs=1, help='Menu item for the solc compiler verification on EtherScan', required=False, default="v0.4.24+commit.e67f0147")
 @click.option('--allow-zero/--no-allow-zero', default=False, help='Stops the script if a zero amount row is encountered')
 def main(chain, address, token, csv_file, limit, start_from, issuer_address, address_column, amount_column, allow_zero, master_address, gas_price, solc_version):
     """Distribute tokens to centrally issued crowdsale participant or bounty program participants.
