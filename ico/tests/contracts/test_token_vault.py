@@ -72,7 +72,6 @@ def token_vault(chain, team_multisig, token, freeze_ends_at, token_vault_balance
         freeze_ends_at,
         token.address,
         total,
-        0 # Disable the tap
     ]
     contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
     return contract
@@ -89,7 +88,6 @@ def token_vault_single(chain, team_multisig, token, freeze_ends_at, token_vault_
         freeze_ends_at,
         token.address,
         total,
-        0 # Disable the tap
     ]
     contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
     return contract
@@ -105,7 +103,6 @@ def token_vault_tapped(chain, team_multisig, token, freeze_ends_at) -> Contract:
         freeze_ends_at,
         token.address,
         total,
-        1 # Enable tap, 1 token per second
     ]
     contract, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
     return contract
@@ -115,7 +112,7 @@ def token_vault_tapped(chain, team_multisig, token, freeze_ends_at) -> Contract:
 def loaded_token_vault(token_vault, team_multisig, token_vault_balances):
     """Token vault with investor balances set."""
     for address, balance in token_vault_balances:
-        token_vault.functions.setInvestor(address, balance).transact({"from": team_multisig})
+        token_vault.functions.setInvestor(address, balance, 0).transact({"from": team_multisig})
     return token_vault
 
 
@@ -147,7 +144,7 @@ def test_load_vault_not_owner(token_vault, team_multisig, token, malicious_addre
 
     for address, balance in token_vault_balances:
         with pytest.raises(TransactionFailed):
-            token_vault.functions.setInvestor(address, balance).transact({"from": malicious_address})
+            token_vault.functions.setInvestor(address, balance, 0).transact({"from": malicious_address})
 
 
 def test_load_vault_twice(loaded_token_vault, team_multisig, token, token_vault_balances):
@@ -155,7 +152,7 @@ def test_load_vault_twice(loaded_token_vault, team_multisig, token, token_vault_
 
     for address, balance in token_vault_balances:
         with pytest.raises(TransactionFailed):
-            loaded_token_vault.functions.setInvestor(address, balance).transact({"from": team_multisig})
+            loaded_token_vault.functions.setInvestor(address, balance, 0).transact({"from": team_multisig})
 
 
 def test_lock(loaded_token_vault, team_multisig, token, customer, customer_2):
@@ -226,7 +223,7 @@ def test_load_after_lock(token_vault_single, team_multisig, token, customer, cus
 
     assert token_vault.functions.getState().call() == TokenVaultState.Loading
 
-    token_vault.functions.setInvestor(customer, 1000).transact({"from": team_multisig})
+    token_vault.functions.setInvestor(customer, 1000, 0).transact({"from": team_multisig})
 
     # Move in tokens and lock
     token.functions.transfer(token_vault.address, 1000).transact({"from": team_multisig})
@@ -234,7 +231,7 @@ def test_load_after_lock(token_vault_single, team_multisig, token, customer, cus
     assert token_vault.functions.getState().call() == TokenVaultState.Holding
 
     with pytest.raises(TransactionFailed):
-        token_vault.functions.setInvestor(customer_2, 2000).transact({"from": team_multisig})
+        token_vault.functions.setInvestor(customer_2, 2000, 0).transact({"from": team_multisig})
 
 
 def test_claim(distributing_token_vault, team_multisig, token, customer, customer_2):
@@ -312,7 +309,7 @@ def test_emergency_claim_other_token(chain, loaded_token_vault, team_multisig, t
 def test_tapped_claim(chain, token_vault_tapped, team_multisig, token, customer, customer_2, token_vault_balances):
     """Tokens can be claimed after freeze time is over."""
     for address, balance in token_vault_balances:
-        token_vault_tapped.functions.setInvestor(address, balance).transact({"from": team_multisig})
+        token_vault_tapped.functions.setInvestor(address, balance, 1).transact({"from": team_multisig})
 
     token.functions.transfer(token_vault_tapped.address, 3000).transact({"from": team_multisig})
     token_vault_tapped.functions.lock().transact({"from": team_multisig})

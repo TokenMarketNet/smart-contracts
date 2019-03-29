@@ -58,8 +58,8 @@ contract TokenVault is Ownable, Recoverable {
   /** When this vault was locked (UNIX timestamp) */
   uint public lockedAt;
 
-  /** defining the tap **/
-  uint public tokensPerSecond;
+  /** defining the taps per account **/
+  mapping(address => uint256) public tokensPerSecond;
 
   /** We can also define our own token, which will override the ICO one ***/
   StandardTokenExt public token;
@@ -87,9 +87,8 @@ contract TokenVault is Ownable, Recoverable {
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
    * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplication
-   * @param _tokensPerSecond Define the tap: how many tokens we permit an user to withdraw per second, 0 to disable
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated, uint _tokensPerSecond) {
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated) {
 
     owner = _owner;
 
@@ -121,11 +120,15 @@ contract TokenVault is Ownable, Recoverable {
       freezeEndsAt = _freezeEndsAt;
     }
     tokensToBeAllocated = _tokensToBeAllocated;
-    tokensPerSecond = _tokensPerSecond;
   }
 
-  /// @dev Add a presale participating allocation
-  function setInvestor(address investor, uint amount) public onlyOwner {
+  /**
+   * @dev Add a participant to this Vault
+   * @param investor Address of the participant who will be added to this vault
+   * @param amount Amount of tokens this participant is entitled to in total
+   * @param _tokensPerSecond Define the tap: how many tokens we permit the participant to withdraw per second, 0 to disable tap
+   */
+  function setInvestor(address investor, uint amount, uint _tokensPerSecond) public onlyOwner {
 
     if(lockedAt > 0) {
       // Cannot add new investors after the vault is locked
@@ -144,6 +147,8 @@ contract TokenVault is Ownable, Recoverable {
     investorCount++;
 
     tokensAllocatedTotal += amount;
+
+    tokensPerSecond[investor] = _tokensPerSecond;
 
     Allocated(investor, amount);
   }
@@ -199,7 +204,7 @@ contract TokenVault is Ownable, Recoverable {
       return 0;
     }
 
-    if (tokensPerSecond > 0) {
+    if (tokensPerSecond[investor] > 0) {
       uint previousClaimAt = lastClaimedAt[investor];
       uint maxClaim;
 
@@ -207,7 +212,7 @@ contract TokenVault is Ownable, Recoverable {
         previousClaimAt = freezeEndsAt;
       }
 
-      maxClaim = (now - previousClaimAt) * tokensPerSecond;
+      maxClaim = (now - previousClaimAt) * tokensPerSecond[investor];
 
       if (maxClaim > maxTokensLeft) {
         return maxTokensLeft;
