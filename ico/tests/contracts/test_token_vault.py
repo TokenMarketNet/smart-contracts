@@ -360,7 +360,7 @@ def test_tapped_claim(chain, token_vault_tapped, team_multisig, token, customer,
 
 
 def test_claim_amounts_by_time(chain, team_multisig, token_10000, customer, customer_2):
-    """Test that our tokens per second tap is giving good estimates."""
+    """Vault vesting tokens per second tap is giving good numbers over time period and different claims."""
 
     token = token_10000
     tokens = 10**18
