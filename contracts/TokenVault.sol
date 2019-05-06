@@ -26,6 +26,7 @@ import "zeppelin/contracts/ownership/Ownable.sol";
  * - Call lock from the owner account
  * - Wait until the freeze period is over
  * - After the freeze time is over investors can call claim() from their address to get their tokens
+ * - Tokens vest to the investors with individual schedules
  *
  */
 contract TokenVault is Ownable, Recoverable {
@@ -52,7 +53,7 @@ contract TokenVault is Ownable, Recoverable {
   /** When was the last claim by an investor **/
   mapping(address => uint) public lastClaimedAt;
 
-  /** When our claim freeze is over (UNIX timestamp) */
+  /** When our claim freeze is over (UNIX timestamp) - this is when the tokensPerSecond starts running */
   uint public freezeEndsAt;
 
   /** When this vault was locked (UNIX timestamp) */
@@ -194,25 +195,41 @@ contract TokenVault is Ownable, Recoverable {
     return token.balanceOf(address(this));
   }
 
-  /// @dev Check how many tokens "investor" can claim
+  /// @dev How much the investor could claim based on the current time and his previous claims
+  /// @param investor Address of the investor
+  /// @return uint How many tokens the investor can claim now
+  function getMaxClaimByNow(address investor) public constant returns (uint claimableAmount) {
+
+    if (now < freezeEndsAt) {
+      return 0;
+    }
+
+    uint previousClaimAt = lastClaimedAt[investor];
+
+    // This investor has not claimed tokens yet.... start counting from the unfreeze time
+    if (previousClaimAt == 0) {
+      previousClaimAt = freezeEndsAt;
+    }
+
+    uint passed = now.minus(previousClaimAt);
+    uint maxClaim = passed.times(tokensPerSecond[investor]);
+    return maxClaim;
+  }
+
+  /// @dev Check how many tokens "investor" can claim, based on the previous claims and tokens left
   /// @param investor Address of the investor
   /// @return uint How many tokens the investor can claim now
   function getCurrentlyClaimableAmount(address investor) public constant returns (uint claimableAmount) {
+
     uint maxTokensLeft = balances[investor] - claimed[investor];
 
     if (now < freezeEndsAt) {
       return 0;
     }
 
+    uint maxClaim = getMaxClaimByNow(investor);
+
     if (tokensPerSecond[investor] > 0) {
-      uint previousClaimAt = lastClaimedAt[investor];
-      uint maxClaim;
-
-      if (previousClaimAt == 0) {
-        previousClaimAt = freezeEndsAt;
-      }
-
-      maxClaim = (now - previousClaimAt) * tokensPerSecond[investor];
 
       if (maxClaim > maxTokensLeft) {
         return maxTokensLeft;
@@ -225,7 +242,7 @@ contract TokenVault is Ownable, Recoverable {
   }
 
   /// @dev Claim N bought tokens to the investor as the msg sender
-  function claim() {
+  function claim() public {
 
     address investor = msg.sender;
 
@@ -243,16 +260,18 @@ contract TokenVault is Ownable, Recoverable {
     }
 
     uint amount = getCurrentlyClaimableAmount(investor);
-    require (amount > 0);
 
+    require(amount > 0); // This gives somewhat better user experience as running transactions with zero claim amounts might confuse users
+
+    // Update when and how much tokens the investor has claimed
     lastClaimedAt[investor] = now;
-
     claimed[investor] += amount;
 
+    // Update our bean counter
     totalClaimed += amount;
 
+    // Send tokens to the investors
     token.transfer(investor, amount);
-
     Distributed(investor, amount);
   }
 

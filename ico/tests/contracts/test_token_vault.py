@@ -1,6 +1,8 @@
 """Token core functionality."""
 
 import enum
+import time
+
 import pytest
 from eth_tester.exceptions import TransactionFailed
 from ico.tests.utils import time_travel
@@ -26,6 +28,24 @@ def token(chain, team_multisig):
     ]
     contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
     assert contract.functions.balanceOf(team_multisig).call() == 1000000
+
+    contract.functions.releaseTokenTransfer().transact({"from": team_multisig})
+    return contract
+
+
+@pytest.fixture
+def token_10000(chain, team_multisig):
+    """Unlocked token with mint of 10,000 ethereum decimal units"""
+    args = [
+        team_multisig,
+        "Token",
+        "TKN",
+        10000 * 10**18,
+        0,
+        chain.web3.eth.getBlock('pending').timestamp
+    ]
+    contract, hash = chain.provider.deploy_contract('CentrallyIssuedToken', deploy_args=args)
+    assert contract.functions.balanceOf(team_multisig).call() == 10000 * 10**18
 
     contract.functions.releaseTokenTransfer().transact({"from": team_multisig})
     return contract
@@ -254,6 +274,7 @@ def test_claim_twice(distributing_token_vault, team_multisig, token, customer, c
     """Investor cannot make claim twice."""
 
     distributing_token_vault.functions.claim().transact({"from": customer})
+
     with pytest.raises(TransactionFailed):
         distributing_token_vault.functions.claim().transact({"from": customer})
 
@@ -336,3 +357,98 @@ def test_tapped_claim(chain, token_vault_tapped, team_multisig, token, customer,
     assert token.functions.balanceOf(customer_2).call() == 2000
 
     assert token_vault_tapped.functions.totalClaimed().call() == 2400
+
+
+def test_claim_amounts_by_time(chain, team_multisig, token_10000, customer, customer_2):
+    """Test that our tokens per second tap is giving good estimates."""
+
+    token = token_10000
+    tokens = 10**18
+
+    # Customers have different amount of tokens, but relative same vesting rate
+    # so vault should be empty for the both of the customers at the same time
+    tokens_per_second = int(3*tokens)
+    tokens_per_second_2 = int(3*tokens/2)
+    customer_balance = 6000*tokens  # How many tokens this account will have in the end
+    customer_2_balance = 3000*tokens  # How many tokens this account will have in the end
+    total_balance = 9000*tokens  # All tokens kockjed up in the vault
+    assert customer_balance/tokens_per_second == customer_2_balance/tokens_per_second_2
+
+    start_time = int(time.time() + 1000)
+    end_time = start_time + int(customer_balance / tokens_per_second)
+
+    # Load and lock the vault
+    args = [
+        team_multisig,
+        start_time,
+        token.address,
+        total_balance,
+    ]
+    token_vault_tapped, hash = chain.provider.deploy_contract('TokenVault', deploy_args=args)
+    token.functions.transfer(token_vault_tapped.address, total_balance).transact({"from": team_multisig})
+    token_vault_tapped.functions.setInvestor(customer, customer_balance, tokens_per_second).transact({"from": team_multisig})
+    token_vault_tapped.functions.setInvestor(customer_2, customer_2_balance, tokens_per_second_2).transact({"from": team_multisig})
+    token_vault_tapped.functions.lock().transact({"from": team_multisig})
+
+    # Test claims before the vault unfreezes
+    time_travel(chain, start_time - 300)
+    assert token_vault_tapped.functions.getState().call() == TokenVaultState.Holding
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == 0
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == 0
+
+    # After one second we should be able to claim tokens_per_second amount
+    time_travel(chain, start_time + 1)
+    assert token_vault_tapped.functions.getState().call() == TokenVaultState.Distributing
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == tokens_per_second
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == tokens_per_second
+
+    # After two second we should be able to claim tokens_per_second amount
+    time_travel(chain, start_time + 2)
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == tokens_per_second*2
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == tokens_per_second*2
+
+    # Claiming tokens should clear the available tap
+    # Note that claim() itself automatically advanced us to next block - so we get 9 tokens instead 6
+    # (testrpc runs 1 second per block)
+    assert token.functions.balanceOf(customer).call() == 0
+    token_vault_tapped.functions.claim().transact({"from": customer})
+    assert token.functions.balanceOf(customer).call() == 9*tokens
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == 0
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == 0
+
+    # Moving forward after claim should give us more tokens to claim
+    # We have claimed 9 tokens
+    # 5 seconds has passed, total 15 tokens should be available by time
+    # but because of previous claims we have only 6 left to claim now
+    time_travel(chain, start_time + 2 + 3)
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == 6*tokens
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == 6*tokens
+    assert token_vault_tapped.functions.claimed(customer).call() == 9*tokens
+
+    # Then travel and overshoot the end of vesting period -- all 6000 tokens should be unlocked
+    time_travel(chain, end_time + 10)
+    claimed = 9*tokens
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == customer_balance - claimed
+    assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == (customer_balance + 10*tokens_per_second) - claimed  # This does not consider vault end time
+
+    # Clain rest of the tokens
+    token_vault_tapped.functions.claim().transact({"from": customer})
+    assert token.functions.balanceOf(customer).call() == customer_balance
+
+    # Cannot claim anything anymore
+    time_travel(chain, end_time + 12)
+    with pytest.raises(TransactionFailed):
+        token_vault_tapped.functions.claim().transact({"from": customer})
+
+    # Then claim all tokens for the customer_2
+    token_vault_tapped.functions.claim().transact({"from": customer_2})
+    assert token.functions.balanceOf(customer_2).call() == customer_2_balance
+
+    # See that we are zeroed out
+    time_travel(chain, end_time + 20)
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == 0
+    assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer_2).call() == 0
+    assert token.functions.balanceOf(token_vault_tapped.address).call() == 0
+    assert token_vault_tapped.functions.claimed(customer).call() == customer_balance
+    assert token_vault_tapped.functions.claimed(customer_2).call() == customer_2_balance
+
