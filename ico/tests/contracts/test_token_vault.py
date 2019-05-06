@@ -431,7 +431,7 @@ def test_claim_amounts_by_time(chain, team_multisig, token_10000, customer, cust
     assert token_vault_tapped.functions.getCurrentlyClaimableAmount(customer).call() == customer_balance - claimed
     assert token_vault_tapped.functions.getMaxClaimByNow(customer).call() == (customer_balance + 10*tokens_per_second) - claimed  # This does not consider vault end time
 
-    # Clain rest of the tokens
+    # Claim rest of the tokens
     token_vault_tapped.functions.claim().transact({"from": customer})
     assert token.functions.balanceOf(customer).call() == customer_balance
 
