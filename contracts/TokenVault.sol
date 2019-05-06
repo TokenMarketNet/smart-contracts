@@ -230,6 +230,7 @@ contract TokenVault is Ownable, Recoverable {
     uint maxClaim = getMaxClaimByNow(investor);
 
     if (tokensPerSecond[investor] > 0) {
+      // This investor is vesting over time
 
       if (maxClaim > maxTokensLeft) {
         return maxTokensLeft;
@@ -237,6 +238,7 @@ contract TokenVault is Ownable, Recoverable {
         return maxClaim;
       }
     } else {
+      // This investor gets all tokens when the vault unlocks
       return maxTokensLeft;
     }
   }
