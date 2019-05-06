@@ -48,7 +48,7 @@ def main(chain, owner_address, token, csv_file, address_column, label_column, ga
     with project.get_chain(chain) as c:
 
         web3 = c.web3
-        logger.info("Web3 provider is %s", web3.currentProvider)
+        logger.info("Web3 provider is %s", web3.providers[0])
         logger.info("Owner account address is %s", owner_address)
         logger.info("Owner account balance is %s ETH", from_wei(web3.eth.getBalance(owner_address), "ether"))
 

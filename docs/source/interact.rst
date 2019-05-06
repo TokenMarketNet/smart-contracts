@@ -64,7 +64,7 @@ Example:
     with project.get_chain(chain_name) as chain:
 
         web3 = chain.web3
-        print("Web3 provider is", web3.currentProvider)
+        print("Web3 provider is", web3.providers[0])
         print("Owner address is", owner_address)
         print("Owner balance is", from_wei(web3.eth.getBalance(owner_address), "ether"), "ETH")
 
@@ -120,7 +120,7 @@ Then copy and edit the following snippet with your address information:
     with project.get_chain(chain_name) as chain:
 
         web3 = chain.web3
-        print("Web3 provider is", web3.currentProvider)
+        print("Web3 provider is", web3.providers[0])
         print("Owner address is", owner_address)
         print("Owner balance is", from_wei(web3.eth.getBalance(owner_address), "ether"), "ETH")
 
@@ -181,7 +181,7 @@ We have deployed a crowdsale token and made it transferable as above. Now let's 
         contract = Contract(address=contract_address)
 
         web3 = chain.web3
-        print("Web3 provider is", web3.currentProvider)
+        print("Web3 provider is", web3.providers[0])
         print("Owner address is", owner_address)
         print("Owner balance is", from_wei(web3.eth.getBalance(owner_address), "ether"), "ETH")
         print("Owner token balance is", contract.call().balanceOf(owner_address))
