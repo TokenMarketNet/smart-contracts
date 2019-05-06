@@ -221,7 +221,7 @@ contract TokenVault is Ownable, Recoverable {
   /// @return uint How many tokens the investor can claim now
   function getCurrentlyClaimableAmount(address investor) public constant returns (uint claimableAmount) {
 
-    uint maxTokensLeft = balances[investor].sub(claimed[investor]);
+    uint maxTokensLeft = balances[investor].minus(claimed[investor]);
 
     if (now < freezeEndsAt) {
       return 0;
