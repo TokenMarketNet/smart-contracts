@@ -51,6 +51,18 @@
             "settings": {
               "file_path": "./registrar.json"
             }
+          },
+          "Memory": {
+            "class": "populus.contracts.backends.memory.MemoryBackend",
+            "priority": 50
+          },
+          "ProjectContracts": {
+            "class": "populus.contracts.backends.project.ProjectContractsBackend",
+            "priority": 20
+          },
+          "TestContracts": {
+            "class": "populus.contracts.backends.testing.TestContractsBackend",
+            "priority": 40
           }
         }
       },

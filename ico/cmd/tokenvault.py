@@ -206,7 +206,7 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
             request_account_unlock(c, address, timeout=3600*6)
             assert not is_account_locked(web3, address)
 
-        Token = c.contract_factories.FractionalERC20
+        Token = c.provider.get_base_contract_factory('FractionalERC20')
         token = Token(address=token_address)
 
         print("Total supply is", token.functions.totalSupply().call())
