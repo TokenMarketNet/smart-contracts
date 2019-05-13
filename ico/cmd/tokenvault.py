@@ -71,7 +71,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
     decimal_multiplier = 10 ** decimals
     transaction = {"from": address}
 
-    TokenVault = chain.contract_factories.TokenVault
+    TokenVault = chain.provider.get_base_contract_factory('TokenVault')
     token_vault = TokenVault(address=vault_address)
 
     # Check that our tokens are the same
@@ -149,7 +149,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
 
 
 def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
-    TokenVault = chain.contract_factories.TokenVault
+    TokenVault = chain.provider.get_base_contract_factory('TokenVault')
     token_vault = TokenVault(address=vault_address)
 
     print("Locking vault ", token_vault.address)
