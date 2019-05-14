@@ -65,13 +65,13 @@ def deploy(project: Project, chain, chain_name, web3: Web3, address: str, token:
     return token_vault
 
 
-def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, address_column: str, amount_column: str, vault_address: str):
+def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, address_column: str, amount_column: str, duration_column: str, vault_address: str):
 
     decimals = token.functions.decimals().call()
     decimal_multiplier = 10 ** decimals
     transaction = {"from": address}
 
-    TokenVault = chain.contract_factories.TokenVault
+    TokenVault = chain.provider.get_base_contract_factory('TokenVault')
     token_vault = TokenVault(address=vault_address)
 
     # Check that our tokens are the same
@@ -90,6 +90,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
     for row in rows:
         addr = row[address_column].strip()
         amount = row[amount_column].strip()
+
         if addr in uniq_addresses:
             raise RuntimeError("Address appears twice in input data", addr)
         uniq_addresses.add(addr)
@@ -126,13 +127,19 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
 
         tokens = int(tokens)
 
+        duration = int(row[duration_column].strip())
+        if duration > 0:
+            tokens_per_second = int(tokens / duration)
+        else:
+            tokens_per_second = 0
+
         print("Row", i, "giving", tokens, "to", addr, "vault", token_vault.address, "time passed", time.time() - start_time, "ETH spent", spent)
 
         if token_vault.functions.balances(addr).call() > 0:
             print("Already issued, skipping")
             continue
 
-        txid = token_vault.functions.setInvestor(addr, tokens).transact(transaction)
+        txid = token_vault.functions.setInvestor(addr, tokens, tokens_per_second).transact(transaction)
 
         tx_to_confirm.append(txid)
 
@@ -149,7 +156,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
 
 
 def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
-    TokenVault = chain.contract_factories.TokenVault
+    TokenVault = chain.provider.get_base_contract_factory('TokenVault')
     token_vault = TokenVault(address=vault_address)
 
     print("Locking vault ", token_vault.address)
@@ -177,12 +184,13 @@ def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
 @click.option('--csv-file', nargs=1, help='CSV file containing distribution data', required=False)
 @click.option('--address-column', nargs=1, help='Name of CSV column containing Ethereum addresses', default="address")
 @click.option('--amount-column', nargs=1, help='Name of CSV column containing decimal token amounts', default="amount")
+@click.option('--duration-column', nargs=1, help='Name of CSV column containing duration of vesting, in seconds if tap is enabled, 0 otherwise', default="duration")
 @click.option('--limit', nargs=1, help='How many items to import in this batch', required=False, default=1000)
 @click.option('--start-from', nargs=1, help='First row to import (zero based)', required=False, default=0)
 @click.option('--vault-address', nargs=1, help='The address of the vault contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
 @click.option('--freeze-ends-at', nargs=1, help='UNIX timestamp when vault freeze ends for deployment', required=False, default=None, type=int)
 @click.option('--tokens-to-be-allocated', nargs=1, help='Manually verified count of tokens to be set in the vault', required=False, default=None, type=int)
-def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, action, freeze_ends_at, tokens_to_be_allocated):
+def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, duration_column, action, freeze_ends_at, tokens_to_be_allocated):
     """TokenVault control script.
 
     1) Deploys a token vault contract
@@ -206,7 +214,7 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
             request_account_unlock(c, address, timeout=3600*6)
             assert not is_account_locked(web3, address)
 
-        Token = c.contract_factories.FractionalERC20
+        Token = c.provider.get_base_contract_factory('FractionalERC20')
         token = Token(address=token_address)
 
         print("Total supply is", token.functions.totalSupply().call())
@@ -234,7 +242,7 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
             if amount_column == None:
                 sys.exit("amount_column missing")
 
-            load(c, web3, address, csv_file, token, address_column, amount_column, vault_address)
+            load(c, web3, address, csv_file, token, address_column, amount_column, duration_column, vault_address)
             print("Data loaded to the vault.")
             sys.exit(0)
         elif action == "lock":
