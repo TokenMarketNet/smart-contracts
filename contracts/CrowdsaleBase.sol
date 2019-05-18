@@ -118,24 +118,24 @@ contract CrowdsaleBase is Haltable {
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
-        throw;
+      throw;
     }
 
     if(_start == 0) {
-        throw;
+      throw;
     }
 
     startsAt = _start;
 
     if(_end == 0) {
-        throw;
+      throw;
     }
 
     endsAt = _end;
 
     // Don't mess the dates
     if(startsAt >= endsAt) {
-        throw;
+      throw;
     }
 
     // Minimum funding goal can be zero
@@ -183,8 +183,8 @@ contract CrowdsaleBase is Haltable {
     require(tokenAmount != 0);
 
     if(investedAmountOf[receiver] == 0) {
-       // A new investor
-       investorCount++;
+      // A new investor
+      investorCount++;
     }
 
     // Update investor
@@ -196,7 +196,7 @@ contract CrowdsaleBase is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     if(pricingStrategy.isPresalePurchase(receiver)) {
-        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+      presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
 
     // Check that we did not bust the cap
@@ -359,6 +359,18 @@ contract CrowdsaleBase is Haltable {
     weiRefunded = weiRefunded.plus(weiValue);
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
+  }
+  /**
+  * Withdraw tokens
+  */
+
+  function withdrawTokens ( address _token , address to , uint256 amount )
+  public
+  onlyOwner
+  {
+    FractionalERC20 token = FractionalERC20(_token);
+
+    if(!token.transfer(to , amount )) throw ;
   }
 
   /**
