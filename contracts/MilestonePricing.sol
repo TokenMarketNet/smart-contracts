@@ -128,6 +128,18 @@ contract MilestonePricing is PricingStrategy, Ownable {
     return getCurrentMilestone().price;
   }
 
+
+  // @dev change current milestone price
+  function setCurrentPrice (uint price) public onlyOwner {
+    uint i;
+
+    for(i=0; i<milestones.length; i++) {
+      if(now < milestones[i].time) {
+        milestones[i-1].price = price;
+      }
+    }
+  }
+
   /// @dev Calculate the current price for buy in amount.
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
 
