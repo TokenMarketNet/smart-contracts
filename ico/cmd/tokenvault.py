@@ -7,6 +7,8 @@ from decimal import Decimal
 
 import sys
 from eth_utils import from_wei
+from eth_utils import is_checksum_address
+from eth_utils import to_checksum_address
 from web3 import Web3
 from web3.contract import Contract
 
@@ -65,7 +67,7 @@ def deploy(project: Project, chain, chain_name, web3: Web3, address: str, token:
     return token_vault
 
 
-def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, address_column: str, amount_column: str, duration_column: str, vault_address: str):
+def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, address_column: str, amount_column: str, duration_column: str, vault_address: str, skip_checksums: bool):
 
     decimals = token.functions.decimals().call()
     decimal_multiplier = 10 ** decimals
@@ -100,7 +102,7 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
             raise RuntimeError("Invalid amount:".format(amount))
 
     if token_vault.functions.tokensToBeAllocated().call() != total * decimal_multiplier:
-        raise RuntimeError("Expected total amount {}, CSV sum is {}".format(token_vault.functions.tokensToBeAllocated().call(), total))
+        raise RuntimeError("Expected total amount {}, CSV sum is {}".format(token_vault.functions.tokensToBeAllocated().call(), int(total * decimal_multiplier)))
 
     # Start distribution
     start_time = time.time()
@@ -134,6 +136,13 @@ def load(chain, web3: Web3, address: str, csv_file: str, token: Contract, addres
             tokens_per_second = 0
 
         print("Row", i, "giving", tokens, "to", addr, "vault", token_vault.address, "time passed", time.time() - start_time, "ETH spent", spent)
+
+        if not is_checksum_address(addr):
+            if skip_checksums:
+                print("WARNING: not a checksummed Ethereum address at row", i, ":", format(addr))
+                addr = to_checksum_address(addr)
+            else:
+                raise RuntimeError("Address not checksummed", addr, "Use --skip-checksums to override if you know what you are doing.")
 
         if token_vault.functions.balances(addr).call() > 0:
             print("Already issued, skipping")
@@ -190,7 +199,8 @@ def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
 @click.option('--vault-address', nargs=1, help='The address of the vault contract - leave out for the first run to deploy a new issuer contract', required=False, default=None)
 @click.option('--freeze-ends-at', nargs=1, help='UNIX timestamp when vault freeze ends for deployment', required=False, default=None, type=int)
 @click.option('--tokens-to-be-allocated', nargs=1, help='Manually verified count of tokens to be set in the vault', required=False, default=None, type=int)
-def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, duration_column, action, freeze_ends_at, tokens_to_be_allocated):
+@click.option('--skip-checksums', is_flag=True, help='Skip checksum checks for addresses. Use this only if you understand the risks')
+def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, duration_column, action, freeze_ends_at, tokens_to_be_allocated, skip_checksums):
     """TokenVault control script.
 
     1) Deploys a token vault contract
@@ -242,7 +252,7 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
             if amount_column == None:
                 sys.exit("amount_column missing")
 
-            load(c, web3, address, csv_file, token, address_column, amount_column, duration_column, vault_address)
+            load(c, web3, address, csv_file, token, address_column, amount_column, duration_column, vault_address, skip_checksums)
             print("Data loaded to the vault.")
             sys.exit(0)
         elif action == "lock":
