@@ -185,6 +185,50 @@ def lock(chain, web3: Web3, address: str, token: Contract, vault_address: str):
     check_succesful_tx(web3, txid)
 
 
+def inspect(chain, vault_address: str, decimals: int):
+    TokenVault = chain.provider.get_base_contract_factory('TokenVault')
+    token_vault = TokenVault(address=vault_address)
+    decimal_multiplier = 10 ** decimals
+    claiming_starts = token_vault.functions.freezeEndsAt().call()
+    csv_row = "{addr},{amount},{claimed},{curr},{tps},{tph},{tpd},{final}"
+    csv_first_row = {
+        "addr": "address",
+        "amount": "amount",
+        "claimed": "claimed",
+        "curr": "currently claimable",
+        "tps": "tokens per second",
+        "tph": "tokens per hour",
+        "tpd": "tokens per day",
+        "final": "final claim after"
+    }
+
+    print (csv_row.format(**csv_first_row))
+
+    events = token_vault.events.Allocated().createFilter(fromBlock=0).get_all_entries()
+
+    for e in events:
+        participant_addr = e["args"]["investor"]
+        participant_balance = token_vault.functions.balances(participant_addr).call()
+        participant_claimed = token_vault.functions.claimed(participant_addr).call()
+        participant_tokens_per_second = token_vault.functions.tokensPerSecond(participant_addr).call()
+        participant_currently_claimable = token_vault.functions.getCurrentlyClaimableAmount(participant_addr).call()
+
+        final_claim = int(claiming_starts + (participant_balance / participant_tokens_per_second))
+        hourly_tap = participant_tokens_per_second * 3600
+        daily_tap = participant_tokens_per_second * 86400
+
+        participant_row = {
+            "addr": participant_addr,
+            "amount": participant_balance / decimal_multiplier,
+            "claimed": participant_claimed / decimal_multiplier,
+            "curr": participant_currently_claimable / decimal_multiplier,
+            "tps": participant_tokens_per_second / decimal_multiplier,
+            "tph": hourly_tap / decimal_multiplier,
+            "tpd": daily_tap / decimal_multiplier,
+            "final": time.ctime(final_claim)
+        }
+        print(csv_row.format(**participant_row))
+
 @click.command()
 @click.option('--action', nargs=1, help='One of: deploy, load, lock', required=False, default=None)
 @click.option('--chain', nargs=1, default="mainnet", help='On which chain to deploy - see populus.json')
@@ -258,6 +302,8 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
         elif action == "lock":
             lock(c, web3, address, token, vault_address)
             print("Vault locked. Now duck and wait.")
+        elif action == "inspect":
+            inspect(c, vault_address, decimals)
         else:
             sys.exit("Unknown action: {}".format(action))
 
