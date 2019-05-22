@@ -244,7 +244,9 @@ def inspect(chain, vault_address: str, decimals: int):
 @click.option('--freeze-ends-at', nargs=1, help='UNIX timestamp when vault freeze ends for deployment', required=False, default=None, type=int)
 @click.option('--tokens-to-be-allocated', nargs=1, help='Manually verified count of tokens to be set in the vault', required=False, default=None, type=int)
 @click.option('--skip-checksums', is_flag=True, help='Skip checksum checks for addresses. Use this only if you understand the risks')
-def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, duration_column, action, freeze_ends_at, tokens_to_be_allocated, skip_checksums):
+@click.option('--print-timestamp', is_flag=True, help='Print timestamp in the end of the output')
+@click.option('--less-verbose', is_flag=True, help='Only print meaningful output. Ideal for CSV exports')
+def main(chain, address, token_address, csv_file, limit, start_from, vault_address, address_column, amount_column, duration_column, action, freeze_ends_at, tokens_to_be_allocated, skip_checksums, print_timestamp, less_verbose):
     """TokenVault control script.
 
     1) Deploys a token vault contract
@@ -259,9 +261,6 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
     with project.get_chain(chain) as c:
 
         web3 = c.web3
-        print("Web3 provider is", web3.providers[0])
-        print("Owner address is", address)
-        print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
 
         # Goes through geth account unlock process if needed
         if is_account_locked(web3, address):
@@ -271,20 +270,23 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
         Token = c.provider.get_base_contract_factory('FractionalERC20')
         token = Token(address=token_address)
 
-        print("Total supply is", token.functions.totalSupply().call())
-
         try:
             decimals = token.functions.decimals().call()
         except ValueError:
             sys.exit("Token contract does not have support for decimal places, cannot work with it")
 
-        print("Token decimal places is", decimals)
         assert decimals >= 0
+
+        if not less_verbose:
+            print("Web3 provider is", web3.providers[0])
+            print("Owner address is", address)
+            print("Owner balance is", from_wei(web3.eth.getBalance(address), "ether"), "ETH")
+            print("Total supply is", token.functions.totalSupply().call())
+            print("Token decimal places is", decimals)
 
         if action == "deploy":
             deploy(project, c, chain, web3, address, token, freeze_ends_at, tokens_to_be_allocated * (10**decimals))
             print("TokenVault deployed.")
-            sys.exit(0)
         elif action == "load":
 
             if vault_address == None:
@@ -298,7 +300,6 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
 
             load(c, web3, address, csv_file, token, address_column, amount_column, duration_column, vault_address, skip_checksums)
             print("Data loaded to the vault.")
-            sys.exit(0)
         elif action == "lock":
             lock(c, web3, address, token, vault_address)
             print("Vault locked. Now duck and wait.")
@@ -306,6 +307,9 @@ def main(chain, address, token_address, csv_file, limit, start_from, vault_addre
             inspect(c, vault_address, decimals)
         else:
             sys.exit("Unknown action: {}".format(action))
+
+        if print_timestamp:
+            print(time.ctime(time.time()))
 
 
 if __name__ == "__main__":
