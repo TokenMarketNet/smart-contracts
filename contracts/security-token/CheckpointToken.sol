@@ -8,12 +8,9 @@
 
 pragma solidity ^0.4.18;
 
-import "../CrowdsaleToken.sol";
 import "./SecurityTransferAgent.sol";
-import "zeppelin/contracts/math/SafeMath.sol";
-import "zeppelin/contracts/ownership/Whitelist.sol";
-import "zeppelin/contracts/token/ERC20/ERC20.sol";
 import "./ERC677Token.sol";
+import "zeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
