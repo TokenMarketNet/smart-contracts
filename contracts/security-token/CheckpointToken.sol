@@ -1,14 +1,14 @@
 /**
- * This smart contract code is Copyright 2018 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018, 2019 TokenMarket Ltd. For more information see https://tokenmarket.net
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- * NatSpec is used intentionally to cover also other than public functions
+ * NatSpec is used intentionally to cover also other than public functions.
  * Solidity 0.4.18 is intentionally used: it's stable, and our framework is
  * based on that.
  */
 
 pragma solidity ^0.4.18;
 
-import "./SecurityTransferAgent.sol";
+import "./SecurityTransferAgentInterface.sol";
 import "./ERC677Token.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 

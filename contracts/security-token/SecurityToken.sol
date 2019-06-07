@@ -1,31 +1,20 @@
 /**
- * This smart contract code is Copyright 2018 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018, 2019 TokenMarket Ltd. For more information see https://tokenmarket.net
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- * NatSpec is used intentionally to cover also other than public functions
+ * NatSpec is used intentionally to cover also other than public functions.
  * Solidity 0.4.18 is intentionally used: it's stable, and our framework is
  * based on that.
  */
 
 pragma solidity ^0.4.18;
 
-import "../Recoverable.sol";
 import "./CheckpointToken.sol";
 import "./ERC865.sol";
+import "./AnnouncementInterface.sol";
+import "../Recoverable.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
 import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
-/**
- * @dev Interface for general announcements about the security.
- *
- * Announcements can be for instance for dividend sharing, voting, or
- * just for general announcements.
- */
-interface Announcement {
-  function announcementName() public view returns (bytes32);
-  function announcementURI() public view returns (bytes32);
-  function announcementType() public view returns (uint256);
-  function announcementHash() public view returns (uint256);
-}
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
