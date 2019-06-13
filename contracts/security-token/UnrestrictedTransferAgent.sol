@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import "./SecurityTransferAgent.sol";
+import "./SecurityTransferAgentInterface.sol";
 
 /** Transfer agent for a security token that does not limit transfers any way */
 contract UnrestrictedTransferAgent is SecurityTransferAgent {

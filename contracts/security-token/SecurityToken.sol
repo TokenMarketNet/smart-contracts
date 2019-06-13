@@ -1,33 +1,20 @@
 /**
- * This smart contract code is Copyright 2018 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018, 2019 TokenMarket Ltd. For more information see https://tokenmarket.net
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- * NatSpec is used intentionally to cover also other than public functions
+ * NatSpec is used intentionally to cover also other than public functions.
  * Solidity 0.4.18 is intentionally used: it's stable, and our framework is
  * based on that.
  */
 
 pragma solidity ^0.4.18;
 
-import "../CrowdsaleToken.sol";
-import "../Recoverable.sol";
 import "./CheckpointToken.sol";
 import "./ERC865.sol";
+import "./AnnouncementInterface.sol";
+import "../Recoverable.sol";
 import "zeppelin/contracts/math/SafeMath.sol";
-import "zeppelin/contracts/ownership/Whitelist.sol";
 import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
-/**
- * @dev Interface for general announcements about the security.
- *
- * Announcements can be for instance for dividend sharing, voting, or
- * just for general announcements.
- */
-interface Announcement {
-  function announcementName() public view returns (bytes32);
-  function announcementURI() public view returns (bytes32);
-  function announcementType() public view returns (uint256);
-  function announcementHash() public view returns (uint256);
-}
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
@@ -113,7 +100,8 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
    * This must be implemented carefully, since this is a very critical part
    * to ensure investor safety.
    *
-   * This is intended to be called by the BAC (The Board), hence the whitelisting.
+   * This is intended to be called by the BAC (The Board).
+   * The BAC must have the RBAC role ROLE_FORCE.
    *
    * @param from Address of the account to confisticate the tokens from
    * @param to Address to deposit the confisticated token to
@@ -128,8 +116,8 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   /**
    * @dev Issue new tokens to the board by a board decission
    *
-   * Issue new tokens. This is intended to be called by the BAC (The Board),
-   * hence the whitelisting.
+   * Issue new tokens. This is intended to be called by the BAC (The Board).
+   * The BAC must have the RBAC role ROLE_ISSUE.
    *
    * @param value Token amount to issue
    */
@@ -149,7 +137,8 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
    * @dev Burn tokens from contract's own balance by a board decission
    *
    * Burn tokens from contract's own balance to prevent accidental burnings.
-   * This is intended to be called by the BAC (The Board), hence the whitelisting.
+   * This is intended to be called by the BAC (The Board).
+   * The BAC must have the RBAC role ROLE_BURN.
    *
    * @param value Token amount to burn from this contract's balance
    */
@@ -166,13 +155,15 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   }
 
   /**
-   * @dev Whitelisted users (The Board, BAC) can update token information here.
+   * @dev Permissioned users (The Board, BAC) can update token information here.
    *
    * It is often useful to conceal the actual token association, until
    * the token operations, like central issuance or reissuance have been completed.
    *
    * This function allows the token owner to rename the token after the operations
    * have been completed and then point the audience to use the token contract.
+   *
+   * The BAC must have the RBAC role ROLE_INFO.
    *
    * @param _name New name of the token
    * @param _symbol New symbol of the token

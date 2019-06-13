@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./KYCInterface.sol";
-import "./SecurityTransferAgent.sol";
+import "./SecurityTransferAgentInterface.sol";
 
 contract RestrictedTransferAgent is SecurityTransferAgent {
 

@@ -1,6 +1,6 @@
  pragma solidity ^0.4.18;
 
-import "../SecurityTransferAgent.sol";
+import "../SecurityTransferAgentInterface.sol";
 
 contract MockSecurityTransferAgent is SecurityTransferAgent {
   bool frozen = false;
