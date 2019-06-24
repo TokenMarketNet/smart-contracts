@@ -313,6 +313,27 @@ def test_emergency_claim_our_token(chain, loaded_token_vault, team_multisig, tok
     assert token.functions.balanceOf(team_multisig).call() == amount_after_locking
 
 
+def test_emergency_claim_our_token_after_claim(chain, loaded_token_vault, team_multisig, token, customer, customer_2):
+    """Trying to claim extra tokens we have sent after legimate claiming."""
+    extra_tokens = 100
+
+    token.functions.transfer(loaded_token_vault.address, 3000).transact({"from": team_multisig})
+    loaded_token_vault.functions.lock().transact({"from": team_multisig})
+
+    amount_after_locking = token.functions.balanceOf(loaded_token_vault.address).call()
+    token.functions.transfer(loaded_token_vault.address, extra_tokens).transact({"from": team_multisig})
+    assert token.functions.balanceOf(loaded_token_vault.address).call() > amount_after_locking
+
+    time_travel(chain, loaded_token_vault.functions.freezeEndsAt().call() + 2000 - 1)
+
+    loaded_token_vault.functions.claim().transact({"from": customer})
+    loaded_token_vault.functions.claim().transact({"from": customer_2})
+    assert token.functions.balanceOf(loaded_token_vault.address).call() == extra_tokens
+
+    loaded_token_vault.functions.recoverTokens(token.address).transact({"from": team_multisig})
+    assert token.functions.balanceOf(loaded_token_vault.address).call() == 0
+
+
 def test_emergency_claim_other_token(chain, loaded_token_vault, team_multisig, token, other_token, customer, customer_2):
     """Trying to claim extra tokens (other than the vault's own) we have sent."""
 
@@ -451,4 +472,3 @@ def test_claim_amounts_by_time(chain, team_multisig, token_10000, customer, cust
     assert token.functions.balanceOf(token_vault_tapped.address).call() == 0
     assert token_vault_tapped.functions.claimed(customer).call() == customer_balance
     assert token_vault_tapped.functions.claimed(customer_2).call() == customer_2_balance
-
