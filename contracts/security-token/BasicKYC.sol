@@ -6,7 +6,7 @@
  * based on that.
  */
 
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 import "./KYCInterface.sol";
 import "zeppelin/contracts/ownership/rbac/RBAC.sol";
