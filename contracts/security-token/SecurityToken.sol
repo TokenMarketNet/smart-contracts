@@ -22,12 +22,12 @@ import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
-  string constant ROLE_ANNOUNCE = "announce()";
-  string constant ROLE_FORCE = "forceTransfer()";
-  string constant ROLE_ISSUE = "issueTokens()";
-  string constant ROLE_BURN = "burnTokens()";
-  string constant ROLE_INFO = "setTokenInformation()";
-  string constant ROLE_SETVERIFIER = "setTransactionVerifier()";
+  string public constant ROLE_ANNOUNCE = "announce()";
+  string public constant ROLE_FORCE = "forceTransfer()";
+  string public constant ROLE_ISSUE = "issueTokens()";
+  string public constant ROLE_BURN = "burnTokens()";
+  string public constant ROLE_INFO = "setTokenInformation()";
+  string public constant ROLE_SETVERIFIER = "setTransactionVerifier()";
 
   /// @dev Version string telling the token is TM-01, and its version:
   string public version = 'TM-01 0.1';
