@@ -55,7 +55,7 @@ contract BasicKYC is RBAC, KYCInterface {
   }
 
   /**
-   * @dev Whitelist an address. User can whitelist themselves by using a
+   * @dev Set flags an address. User can set their own flags by using a
    *      signed message from server side.
    * @param signer Address of the server side signing key
    * @param newFlags 256 bit integer for all the flags for an address
@@ -64,7 +64,7 @@ contract BasicKYC is RBAC, KYCInterface {
    * @param r R of the server's key which was used to sign this transfer
    * @param s S of the server's key which was used to sign this transfer
    */
-  function whitelistMe(address signer, uint256 newFlags, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
+  function setMyFlags(address signer, uint256 newFlags, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
     require(hasRole(signer, ROLE_SIGNER));
 
     bytes32 hash = keccak256(msg.sender, signer, newFlags, nonce);
