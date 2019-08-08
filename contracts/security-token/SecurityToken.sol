@@ -186,7 +186,7 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
    * @param newVerifier Address of the SecurityTransferAgent used as verifier
    */
   function setTransactionVerifier(SecurityTransferAgent newVerifier) external onlyRole(ROLE_SETVERIFIER) {
-    transferVerifier = newVerifier;
+    transactionVerifier = newVerifier;
 
     UpdatedTransactionVerifier(newVerifier);
   }

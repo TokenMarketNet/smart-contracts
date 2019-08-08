@@ -24,8 +24,8 @@ contract CheckpointToken is ERC677Token {
   string public symbol;
   /// @dev Decimals are usually set to 18 for EIP-20 tokens:
   uint256 public decimals;
-  /// @dev If transferVerifier is set, that contract will be queried upon every token transaction:
-  SecurityTransferAgent public transferVerifier;
+  /// @dev If transactionVerifier is set, that contract will be queried upon every token transaction:
+  SecurityTransferAgent public transactionVerifier;
 
   /// @dev Checkpoint is the fundamental unit for our internal accounting
   ///      (who owns what, and at what moment in time)
@@ -246,8 +246,8 @@ contract CheckpointToken is ERC677Token {
     uint256 fromBalance = balanceOf(from);
     uint256 toBalance = balanceOf(to);
 
-    if (address(transferVerifier) != address(0)) {
-      value = transferVerifier.verify(from, to, value);
+    if (address(transactionVerifier) != address(0)) {
+      value = transactionVerifier.verify(from, to, value);
       require(value > 0);
     }
 
