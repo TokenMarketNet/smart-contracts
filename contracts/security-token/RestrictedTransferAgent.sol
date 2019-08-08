@@ -4,7 +4,6 @@ import "./KYCInterface.sol";
 import "./SecurityTransferAgentInterface.sol";
 
 contract RestrictedTransferAgent is SecurityTransferAgent {
-
   KYCInterface KYC;
 
   function RestrictedTransferAgent(KYCInterface _KYC) {
@@ -24,7 +23,16 @@ contract RestrictedTransferAgent is SecurityTransferAgent {
       return value;
     }
 
-    if (KYC.isWhitelisted(to)) {
+    // The following ifs might seem counterintuitive, but this function will
+    // be executed upon every transfer, so we want to make sure that despite of
+    // Solidity's optimization settings, only relevant external calls are made
+    if (KYC.getFlag(to, 0)) {
+      if (KYC.getFlag(from, 0)) {
+        return value;
+      } else {
+        return 0;
+      }
+    } else if (KYC.getFlag(from, 1)) {
       return value;
     } else {
       return 0;

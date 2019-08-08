@@ -6,72 +6,73 @@
  * based on that.
  */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.25;
 
 import "./KYCInterface.sol";
-import "zeppelin/contracts/ownership/Ownable.sol";
+import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract BasicKYC is Ownable, KYCInterface {
-    /** @dev This mapping contains address which have completed the KYC: */
-    mapping (address => bool) public whitelist;
-    /** @dev This mapping contains signature hashes which have been already used: */
-    mapping (bytes32 => bool) public hashes;
+contract BasicKYC is RBAC, KYCInterface {
+  /** @dev This mapping contains signature hashes which have been already used: */
+  mapping (bytes32 => bool) public hashes;
+  /** @dev Mapping of all the flags for all the users: */
+  mapping (address => uint256) public flags;
 
-    /** @dev this event is emitted when address is whitelisted, including the nonce:*/
-    event Whitelisted(address who, bool status);
+  /** @dev These can be used from other contracts to avoid typos with roles: */
+  string public constant ROLE_SIGNER = "signer";
+  string public constant ROLE_SETTER = "setter";
 
-    /** @dev Simple contructor, mainly because of a Populus bug. */
-    function BasicKYC() Ownable() {
-      // This is here for our verification code only
-    }
+  /**
+   * @dev Interal function for setting the flags, and emmiting the event
+   * @param user Address of the user whose flags we would like to set
+   * @param newFlags Whole set of 256 flags
+   */
+  function writeFlags(address user, uint256 newFlags) internal {
+    flags[user] = newFlags;
 
-    /**
-     * @dev Whitelist an address.
-     * @param who Address being whitelisted
-     * @param status True for whitelisting, False for de-whitelisting
-     */
-    function setWhitelisting(address who, bool status) internal {
-        whitelist[who] = status;
+    emit FlagsSet(user, flags[user]);
+  }
 
-        Whitelisted(who, status);
-    }
+  /**
+   * @dev Set all the flags for a user all in once
+   * @param user Address of the user whose flags we would like to set
+   * @param newFlags Whole set of 256 flags
+   */
+  function setFlags(address user, uint256 newFlags) external onlyRole(ROLE_SETTER) {
+    writeFlags(user, newFlags);
+  }
 
-    /**
-     * @dev Whitelist an address.
-     * @param who Address being whitelisted
-     * @param status True for whitelisting, False for de-whitelisting
-     */
-    function whitelistUser(address who, bool status) external onlyOwner {
-        setWhitelisting(who, status);
-    }
+  /**
+   * @dev Get a flag for a user, return true or false
+   * @param user Address of the user whose flag we would like to have
+   * @param flag Flag index from 0 to 255
+   * @return Flag status, set or unset
+   */
+  function getFlag(address user, uint8 flag) external view returns (bool) {
+    return (flags[user] & 2**flag) > 0;
+  }
 
-    /**
-     * @dev Whitelist an address. User can whitelist themselves by using a
-     *      signed message from server side.
-     * @param nonce Value to prevent re-use of the server side signed data
-     * @param v V of the server's key which was used to sign this transfer
-     * @param r R of the server's key which was used to sign this transfer
-     * @param s S of the server's key which was used to sign this transfer
-     */
-    function whitelistMe(uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(msg.sender, nonce);
-        require(hashes[hash] == false);
-        require(ecrecover(hash, v, r, s) == owner);
+  /**
+   * @dev Whitelist an address. User can whitelist themselves by using a
+   *      signed message from server side.
+   * @param signer Address of the server side signing key
+   * @param newFlags 256 bit integer for all the flags for an address
+   * @param nonce Value to prevent re-use of the server side signed data
+   * @param v V of the server's key which was used to sign this transfer
+   * @param r R of the server's key which was used to sign this transfer
+   * @param s S of the server's key which was used to sign this transfer
+   */
+  function whitelistMe(address signer, uint256 newFlags, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
+    require(hasRole(signer, ROLE_SIGNER));
 
-        hashes[hash] = true;
-        setWhitelisting(msg.sender, true);
-    }
+    bytes32 hash = keccak256(msg.sender, signer, newFlags, nonce);
+    require(hashes[hash] == false);
+    require(ecrecover(hash, v, r, s) == signer);
 
-    /**
-     * @dev Check the whitelisting status of an address.
-     *      Although "whitelist" is a public mapping, we provide this "external"
-     *      function to optimize gas usage.
-     * @param who Address of the user whose whitelist status we want to check
-     */
-    function isWhitelisted(address who) external view returns(bool) {
-        return whitelist[who];
-    }
+    hashes[hash] = true;
+    writeFlags(msg.sender, newFlags);
+  }
+
 }

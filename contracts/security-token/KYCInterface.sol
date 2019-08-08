@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 interface KYCInterface {
-    event Whitelisted(address who, uint128 nonce);
+  event FlagsSet(address indexed who, uint256 indexed flags);
 
-    function isWhitelisted(address who) external view returns(bool);
+  function getFlag(address addr, uint8 flag) external view returns (bool);
 }
