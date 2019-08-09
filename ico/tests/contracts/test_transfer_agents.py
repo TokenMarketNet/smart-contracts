@@ -89,6 +89,7 @@ def restricted_transfer_agent(chain, team_multisig, basic_kyc) -> Contract:
     }
 
     contract, hash_ = chain.provider.deploy_contract('RestrictedTransferAgent', deploy_args=args, deploy_transaction=tx)
+    check_gas(chain, basic_kyc.transact(tx).adminAddRole(team_multisig, "setter"))
 
     check_gas(chain, hash_)
 
@@ -173,7 +174,8 @@ def test_restricted_transfer_agent_whitelisted(chain, security_token, restricted
     assert security_token.call().balanceOf(customer) == 10
 
     check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(restricted_transfer_agent.address))
-    check_gas(chain, basic_kyc.transact({"from": team_multisig}).whitelistUser(team_multisig, True))
+    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setFlags(team_multisig, 1))
+    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setFlags(customer, 1))
 
     check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
 
