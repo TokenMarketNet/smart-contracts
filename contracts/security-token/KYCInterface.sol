@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 interface KYCInterface {
-  event FlagsSet(address indexed who, uint256 indexed flags);
+  event AttributesSet(address indexed who, uint256 indexed flags);
 
-  function getFlag(address addr, uint8 flag) external view returns (bool);
+  function getAttribute(address addr, uint8 attribute) external view returns (bool);
 }

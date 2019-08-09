@@ -69,7 +69,8 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
     }
 
     if (options[_to] != 0) {
-      require(KYC.getFlag(msg.sender, 0));
+      // We require user have compeleted their KYC:
+      require(KYC.getAttribute(msg.sender, 0));
       transferTrigger(msg.sender, _to, _value);
     }
 

@@ -174,8 +174,8 @@ def test_restricted_transfer_agent_whitelisted(chain, security_token, restricted
     assert security_token.call().balanceOf(customer) == 10
 
     check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(restricted_transfer_agent.address))
-    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setFlags(team_multisig, 1))
-    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setFlags(customer, 1))
+    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setAttributes(team_multisig, 1))
+    check_gas(chain, basic_kyc.transact({"from": team_multisig}).setAttributes(customer, 1))
 
     check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
 

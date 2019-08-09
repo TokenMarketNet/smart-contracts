@@ -23,16 +23,9 @@ contract RestrictedTransferAgent is SecurityTransferAgent {
       return value;
     }
 
-    // The following ifs might seem counterintuitive, but this function will
-    // be executed upon every transfer, so we want to make sure that despite of
-    // Solidity's optimization settings, only relevant external calls are made
-    if (KYC.getFlag(to, 0)) {
-      if (KYC.getFlag(from, 0)) {
-        return value;
-      } else {
-        return 0;
-      }
-    } else if (KYC.getFlag(from, 1)) {
+    if (KYC.getAttribute(to, 0) && KYC.getAttribute(from, 0)) {
+      return value;
+    } else if (KYC.getAttribute(from, 1)) {
       return value;
     } else {
       return 0;

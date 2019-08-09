@@ -17,62 +17,62 @@ import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 contract BasicKYC is RBAC, KYCInterface {
   /** @dev This mapping contains signature hashes which have been already used: */
   mapping (bytes32 => bool) public hashes;
-  /** @dev Mapping of all the flags for all the users: */
-  mapping (address => uint256) public flags;
+  /** @dev Mapping of all the attributes for all the users: */
+  mapping (address => uint256) public attributes;
 
   /** @dev These can be used from other contracts to avoid typos with roles: */
   string public constant ROLE_SIGNER = "signer";
   string public constant ROLE_SETTER = "setter";
 
   /**
-   * @dev Interal function for setting the flags, and emmiting the event
-   * @param user Address of the user whose flags we would like to set
-   * @param newFlags Whole set of 256 flags
+   * @dev Interal function for setting the attributes, and emmiting the event
+   * @param user Address of the user whose attributes we would like to set
+   * @param newAttributes Whole set of 256 attributes
    */
-  function writeFlags(address user, uint256 newFlags) internal {
-    flags[user] = newFlags;
+  function writeAttributes(address user, uint256 newAttributes) internal {
+    attributes[user] = newAttributes;
 
-    emit FlagsSet(user, flags[user]);
+    emit AttributesSet(user, attributes[user]);
   }
 
   /**
-   * @dev Set all the flags for a user all in once
-   * @param user Address of the user whose flags we would like to set
-   * @param newFlags Whole set of 256 flags
+   * @dev Set all the attributes for a user all in once
+   * @param user Address of the user whose attributes we would like to set
+   * @param newAttributes Whole set of 256 attributes
    */
-  function setFlags(address user, uint256 newFlags) external onlyRole(ROLE_SETTER) {
-    writeFlags(user, newFlags);
+  function setAttributes(address user, uint256 newAttributes) external onlyRole(ROLE_SETTER) {
+    writeAttributes(user, newAttributes);
   }
 
   /**
-   * @dev Get a flag for a user, return true or false
-   * @param user Address of the user whose flag we would like to have
-   * @param flag Flag index from 0 to 255
-   * @return Flag status, set or unset
+   * @dev Get a attribute for a user, return true or false
+   * @param user Address of the user whose attribute we would like to have
+   * @param attribute Attribute index from 0 to 255
+   * @return Attribute status, set or unset
    */
-  function getFlag(address user, uint8 flag) external view returns (bool) {
-    return (flags[user] & 2**flag) > 0;
+  function getAttribute(address user, uint8 attribute) external view returns (bool) {
+    return (attributes[user] & 2**attribute) > 0;
   }
 
   /**
-   * @dev Set flags an address. User can set their own flags by using a
+   * @dev Set attributes an address. User can set their own attributes by using a
    *      signed message from server side.
    * @param signer Address of the server side signing key
-   * @param newFlags 256 bit integer for all the flags for an address
+   * @param newAttributes 256 bit integer for all the attributes for an address
    * @param nonce Value to prevent re-use of the server side signed data
    * @param v V of the server's key which was used to sign this transfer
    * @param r R of the server's key which was used to sign this transfer
    * @param s S of the server's key which was used to sign this transfer
    */
-  function setMyFlags(address signer, uint256 newFlags, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
+  function setMyAttributes(address signer, uint256 newAttributes, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
     require(hasRole(signer, ROLE_SIGNER));
 
-    bytes32 hash = keccak256(msg.sender, signer, newFlags, nonce);
+    bytes32 hash = keccak256(msg.sender, signer, newAttributes, nonce);
     require(hashes[hash] == false);
     require(ecrecover(hash, v, r, s) == signer);
 
     hashes[hash] = true;
-    writeFlags(msg.sender, newFlags);
+    writeAttributes(msg.sender, newAttributes);
   }
 
 }
