@@ -8,13 +8,14 @@
 
 pragma solidity ^0.4.24;
 
+import "./KYCAttributes.sol";
 import "./KYCInterface.sol";
 import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract BasicKYC is RBAC, KYCInterface {
+contract BasicKYC is RBAC, KYCInterface, KYCAttributes {
   /** @dev This mapping contains signature hashes which have been already used: */
   mapping (bytes32 => bool) public hashes;
   /** @dev Mapping of all the attributes for all the users: */
@@ -50,8 +51,8 @@ contract BasicKYC is RBAC, KYCInterface {
    * @param attribute Attribute index from 0 to 255
    * @return Attribute status, set or unset
    */
-  function getAttribute(address user, uint8 attribute) external view returns (bool) {
-    return (attributes[user] & 2**attribute) > 0;
+  function getAttribute(address user, KYCAttribute attribute) external view returns (bool) {
+    return (attributes[user] & 2**uint8(attribute)) > 0;
   }
 
   /**
