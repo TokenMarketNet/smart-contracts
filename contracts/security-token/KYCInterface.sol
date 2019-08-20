@@ -1,7 +1,9 @@
 pragma solidity ^0.4.18;
 
-interface KYCInterface {
-    event Whitelisted(address who, uint128 nonce);
+import "./KYCAttributes.sol";
 
-    function isWhitelisted(address who) external view returns(bool);
+interface KYCInterface {
+  event AttributesSet(address indexed who, uint256 indexed attributes);
+
+  function getAttribute(address addr, KYCAttributes.KYCAttribute attribute) external view returns (bool);
 }

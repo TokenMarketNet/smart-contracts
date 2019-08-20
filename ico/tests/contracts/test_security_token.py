@@ -232,9 +232,26 @@ def mock_kyc(chain, team_multisig, customer) -> Contract:
 
     check_gas(chain, hash_)
 
-    check_gas(chain, contract.transact(tx).whitelistUser(customer, True))
-    check_gas(chain, contract.transact(tx).whitelistUser(team_multisig, True))
+    check_gas(chain, contract.transact(tx).adminAddRole(team_multisig, "setter"))
+    check_gas(chain, contract.transact(tx).setAttributes(customer, 1))
+    check_gas(chain, contract.transact(tx).setAttributes(team_multisig, 1))
 
+
+    return contract
+
+
+@pytest.fixture
+def restricted_transfer_agent(chain, team_multisig, mock_kyc) -> Contract:
+    """Create the transaction verifier contract."""
+    args = [mock_kyc.address]
+
+    tx = {
+        "from": team_multisig
+    }
+
+    contract, hash_ = chain.provider.deploy_contract('RestrictedTransferAgent', deploy_args=args, deploy_transaction=tx)
+
+    check_gas(chain, hash_)
 
     return contract
 
@@ -487,3 +504,30 @@ def test_erc865(chain, security_token, team_multisig, customer, private_key, sig
     key_raw = signed_data["r_bytes"] + signed_data["s_bytes"] + signed_data["v"].to_bytes(1, byteorder="big")
 
     security_token.transact({"from": customer}).transferPreSigned(key_raw, team_multisig, 123, 123, 123)
+
+
+def test_restricted_transfer_agent(chain, security_token, team_multisig, customer, restricted_transfer_agent, mock_kyc):
+    check_gas(chain, security_token.transact({"from": team_multisig}).setTransactionVerifier(restricted_transfer_agent.address))
+
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
+    assert security_token.call().balanceOf(customer) == 10
+
+    check_gas(chain, mock_kyc.transact({"from": team_multisig}).setAttributes(customer, 0))
+
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
+
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
+
+    check_gas(chain, mock_kyc.transact({"from": team_multisig}).setAttributes(team_multisig, 2))
+
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 10))
+
+    check_gas(chain, mock_kyc.transact({"from": team_multisig}).setAttributes(customer, 1))
+
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))
+
+    check_gas(chain, mock_kyc.transact({"from": team_multisig}).setAttributes(team_multisig, 3))
+    check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 10))

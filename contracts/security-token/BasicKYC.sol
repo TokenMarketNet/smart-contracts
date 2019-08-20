@@ -6,72 +6,74 @@
  * based on that.
  */
 
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
+import "./KYCAttributes.sol";
 import "./KYCInterface.sol";
-import "zeppelin/contracts/ownership/Ownable.sol";
+import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract BasicKYC is Ownable, KYCInterface {
-    /** @dev This mapping contains address which have completed the KYC: */
-    mapping (address => bool) public whitelist;
-    /** @dev This mapping contains signature hashes which have been already used: */
-    mapping (bytes32 => bool) public hashes;
+contract BasicKYC is RBAC, KYCInterface, KYCAttributes {
+  /** @dev This mapping contains signature hashes which have been already used: */
+  mapping (bytes32 => bool) public hashes;
+  /** @dev Mapping of all the attributes for all the users: */
+  mapping (address => uint256) public attributes;
 
-    /** @dev this event is emitted when address is whitelisted, including the nonce:*/
-    event Whitelisted(address who, bool status);
+  /** @dev These can be used from other contracts to avoid typos with roles: */
+  string public constant ROLE_SIGNER = "signer";
+  string public constant ROLE_SETTER = "setter";
 
-    /** @dev Simple contructor, mainly because of a Populus bug. */
-    function BasicKYC() Ownable() {
-      // This is here for our verification code only
-    }
+  /**
+   * @dev Interal function for setting the attributes, and emmiting the event
+   * @param user Address of the user whose attributes we would like to set
+   * @param newAttributes Whole set of 256 attributes
+   */
+  function writeAttributes(address user, uint256 newAttributes) internal {
+    attributes[user] = newAttributes;
 
-    /**
-     * @dev Whitelist an address.
-     * @param who Address being whitelisted
-     * @param status True for whitelisting, False for de-whitelisting
-     */
-    function setWhitelisting(address who, bool status) internal {
-        whitelist[who] = status;
+    emit AttributesSet(user, attributes[user]);
+  }
 
-        Whitelisted(who, status);
-    }
+  /**
+   * @dev Set all the attributes for a user all in once
+   * @param user Address of the user whose attributes we would like to set
+   * @param newAttributes Whole set of 256 attributes
+   */
+  function setAttributes(address user, uint256 newAttributes) external onlyRole(ROLE_SETTER) {
+    writeAttributes(user, newAttributes);
+  }
 
-    /**
-     * @dev Whitelist an address.
-     * @param who Address being whitelisted
-     * @param status True for whitelisting, False for de-whitelisting
-     */
-    function whitelistUser(address who, bool status) external onlyOwner {
-        setWhitelisting(who, status);
-    }
+  /**
+   * @dev Get a attribute for a user, return true or false
+   * @param user Address of the user whose attribute we would like to have
+   * @param attribute Attribute index from 0 to 255
+   * @return Attribute status, set or unset
+   */
+  function getAttribute(address user, KYCAttribute attribute) external view returns (bool) {
+    return (attributes[user] & 2**uint8(attribute)) > 0;
+  }
 
-    /**
-     * @dev Whitelist an address. User can whitelist themselves by using a
-     *      signed message from server side.
-     * @param nonce Value to prevent re-use of the server side signed data
-     * @param v V of the server's key which was used to sign this transfer
-     * @param r R of the server's key which was used to sign this transfer
-     * @param s S of the server's key which was used to sign this transfer
-     */
-    function whitelistMe(uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(msg.sender, nonce);
-        require(hashes[hash] == false);
-        require(ecrecover(hash, v, r, s) == owner);
+  /**
+   * @dev Set attributes an address. User can set their own attributes by using a
+   *      signed message from server side.
+   * @param signer Address of the server side signing key
+   * @param newAttributes 256 bit integer for all the attributes for an address
+   * @param nonce Value to prevent re-use of the server side signed data
+   * @param v V of the server's key which was used to sign this transfer
+   * @param r R of the server's key which was used to sign this transfer
+   * @param s S of the server's key which was used to sign this transfer
+   */
+  function setMyAttributes(address signer, uint256 newAttributes, uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
+    require(hasRole(signer, ROLE_SIGNER));
 
-        hashes[hash] = true;
-        setWhitelisting(msg.sender, true);
-    }
+    bytes32 hash = keccak256(msg.sender, signer, newAttributes, nonce);
+    require(hashes[hash] == false);
+    require(ecrecover(hash, v, r, s) == signer);
 
-    /**
-     * @dev Check the whitelisting status of an address.
-     *      Although "whitelist" is a public mapping, we provide this "external"
-     *      function to optimize gas usage.
-     * @param who Address of the user whose whitelist status we want to check
-     */
-    function isWhitelisted(address who) external view returns(bool) {
-        return whitelist[who];
-    }
+    hashes[hash] = true;
+    writeAttributes(msg.sender, newAttributes);
+  }
+
 }

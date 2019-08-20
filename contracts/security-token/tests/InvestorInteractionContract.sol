@@ -1,12 +1,13 @@
 pragma solidity ^0.4.18;
 
 import "./BogusAnnouncement.sol";
+import "../KYCAttributes.sol";
 import "../KYCInterface.sol";
 import "../CheckpointToken.sol";
 import "../ERC865.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
-contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC865 {
+contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC865, KYCAttributes {
   uint256 public blockNumber;
   CheckpointToken public token;
   mapping(address => bool) public balanceImported;
@@ -69,7 +70,8 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
     }
 
     if (options[_to] != 0) {
-      require(KYC.isWhitelisted(msg.sender));
+      // We require user have compeleted their KYC:
+      require(KYC.getAttribute(msg.sender, KYCAttribute.KYCCleared));
       transferTrigger(msg.sender, _to, _value);
     }
 
