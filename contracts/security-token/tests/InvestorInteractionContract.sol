@@ -8,7 +8,7 @@ import "../ERC865.sol";
 import "zeppelin/contracts/token/ERC20/StandardToken.sol";
 
 contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC865, KYCAttributes {
-  uint256 public blockNumber;
+  uint256 public checkpointID;
   CheckpointToken public token;
   mapping(address => bool) public balanceImported;
 
@@ -20,15 +20,18 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
   uint256 public maximumSupply;
 
   event OptionAdded(address option, bytes32 description);
-  event IICCreated(address token, address KYC, uint256 blockNumber, uint256 maximumSupply);
+  event IICCreated(address token, address KYC, uint256 checkpointID, uint256 maximumSupply);
 
-  function InvestorInteractionContract(CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _blockNumber, bytes32[] _options) CheckpointToken("", "", 18) BogusAnnouncement(name, URI, _type, _hash) public {
+  function InvestorInteractionContract(CheckpointToken _token, KYCInterface _KYC, bytes32 name, bytes32 URI, uint256 _type, uint256 _hash, uint256 _checkpointID, bytes32[] _options) CheckpointToken("", "", 18) BogusAnnouncement(name, URI, _type, _hash) public {
     token = _token;
-    if (_blockNumber > 0) {
-      blockNumber = _blockNumber;
+
+    if (_checkpointID > 0) {
+      checkpointID = _checkpointID;
     } else {
-      blockNumber = block.number;
+      checkpointID = _token.currentCheckpointID();
     }
+
+
     KYC = _KYC;
 
     for(uint i=0; i<_options.length; i++) {
@@ -38,9 +41,9 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
       OptionAdded(optionAddress, _options[i]);
     }
 
-    maximumSupply = token.totalSupplyAt(blockNumber);
+    maximumSupply = token.totalSupplyAt(checkpointID);
 
-    IICCreated(_token, _KYC, _blockNumber, maximumSupply);
+    IICCreated(_token, _KYC, _checkpointID, maximumSupply);
   }
 
   function importInvestor(address investor) public {
@@ -48,7 +51,7 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
 
     require(balanceImported[investor] == false);
 
-    uint256 value = token.balanceAt(investor, blockNumber);
+    uint256 value = token.balanceAt(investor, checkpointID);
     uint256 blackHoleBalance = balanceOf(address(0));
     uint256 totalSupplyNow = totalSupply();
 
