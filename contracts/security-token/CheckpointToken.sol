@@ -14,6 +14,8 @@ import "zeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
+ *
+ * The binary search was inspired by Jordi Baylina's MiniMeToken.
  */
 contract CheckpointToken is ERC677Token {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
@@ -30,13 +32,16 @@ contract CheckpointToken is ERC677Token {
   /// @dev Checkpoint is the fundamental unit for our internal accounting
   ///      (who owns what, and at what moment in time)
   struct Checkpoint {
-    uint256 blockNumber;
+    uint256 checkpointID;
     uint256 value;
   }
   /// @dev This mapping contains checkpoints for every address:
   mapping (address => Checkpoint[]) public tokenBalances;
   /// @dev This is a one dimensional Checkpoint mapping of the overall token supply:
   Checkpoint[] public tokensTotal;
+  /// @dev This contains current checkpoint ID, an incrementing integer,
+  ///      incremented by the internal createCheckpoint() function.
+  uint256 public currentCheckpointID;
 
   /// @dev This mapping keeps account for approve() -> fransferFrom() pattern:
   mapping (address => mapping (address => uint256)) public allowed;
@@ -118,16 +123,16 @@ contract CheckpointToken is ERC677Token {
    * @return A uint256 specifying the total number of tokens in existence
    */
   function totalSupply() public view returns (uint256 tokenCount) {
-    tokenCount = balanceAtBlock(tokensTotal, block.number);
+    tokenCount = balanceAtCheckpoint(tokensTotal, currentCheckpointID);
   }
 
   /**
-   * @dev total number of tokens in existence at the given block
-   * @param blockNumber The block number we want to query for the total supply
-   * @return A uint256 specifying the total number of tokens at a given block
+   * @dev total number of tokens in existence at the given checkpoint
+   * @param checkpointID The checkpoint ID number we want to query for the total supply
+   * @return A uint256 specifying the total number of tokens at a given checkpoint
    */
-  function totalSupplyAt(uint256 blockNumber) public view returns (uint256 tokenCount) {
-    tokenCount = balanceAtBlock(tokensTotal, blockNumber);
+  function totalSupplyAt(uint256 checkpointID) public view returns (uint256 tokenCount) {
+    tokenCount = balanceAtCheckpoint(tokensTotal, checkpointID);
   }
 
   /**
@@ -136,17 +141,17 @@ contract CheckpointToken is ERC677Token {
    * @return An uint256 representing the amount owned by the passed address.
    */
   function balanceOf(address owner) public view returns (uint256 balance) {
-    balance = balanceAtBlock(tokenBalances[owner], block.number);
+    balance = balanceAtCheckpoint(tokenBalances[owner], currentCheckpointID);
   }
 
   /**
    * @dev Gets the balance of the specified address.
    * @param owner The address to query the the balance of.
-   * @param blockNumber The block number we want to query for the balance.
+   * @param checkpointID The checkpoint number we want to query for the balance.
    * @return An uint256 representing the amount owned by the passed address.
    */
-  function balanceAt(address owner, uint256 blockNumber) public view returns (uint256 balance) {
-    balance = balanceAtBlock(tokenBalances[owner], blockNumber);
+  function balanceAt(address owner, uint256 checkpointID) public view returns (uint256 balance) {
+    balance = balanceAtCheckpoint(tokenBalances[owner], checkpointID);
   }
 
   /**
@@ -237,9 +242,9 @@ contract CheckpointToken is ERC677Token {
   /** INTERNALS
    ****************************************/
 
-  function balanceAtBlock(Checkpoint[] storage checkpoints, uint256 blockNumber) internal returns (uint256 balance) {
-    uint256 currentBlockNumber;
-    (currentBlockNumber, balance) = getCheckpoint(checkpoints, blockNumber);
+  function balanceAtCheckpoint(Checkpoint[] storage checkpoints, uint256 checkpointID) internal returns (uint256 balance) {
+    uint256 currentCheckpointID;
+    (currentCheckpointID, balance) = getCheckpoint(checkpoints, checkpointID);
   }
 
   function transferInternal(address from, address to, uint256 value) internal {
@@ -255,30 +260,35 @@ contract CheckpointToken is ERC677Token {
     setCheckpoint(tokenBalances[to], toBalance.add(value));
   }
 
+  function createCheckpoint() internal returns (uint256 checkpointID) {
+    currentCheckpointID = currentCheckpointID + 1;
+    return currentCheckpointID;
+  }
+
 
   /** CORE
    ** The Magic happens below:
    ***************************************/
 
   function setCheckpoint(Checkpoint[] storage checkpoints, uint256 newValue) internal {
-    if ((checkpoints.length == 0) || (checkpoints[checkpoints.length.sub(1)].blockNumber < block.number)) {
-      checkpoints.push(Checkpoint(block.number, newValue));
+    if ((checkpoints.length == 0) || (checkpoints[checkpoints.length.sub(1)].checkpointID < currentCheckpointID)) {
+      checkpoints.push(Checkpoint(currentCheckpointID, newValue));
     } else {
-       checkpoints[checkpoints.length.sub(1)] = Checkpoint(block.number, newValue);
+       checkpoints[checkpoints.length.sub(1)] = Checkpoint(currentCheckpointID, newValue);
     }
   }
 
-  function getCheckpoint(Checkpoint[] storage checkpoints, uint256 blockNumber) internal returns (uint256 blockNumber_, uint256 value) {
+  function getCheckpoint(Checkpoint[] storage checkpoints, uint256 checkpointID) internal returns (uint256 checkpointID_, uint256 value) {
     if (checkpoints.length == 0) {
       return (0, 0);
     }
 
     // Shortcut for the actual value
-    if (blockNumber >= checkpoints[checkpoints.length.sub(1)].blockNumber) {
-      return (checkpoints[checkpoints.length.sub(1)].blockNumber, checkpoints[checkpoints.length.sub(1)].value);
+    if (checkpointID >= checkpoints[checkpoints.length.sub(1)].checkpointID) {
+      return (checkpoints[checkpoints.length.sub(1)].checkpointID, checkpoints[checkpoints.length.sub(1)].value);
     }
 
-    if (blockNumber < checkpoints[0].blockNumber) {
+    if (checkpointID < checkpoints[0].checkpointID) {
       return (0, 0);
     }
 
@@ -287,13 +297,13 @@ contract CheckpointToken is ERC677Token {
     uint256 max = checkpoints.length.sub(1);
     while (max > min) {
       uint256 mid = (max.add(min.add(1))).div(2);
-      if (checkpoints[mid].blockNumber <= blockNumber) {
+      if (checkpoints[mid].checkpointID <= checkpointID) {
         min = mid;
       } else {
         max = mid.sub(1);
       }
     }
 
-    return (checkpoints[min].blockNumber, checkpoints[min].value);
+    return (checkpoints[min].checkpointID, checkpoints[min].value);
   }
 }

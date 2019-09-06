@@ -3,14 +3,14 @@ pragma solidity ^0.4.18;
 import "../CheckpointToken.sol";
 
 contract TestCheckpointFailsafe {
-  function getTokenBalance(CheckpointToken token, uint blockNumber, address who, uint index) public constant returns (bool result, uint balance, uint latestBlock) {
-    uint tmpBlock;
+  function getTokenBalance(CheckpointToken token, uint checkpointID, address who, uint index) public constant returns (bool result, uint balance, uint latestCheckpointID) {
+    uint tmpCheckpointID;
     uint tmpBalance;
 
-    (latestBlock, balance) = token.tokenBalances(who, index);
-    (tmpBlock, tmpBalance) = token.tokenBalances(who, index+1);
+    (latestCheckpointID, balance) = token.tokenBalances(who, index);
+    (tmpCheckpointID, tmpBalance) = token.tokenBalances(who, index+1);
 
-    if (latestBlock >= blockNumber && blockNumber < tmpBlock) {
+    if (latestCheckpointID >= checkpointID && checkpointID < tmpCheckpointID) {
       result = true;
     } else {
       result = false;

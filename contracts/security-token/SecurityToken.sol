@@ -9,6 +9,7 @@
 pragma solidity ^0.4.18;
 
 import "./CheckpointToken.sol";
+import "./ERC20SnapshotMixin.sol";
 import "./ERC865.sol";
 import "./AnnouncementInterface.sol";
 import "../Recoverable.sol";
@@ -19,7 +20,7 @@ import "zeppelin/contracts/ownership/rbac/RBAC.sol";
 /**
  * @author TokenMarket /  Ville Sundell <ville at tokenmarket.net>
  */
-contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
+contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865, ERC20SnapshotMixin {
   using SafeMath for uint256; // We use only uint256 for safety reasons (no boxing)
 
   string public constant ROLE_ANNOUNCE = "announce()";
@@ -28,9 +29,10 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   string public constant ROLE_BURN = "burnTokens()";
   string public constant ROLE_INFO = "setTokenInformation()";
   string public constant ROLE_SETVERIFIER = "setTransactionVerifier()";
+  string public constant ROLE_CHECKPOINT = "checkpoint()";
 
   /// @dev Version string telling the token is TM-01, and its version:
-  string public version = 'TM-01 0.1';
+  string public version = 'TM-01 0.2';
 
   /// @dev URL where you can get more information about the security
   ///      (for example company website or investor interface):
@@ -49,6 +51,8 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
   event UpdatedTokenInformation(string newName, string newSymbol, string newUrl);
   /// @dev This is emitted when transaction verifier (the contract which would check KYC, etc.):
   event UpdatedTransactionVerifier(address newVerifier);
+  /// @dev This is emitted when a new checkpoint (snapshot) is created
+  event Checkpointed(uint256 checkpointID);
 
   /// @dev Address list of Announcements (see "interface Announcement").
   ///      Announcements are things like votings, dividends, or any kind of
@@ -75,6 +79,7 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
     addRole(msg.sender, ROLE_BURN);
     addRole(msg.sender, ROLE_INFO);
     addRole(msg.sender, ROLE_SETVERIFIER);
+    addRole(msg.sender, ROLE_CHECKPOINT);
   }
 
   /**
@@ -189,5 +194,23 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865 {
     transactionVerifier = newVerifier;
 
     UpdatedTransactionVerifier(newVerifier);
+  }
+
+  /**
+   * @dev Create a checkpoint for current token holdings
+   *
+   * Checkpoint enables the auxiliarly contracts to query token holdings on
+   * a pre-defined checkpoint.
+   *
+   * In addition to our own Checkpointed() event, it will emit Snapshot(), which
+   * is compatible with Zeppelin's ERC20Snapshot. This is to enable future block
+   * explorers to be aware of our checkpoint functionality.
+   *
+   * @return ID number of the newly created checkpoint (an incrementing integer)
+   */
+  function checkpoint() external onlyRole(ROLE_CHECKPOINT) returns (uint256 checkpointID) {
+    checkpointID = createCheckpoint();
+    emit Snapshot(checkpointID);
+    emit Checkpointed(checkpointID);
   }
 }

@@ -299,8 +299,38 @@ def test_security_token_force(chain, security_token, security_token_initial_supp
     assert security_token.call().balanceOf(customer) == security_token_initial_supply
 
 
-def test_security_token_ask_balanceat(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
-    check_gas(chain, security_token.transact().balanceAt(team_multisig, 1), gaslimit=26000)
+def test_security_token_unauthorized(chain, security_token, team_multisig, customer, announcement, security_token_verifier):
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).announce(announcement.address))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).forceTransfer(team_multisig, customer, 1))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).issueTokens(1))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).burnTokens(1))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).setTokenInformation("NOTUSED", "NOTUSED", "NOTUSED"))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).setTransactionVerifier(security_token_verifier.address))
+    with pytest.raises(TransactionFailed):
+        check_gas(chain, security_token.transact({"from": customer}).checkpoint())
+
+
+def test_security_token_checkpoint(chain, security_token, team_multisig, customer):
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint(), gaslimit=50000)
+
+
+def test_security_token_ask_balanceat(chain, security_token, security_token_initial_supply, team_multisig, customer):
+    initial_balance = security_token.call().balanceOf(team_multisig)
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
+    check_gas(chain, security_token.transact({"from": team_multisig}).transfer(security_token.address, security_token_initial_supply))
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
+    check_gas(chain, security_token.transact().balanceAt(team_multisig, 1), gaslimit=26500)
+
+    historical_balance = security_token.call().balanceAt(team_multisig, 0)
+    current_balance = security_token.call().balanceAt(team_multisig, 222)
+    assert historical_balance == initial_balance
+    assert security_token.call().balanceAt(team_multisig, 1) == security_token.call().balanceAt(team_multisig, 2)
 
 
 def test_security_token_change_name_and_symbol(chain, security_token, security_token_initial_supply, team_multisig, zero_address, customer):
@@ -352,10 +382,12 @@ def test_security_token_transfer(chain, security_token, team_multisig, zero_addr
 
     # https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20.sol
 
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
     check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 100), gaslimit=140000)
+
     assert security_token.call().balanceOf(customer) == 100
     assert security_token.call().balanceOf(zero_address) == 0
-    assert security_token.call().balanceAt(customer, 1) == 0
+    assert security_token.call().balanceAt(customer, 0) == 0
     assert security_token.call().balanceAt(customer, 999999) == 100
 
 
@@ -387,7 +419,7 @@ def test_security_token_transfer_stresstest(chain, security_token, team_multisig
         assert security_token.call().balanceOf(zero_address) == 0
         check_gas(chain, security_token.transact({"from": customer}).transfer(team_multisig, 100))
         y = 1+randint(0, x)
-        check_gas(chain, security_token.transact().balanceAt(customer, y), tag=str(y))
+        check_gas(chain, security_token.transact().balanceAt(customer, y), tag=str(y),  gaslimit=30000)
         assert security_token.call().balanceOf(customer) == 0
 
 
@@ -418,10 +450,13 @@ def test_security_token_erc677_transfer(security_token, team_multisig, testpaylo
 def test_security_token_failsafe(chain, security_token, failsafetester, team_multisig, customer):
     """Basic ERC-20 Transfer"""
     index = 2
-
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
     check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
     check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
     check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 1))
+    check_gas(chain, security_token.transact({"from": team_multisig}).checkpoint())
     check_gas(chain, security_token.transact({"from": team_multisig}).transfer(customer, 1))
 
     original_block, original_balance = security_token.call().tokenBalances(customer, index);
