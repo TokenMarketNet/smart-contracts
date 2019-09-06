@@ -280,7 +280,7 @@ contract TokenVault is Ownable, Recoverable {
   /// @dev This function is prototyped in Recoverable contract
   function tokensToBeReturned(ERC20Basic tokenToClaim) public returns (uint) {
     if (address(tokenToClaim) == address(token)) {
-      return getBalance().minus(tokensAllocatedTotal);
+      return getBalance().minus(tokensAllocatedTotal.minus(totalClaimed));
     } else {
       return tokenToClaim.balanceOf(this);
     }
