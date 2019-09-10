@@ -32,7 +32,7 @@ contract SecurityToken is CheckpointToken, RBAC, Recoverable, ERC865, ERC20Snaps
   string public constant ROLE_CHECKPOINT = "checkpoint()";
 
   /// @dev Version string telling the token is TM-01, and its version:
-  string public version = 'TM-01 0.2';
+  string public version = 'TM-01 0.3';
 
   /// @dev URL where you can get more information about the security
   ///      (for example company website or investor interface):

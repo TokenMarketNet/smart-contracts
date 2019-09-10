@@ -101,6 +101,8 @@ contract CheckpointToken is ERC677Token {
   function transferFrom(address from, address to, uint256 value) public returns (bool) {
     require(value <= allowed[from][msg.sender]);
 
+    value = verifyTransaction(from, to, value);
+
     transferInternal(from, to, value);
     Transfer(from, to, value);
     return true;
@@ -113,6 +115,8 @@ contract CheckpointToken is ERC677Token {
    * @return true if the call function was executed successfully
    */
   function transfer(address to, uint256 value) public returns (bool) {
+    value = verifyTransaction(msg.sender, to, value);
+
     transferInternal(msg.sender, to, value);
     Transfer(msg.sender, to, value);
     return true;
@@ -247,14 +251,18 @@ contract CheckpointToken is ERC677Token {
     (currentCheckpointID, balance) = getCheckpoint(checkpoints, checkpointID);
   }
 
+  function verifyTransaction(address from, address to, uint256 value) internal returns (uint256) {
+    if (address(transactionVerifier) != address(0)) {
+      value = transactionVerifier.verify(from, to, value);
+    }
+
+    // Per EIP20 standard, value == 0 is a valid transaction, and should not throw
+    return value;
+  }
+
   function transferInternal(address from, address to, uint256 value) internal {
     uint256 fromBalance = balanceOf(from);
     uint256 toBalance = balanceOf(to);
-
-    if (address(transactionVerifier) != address(0)) {
-      value = transactionVerifier.verify(from, to, value);
-      require(value > 0);
-    }
 
     setCheckpoint(tokenBalances[from], fromBalance.sub(value));
     setCheckpoint(tokenBalances[to], toBalance.add(value));
