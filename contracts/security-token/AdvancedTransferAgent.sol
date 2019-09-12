@@ -69,7 +69,7 @@ contract AdvancedTransferAgent is RestrictedTransferAgent, Ownable {
     /* We invoke RestrictedTransferAgent here, because whatever it wants to do
        (like KYC checks if KYC is specified), we want to do too. */
     if (blacklist[from] || blacklist[to]) {
-      return 0;
+      revert("Token transaction not permitted");
     } else {
       if (whitelist[from] || whitelist[to]) {
         return value;
