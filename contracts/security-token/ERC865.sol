@@ -35,6 +35,9 @@ contract ERC865 is CheckpointToken {
     address from = recover(hashedTx, _signature);
     require(from != address(0));
 
+    _value = verifyTransaction(from, _to, _value);
+    _fee = verifyTransaction(from, msg.sender, _fee);
+
     transferInternal(from, _to, _value);
     transferInternal(from, msg.sender, _fee);
 

@@ -29,7 +29,7 @@ contract RestrictedTransferAgent is SecurityTransferAgent, KYCAttributes {
     } else if (KYC.getAttribute(from, KYCAttribute.CanPushTokens)) {
       return value;
     } else {
-      return 0;
+      revert("Token transaction not permitted");
     }
   }
 }
