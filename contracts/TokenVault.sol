@@ -100,11 +100,6 @@ contract TokenVault is Ownable, Recoverable {
 
     token = _token;
 
-    // Check the address looks like a token contract
-    if(!token.isToken()) {
-      throw;
-    }
-
     // Give argument
     if(_freezeEndsAt == 0) {
       throw;
