@@ -121,7 +121,7 @@ def security_token_url() -> str:
     return "http://tokenmarket.net/"
 
 @pytest.fixture
-def security_token_initial_supply() -> str:
+def security_token_initial_supply() -> int:
     return 999999999000000000000000000
 
 
@@ -189,18 +189,18 @@ def payout_contract(chain, team_multisig, mock_kyc, security_token, test_token, 
 
 @pytest.fixture
 def test_token(chain, team_multisig, token_name, token_symbol, security_token_initial_supply, release_agent, customer) -> Contract:
-    """Create a Crowdsale token where transfer restrictions have been lifted."""
+    """Create a Crowdsale token where transfer restrictions have been lifted. Double the security_token_initial_supply"""
+    """Tokens must be minted in the respective testing functions to test different scenarios"""
 
-    args = [token_name, token_symbol, security_token_initial_supply, 18, True]  # Owner set
+    args = [token_name, token_symbol, 0, 18, True]  # Owner set
 
     tx = {
         "from": team_multisig
     }
 
     token, hash = chain.provider.deploy_contract('CrowdsaleToken', deploy_args=args, deploy_transaction=tx)
-
     token.transact({"from": team_multisig}).setReleaseAgent(team_multisig)
-    token.transact({"from": team_multisig}).releaseTokenTransfer()
+    token.transact({"from": team_multisig}).setMintAgent(team_multisig, True)
 
     return token
 
@@ -504,10 +504,12 @@ def test_voting_contract(chain, voting_contract, security_token, team_multisig, 
     check_gas(chain, voting_contract.transact({"from": team_multisig}).transferInvestorTokens(customer, 123))
     check_gas(chain, voting_contract.transact({"from": customer}).importInvestor(customer))
     check_gas(chain, voting_contract.transact({"from": customer}).act(123))
-    return
 
 
-def test_payout_contract(chain, payout_contract, security_token, test_token, team_multisig, customer):
+def test_payout_contract(chain, payout_contract, security_token, security_token_initial_supply, test_token, team_multisig, customer):
+    test_token.transact({"from": team_multisig}).mint(team_multisig, security_token_initial_supply * 2)
+    test_token.transact({"from": team_multisig}).releaseTokenTransfer()
+
     start_balance = test_token.call().balanceOf(team_multisig)
     assert start_balance > 0
     check_gas(chain, test_token.transact({"from": team_multisig}).approve(payout_contract.address, start_balance))
@@ -521,8 +523,27 @@ def test_payout_contract(chain, payout_contract, security_token, test_token, tea
     assert test_token.call().balanceOf(team_multisig) > initial_balance
     # check balance in payout contract
     # 0x0000000000000000000000000000000000000064 is default address(100)
-    assert payout_contract.functions.balanceOf('0x0000000000000000000000000000000000000064').call()
-    return
+    assert payout_contract.functions.balanceOf('0x0000000000000000000000000000000000000064').call() == 123
+
+    remaining_balance = security_token.call().balanceOf(team_multisig) - 123
+    check_gas(chain, payout_contract.transact({"from": team_multisig}).act(remaining_balance))
+    assert payout_contract.functions.balanceOf('0x0000000000000000000000000000000000000064').call() == remaining_balance + 123
+
+    assert test_token.call().balanceOf(team_multisig) == start_balance
+
+
+def test_payout_contract_with_transfer(chain, payout_contract, security_token, security_token_initial_supply, test_token, team_multisig, customer):
+    test_token.transact({"from": team_multisig}).mint(team_multisig, int(security_token_initial_supply / 2))
+    test_token.transact({"from": team_multisig}).releaseTokenTransfer()
+
+    start_balance = test_token.call().balanceOf(team_multisig)
+    assert start_balance > 0
+    check_gas(chain, test_token.transact({"from": team_multisig}).approve(payout_contract.address, start_balance))
+    check_gas(chain, payout_contract.transact({"from": customer}).fetchTokens())
+
+    check_gas(chain, payout_contract.transact({"from": team_multisig}).transfer(customer, security_token.call().balanceOf(team_multisig)))
+    check_gas(chain, payout_contract.transact({"from": customer}).act(security_token.call().balanceOf(team_multisig)))
+    assert test_token.call().balanceOf(customer) == start_balance
 
 
 def test_erc865(chain, security_token, team_multisig, customer, private_key, signer_address):
