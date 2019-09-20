@@ -5,7 +5,7 @@ import "./KYCInterface.sol";
 import "./SecurityTransferAgentInterface.sol";
 
 contract RestrictedTransferAgent is SecurityTransferAgent, KYCAttributes {
-  KYCInterface KYC;
+  KYCInterface public KYC;
 
   function RestrictedTransferAgent(KYCInterface _KYC) {
     KYC = _KYC;
