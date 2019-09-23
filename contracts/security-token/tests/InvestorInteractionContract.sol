@@ -35,6 +35,8 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
     KYC = _KYC;
 
     for(uint i=0; i<_options.length; i++) {
+      require(_options[i] != 0);
+
       address optionAddress = address(100 + i);
       options[optionAddress] = _options[i];
 
@@ -48,7 +50,7 @@ contract InvestorInteractionContract is BogusAnnouncement, CheckpointToken, ERC8
 
   function importInvestor(address investor) public {
     // Anyone can invoke this for failsafe reasons
-
+    require(options[investor] == 0);
     require(balanceImported[investor] == false);
 
     uint256 value = token.balanceAt(investor, checkpointID);
