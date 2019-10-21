@@ -58,4 +58,4 @@ urllib3==1.22
 watchdog==0.8.3
 web3==4.8.2
 websockets==6.0
-Werkzeug==0.12.2
+Werkzeug==0.15.3
