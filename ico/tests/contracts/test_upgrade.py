@@ -117,7 +117,7 @@ def test_cannot_upgrade_too_many(released_token: Contract, upgrade_agent: Contra
 
 
 def test_cannot_change_agent_in_fly(released_token: Contract, upgrade_agent: Contract, team_multisig, customer, upgrade_agent_2):
-    """Upgrade agent cannot be changed after the ugprade has begun."""
+    """Upgrade agent cannot be changed after the upgrade has begun."""
 
     released_token.functions.setUpgradeAgent(upgrade_agent.address).transact({"from": team_multisig})
     released_token.functions.upgrade(10000).transact({"from": customer})
