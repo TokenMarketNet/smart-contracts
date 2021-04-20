@@ -31,7 +31,7 @@ parsimonious==0.8.1
 pathtools==0.1.2
 pbkdf2==1.3
 -e git+https://github.com/ethereum/populus.git@2ab03fea0d0e2881c80698d2a349a74cc6c953d3#egg=populus
-py==1.4.34
+py==1.10.0
 py-ecc==1.4.3
 py-evm==0.2.0a32
 py-geth==1.9.0
